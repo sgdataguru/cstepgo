@@ -1,0 +1,82 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local env files
+.env*.local
+.env
+.env.development
+.env.production
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sw[op]
+*.sublime-*
+
+# Logs
+logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache
+
+# OS
+Thumbs.db
+
+# Service Account Keys
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!.eslintrc.json
+
+# Documents (except docs folder)
+*.docx
+*.doc
+*.pdf
+!docs/**/*.pdf
+
+# Images (except in specific folders)
+*.jpeg
+*.jpg
+*.png
+!public/**/*.jpeg
+!public/**/*.jpg
+!public/**/*.png
+steppergo/
+
+/src/generated/prisma

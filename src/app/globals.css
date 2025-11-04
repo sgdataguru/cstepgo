@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Urgency Colors */
+    --urgency-teal: #14b8a6;
+    --urgency-amber: #f59e0b;
+    --urgency-red: #ef4444;
+    --urgency-gray: #6b7280;
+    
+    /* Timer Background */
+    --timer-bg: rgba(0, 0, 0, 0.05);
+    --timer-border: rgba(0, 0, 0, 0.1);
+    
+    /* Builder Elements */
+    --builder-bg: #f8fafc;
+    --builder-border: #e2e8f0;
+    --activity-bg: #ffffff;
+    --activity-hover: #f1f5f9;
+  }
+  
+  body {
+    @apply font-body text-gray-900 antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-modernSg text-white font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-all duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-900 font-semibold px-6 py-3 rounded-lg hover:bg-gray-300 transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm p-6 border border-gray-100;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-modernSg focus:border-transparent transition-all duration-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  phone           String?          @unique
+  name            String
+  passwordHash    String
+  role            UserRole         @default(PASSENGER)
+  emailVerified   Boolean          @default(false)
+  phoneVerified   Boolean          @default(false)
+  avatar          String?
+  bio             String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  analyticsEvents AnalyticsEvent[]
+  bookings        Booking[]
+  driverProfile   Driver?
+  sessions        Session[]
+  trips           Trip[]           @relation("TripOrganizer")
+
+  @@index([email])
+  @@index([phone])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Driver {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  status          DriverStatus @default(PENDING)
+  vehicleType     String
+  vehicleModel    String
+  vehicleMake     String
+  vehicleYear     Int
+  licensePlate    String
+  vehicleColor    String?
+  licenseNumber   String
+  licenseExpiry   DateTime
+  documentsUrl    Json
+  rating          Float        @default(0)
+  completedTrips  Int          @default(0)
+  totalEarnings   Decimal      @default(0)
+  appliedAt       DateTime     @default(now())
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payouts         Payout[]
+  trips           Trip[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Trip {
+  id             String     @id @default(cuid())
+  title          String
+  description    String
+  organizerId    String
+  driverId       String?
+  departureTime  DateTime
+  returnTime     DateTime
+  timezone       String     @default("Asia/Almaty")
+  originName     String
+  originAddress  String
+  originLat      Float
+  originLng      Float
+  destName       String
+  destAddress    String
+  destLat        Float
+  destLng        Float
+  totalSeats     Int
+  availableSeats Int
+  basePrice      Decimal
+  currency       String     @default("KZT")
+  platformFee    Decimal
+  itinerary      Json
+  status         TripStatus @default(DRAFT)
+  metadata       Json?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  publishedAt    DateTime?
+  cancelledAt    DateTime?
+  bookings       Booking[]
+  driver         Driver?    @relation(fields: [driverId], references: [id])
+  organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
+
+  @@index([organizerId])
+  @@index([driverId])
+  @@index([status])
+  @@index([departureTime])
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  tripId      String
+  userId      String
+  status      BookingStatus @default(PENDING)
+  seatsBooked Int           @default(1)
+  totalAmount Decimal
+  currency    String        @default("KZT")
+  passengers  Json
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+  trip        Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id])
+  payment     Payment?
+
+  @@index([tripId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id                 String        @id @default(cuid())
+  bookingId          String        @unique
+  stripeIntentId     String        @unique
+  stripeClientSecret String?
+  amount             Decimal
+  currency           String        @default("KZT")
+  status             PaymentStatus @default(PENDING)
+  paymentMethod      String?
+  last4              String?
+  metadata           Json?
+  errorMessage       String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  succeededAt        DateTime?
+  failedAt           DateTime?
+  booking            Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([stripeIntentId])
+  @@index([status])
+}
+
+model Payout {
+  id               String       @id @default(cuid())
+  driverId         String
+  amount           Decimal
+  currency         String       @default("KZT")
+  status           PayoutStatus @default(PENDING)
+  stripeTransferId String?      @unique
+  periodStart      DateTime
+  periodEnd        DateTime
+  tripsCount       Int          @default(0)
+  metadata         Json?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  processedAt      DateTime?
+  driver           Driver       @relation(fields: [driverId], references: [id])
+
+  @@index([driverId])
+  @@index([status])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  eventName String
+  userId    String?
+  metadata  Json
+  sessionId String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([eventName])
+  @@index([userId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model WebhookLog {
+  id              String    @id @default(cuid())
+  source          String
+  eventType       String
+  eventId         String    @unique
+  payload         Json
+  processed       Boolean   @default(false)
+  processingError String?
+  createdAt       DateTime  @default(now())
+  processedAt     DateTime?
+
+  @@index([source])
+  @@index([eventId])
+  @@index([processed])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String?
+  type      String
+  channel   String
+  recipient String
+  subject   String?
+  body      String
+  status    String
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum UserRole {
+  PASSENGER
+  DRIVER
+  ADMIN
+}
+
+enum DriverStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum TripStatus {
+  DRAFT
+  PUBLISHED
+  FULL
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+}
