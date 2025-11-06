@@ -1,13 +1,13 @@
-# 07 Register as Passenger - Implementation Planning
+# B1 Traveler Identity (OTP Verification) - Implementation Planning
 
 ## Project Context
 **Technical Stack**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui
-**Backend**: NestJS, PostgreSQL, Redis, BullMQ
-**Infrastructure**: Vercel (FE), Fly.io/Render (BE), GitHub Actions CI/CD
+**Backend**: Supabase PostgreSQL, Prisma ORM
+**Infrastructure**: Vercel (FE), Supabase (DB), Twilio (SMS), Resend (Email)
 
 ## User Story
 
-As a tourist or local passenger, I want to quickly register using my phone number or email, so that I can book trips without a lengthy signup process.
+**Epic B.1**: As a traveler, I want to verify my identity quickly using OTP, so that I can book a trip without lengthy registration forms.
 
 ## Pre-conditions
 

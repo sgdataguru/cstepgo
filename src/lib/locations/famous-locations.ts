@@ -1,452 +1,272 @@
-/**
- * Famous locations in Kazakhstan and Kyrgyzstan
- * Used for autocomplete suggestions and quick selection
- */
+// Famous locations in Kazakhstan and Kyrgyzstan for autocomplete
 
 export interface FamousLocation {
   id: string;
   name: string;
+  type: 'CITY' | 'LANDMARK' | 'AIRPORT' | 'ATTRACTION';
   country: 'Kazakhstan' | 'Kyrgyzstan';
-  address: string;
-  placeId?: string;
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  type: 'city' | 'landmark' | 'region';
-  description?: string;
-  isPopular?: boolean;
+  latitude: number;
+  longitude: number;
+  isFamous: boolean;
+  searchTerms?: string[]; // Alternative names for searching
 }
 
-/**
- * Famous cities and locations in Kazakhstan
- */
-export const KAZAKHSTAN_LOCATIONS: FamousLocation[] = [
-  // Major Cities
+export const famousLocations: FamousLocation[] = [
+  // Kazakhstan - Major Cities
   {
-    id: 'kz-almaty',
+    id: 'almaty',
     name: 'Almaty',
+    type: 'CITY',
     country: 'Kazakhstan',
-    address: 'Almaty, Kazakhstan',
-    coordinates: { lat: 43.2220, lng: 76.8512 },
-    type: 'city',
-    description: 'Largest city and former capital',
-    isPopular: true,
+    latitude: 43.2220,
+    longitude: 76.8512,
+    isFamous: true,
+    searchTerms: ['alma-ata']
   },
   {
-    id: 'kz-astana',
+    id: 'nur-sultan',
     name: 'Astana (Nur-Sultan)',
+    type: 'CITY',
     country: 'Kazakhstan',
-    address: 'Astana, Kazakhstan',
-    coordinates: { lat: 51.1694, lng: 71.4491 },
-    type: 'city',
-    description: 'Capital city',
-    isPopular: true,
+    latitude: 51.1694,
+    longitude: 71.4491,
+    isFamous: true,
+    searchTerms: ['astana', 'nur-sultan', 'nursultan']
   },
   {
-    id: 'kz-shymkent',
+    id: 'shymkent',
     name: 'Shymkent',
+    type: 'CITY',
     country: 'Kazakhstan',
-    address: 'Shymkent, Kazakhstan',
-    coordinates: { lat: 42.3417, lng: 69.5901 },
-    type: 'city',
-    description: 'Third largest city',
-    isPopular: true,
+    latitude: 42.3417,
+    longitude: 69.5901,
+    isFamous: true
   },
   {
-    id: 'kz-karaganda',
+    id: 'karaganda',
     name: 'Karaganda',
+    type: 'CITY',
     country: 'Kazakhstan',
-    address: 'Karaganda, Kazakhstan',
-    coordinates: { lat: 49.8028, lng: 73.0878 },
-    type: 'city',
-    description: 'Industrial center',
-    isPopular: true,
+    latitude: 49.8047,
+    longitude: 73.1094,
+    isFamous: true
   },
   {
-    id: 'kz-aktobe',
+    id: 'aktobe',
     name: 'Aktobe',
+    type: 'CITY',
     country: 'Kazakhstan',
-    address: 'Aktobe, Kazakhstan',
-    coordinates: { lat: 50.2797, lng: 57.2070 },
-    type: 'city',
-    description: 'Western Kazakhstan',
-    isPopular: false,
-  },
-  {
-    id: 'kz-taraz',
-    name: 'Taraz',
-    country: 'Kazakhstan',
-    address: 'Taraz, Kazakhstan',
-    coordinates: { lat: 42.9000, lng: 71.3667 },
-    type: 'city',
-    description: 'Ancient Silk Road city',
-    isPopular: false,
-  },
-  {
-    id: 'kz-pavlodar',
-    name: 'Pavlodar',
-    country: 'Kazakhstan',
-    address: 'Pavlodar, Kazakhstan',
-    coordinates: { lat: 52.2873, lng: 76.9674 },
-    type: 'city',
-    description: 'Northern industrial city',
-    isPopular: false,
-  },
-  {
-    id: 'kz-semey',
-    name: 'Semey',
-    country: 'Kazakhstan',
-    address: 'Semey, Kazakhstan',
-    coordinates: { lat: 50.4265, lng: 80.2647 },
-    type: 'city',
-    description: 'Eastern Kazakhstan',
-    isPopular: false,
-  },
-  {
-    id: 'kz-atyrau',
-    name: 'Atyrau',
-    country: 'Kazakhstan',
-    address: 'Atyrau, Kazakhstan',
-    coordinates: { lat: 47.1164, lng: 51.8834 },
-    type: 'city',
-    description: 'Oil capital',
-    isPopular: false,
-  },
-  {
-    id: 'kz-kostanay',
-    name: 'Kostanay',
-    country: 'Kazakhstan',
-    address: 'Kostanay, Kazakhstan',
-    coordinates: { lat: 53.2144, lng: 63.6246 },
-    type: 'city',
-    description: 'Northern city',
-    isPopular: false,
+    latitude: 50.2839,
+    longitude: 57.1670,
+    isFamous: true
   },
 
-  // Famous Landmarks
+  // Kazakhstan - Airports
   {
-    id: 'kz-medeu',
-    name: 'Medeu',
+    id: 'almaty-airport',
+    name: 'Almaty International Airport',
+    type: 'AIRPORT',
     country: 'Kazakhstan',
-    address: 'Medeu, Almaty Region, Kazakhstan',
-    coordinates: { lat: 43.1667, lng: 77.0833 },
-    type: 'landmark',
-    description: 'Famous ice skating rink',
-    isPopular: true,
+    latitude: 43.3521,
+    longitude: 77.0405,
+    isFamous: true,
+    searchTerms: ['ala', 'almaty airport']
   },
   {
-    id: 'kz-shymbulak',
-    name: 'Shymbulak Ski Resort',
+    id: 'astana-airport',
+    name: 'Nursultan Nazarbayev International Airport',
+    type: 'AIRPORT',
     country: 'Kazakhstan',
-    address: 'Shymbulak, Almaty Region, Kazakhstan',
-    coordinates: { lat: 43.1167, lng: 77.0667 },
-    type: 'landmark',
-    description: 'Premier ski resort',
-    isPopular: true,
+    latitude: 51.0222,
+    longitude: 71.4669,
+    isFamous: true,
+    searchTerms: ['tse', 'astana airport', 'nur-sultan airport']
   },
+
+  // Kazakhstan - Attractions
   {
-    id: 'kz-charyn',
+    id: 'charyn-canyon',
     name: 'Charyn Canyon',
+    type: 'ATTRACTION',
     country: 'Kazakhstan',
-    address: 'Charyn National Park, Kazakhstan',
-    coordinates: { lat: 43.3500, lng: 79.0833 },
-    type: 'landmark',
-    description: 'Grand Canyon of Kazakhstan',
-    isPopular: true,
+    latitude: 43.3458,
+    longitude: 79.0906,
+    isFamous: true
   },
   {
-    id: 'kz-big-almaty-lake',
+    id: 'big-almaty-lake',
     name: 'Big Almaty Lake',
+    type: 'ATTRACTION',
     country: 'Kazakhstan',
-    address: 'Big Almaty Lake, Almaty Region, Kazakhstan',
-    coordinates: { lat: 43.0556, lng: 76.9833 },
-    type: 'landmark',
-    description: 'Scenic mountain lake',
-    isPopular: true,
+    latitude: 43.0556,
+    longitude: 76.9900,
+    isFamous: true
   },
   {
-    id: 'kz-turkistan',
-    name: 'Turkistan',
+    id: 'medeu',
+    name: 'Medeu',
+    type: 'ATTRACTION',
     country: 'Kazakhstan',
-    address: 'Turkistan, Kazakhstan',
-    coordinates: { lat: 43.3000, lng: 68.2667 },
-    type: 'landmark',
-    description: 'Historic city with Yasawi Mausoleum',
-    isPopular: true,
+    latitude: 43.1622,
+    longitude: 77.0800,
+    isFamous: true
   },
   {
-    id: 'kz-kolsai-lakes',
+    id: 'shymbulak',
+    name: 'Shymbulak Ski Resort',
+    type: 'ATTRACTION',
+    country: 'Kazakhstan',
+    latitude: 43.1381,
+    longitude: 77.0658,
+    isFamous: true
+  },
+  {
+    id: 'kolsai-lakes',
     name: 'Kolsai Lakes',
+    type: 'ATTRACTION',
     country: 'Kazakhstan',
-    address: 'Kolsai Lakes National Park, Kazakhstan',
-    coordinates: { lat: 42.9667, lng: 78.3333 },
-    type: 'landmark',
-    description: 'Three beautiful mountain lakes',
-    isPopular: true,
+    latitude: 42.9667,
+    longitude: 78.3333,
+    isFamous: true
   },
   {
-    id: 'kz-kaindy-lake',
+    id: 'kaindy-lake',
     name: 'Kaindy Lake',
+    type: 'ATTRACTION',
     country: 'Kazakhstan',
-    address: 'Kaindy Lake, Almaty Region, Kazakhstan',
-    coordinates: { lat: 42.9833, lng: 78.4500 },
-    type: 'landmark',
-    description: 'Sunken forest lake',
-    isPopular: true,
+    latitude: 42.9939,
+    longitude: 78.4850,
+    isFamous: true
   },
-];
 
-/**
- * Famous cities and locations in Kyrgyzstan
- */
-export const KYRGYZSTAN_LOCATIONS: FamousLocation[] = [
-  // Major Cities
+  // Kyrgyzstan - Major Cities
   {
-    id: 'kg-bishkek',
+    id: 'bishkek',
     name: 'Bishkek',
+    type: 'CITY',
     country: 'Kyrgyzstan',
-    address: 'Bishkek, Kyrgyzstan',
-    coordinates: { lat: 42.8746, lng: 74.5698 },
-    type: 'city',
-    description: 'Capital city',
-    isPopular: true,
+    latitude: 42.8746,
+    longitude: 74.5698,
+    isFamous: true
   },
   {
-    id: 'kg-osh',
+    id: 'osh',
     name: 'Osh',
+    type: 'CITY',
     country: 'Kyrgyzstan',
-    address: 'Osh, Kyrgyzstan',
-    coordinates: { lat: 40.5283, lng: 72.7985 },
-    type: 'city',
-    description: 'Second largest city, Southern capital',
-    isPopular: true,
+    latitude: 40.5283,
+    longitude: 72.7985,
+    isFamous: true
   },
   {
-    id: 'kg-jalal-abad',
+    id: 'jalal-abad',
     name: 'Jalal-Abad',
+    type: 'CITY',
     country: 'Kyrgyzstan',
-    address: 'Jalal-Abad, Kyrgyzstan',
-    coordinates: { lat: 40.9333, lng: 73.0000 },
-    type: 'city',
-    description: 'Southern city',
-    isPopular: false,
+    latitude: 40.9333,
+    longitude: 73.0000,
+    isFamous: true,
+    searchTerms: ['jalalabad', 'dzhalal-abad']
   },
   {
-    id: 'kg-karakol',
+    id: 'karakol',
     name: 'Karakol',
+    type: 'CITY',
     country: 'Kyrgyzstan',
-    address: 'Karakol, Kyrgyzstan',
-    coordinates: { lat: 42.4908, lng: 78.3936 },
-    type: 'city',
-    description: 'Gateway to Issyk-Kul',
-    isPopular: true,
-  },
-  {
-    id: 'kg-tokmok',
-    name: 'Tokmok',
-    country: 'Kyrgyzstan',
-    address: 'Tokmok, Kyrgyzstan',
-    coordinates: { lat: 42.8417, lng: 75.2958 },
-    type: 'city',
-    description: 'Near ancient Burana Tower',
-    isPopular: false,
-  },
-  {
-    id: 'kg-naryn',
-    name: 'Naryn',
-    country: 'Kyrgyzstan',
-    address: 'Naryn, Kyrgyzstan',
-    coordinates: { lat: 41.4289, lng: 75.9911 },
-    type: 'city',
-    description: 'Mountain city',
-    isPopular: false,
+    latitude: 42.4908,
+    longitude: 78.3936,
+    isFamous: true
   },
 
-  // Famous Landmarks
+  // Kyrgyzstan - Airports
   {
-    id: 'kg-issyk-kul',
+    id: 'bishkek-airport',
+    name: 'Manas International Airport',
+    type: 'AIRPORT',
+    country: 'Kyrgyzstan',
+    latitude: 43.0621,
+    longitude: 74.4776,
+    isFamous: true,
+    searchTerms: ['fru', 'bishkek airport', 'manas']
+  },
+
+  // Kyrgyzstan - Attractions
+  {
+    id: 'issyk-kul',
     name: 'Issyk-Kul Lake',
+    type: 'ATTRACTION',
     country: 'Kyrgyzstan',
-    address: 'Issyk-Kul, Kyrgyzstan',
-    coordinates: { lat: 42.4414, lng: 77.0891 },
-    type: 'landmark',
-    description: "World's second-largest alpine lake",
-    isPopular: true,
+    latitude: 42.4167,
+    longitude: 77.2500,
+    isFamous: true,
+    searchTerms: ['issyk kul', 'issykkul']
   },
   {
-    id: 'kg-cholpon-ata',
-    name: 'Cholpon-Ata',
+    id: 'ala-archa',
+    name: 'Ala Archa National Park',
+    type: 'ATTRACTION',
     country: 'Kyrgyzstan',
-    address: 'Cholpon-Ata, Issyk-Kul Region, Kyrgyzstan',
-    coordinates: { lat: 42.6489, lng: 77.0825 },
-    type: 'landmark',
-    description: 'Resort town on Issyk-Kul',
-    isPopular: true,
+    latitude: 42.6333,
+    longitude: 74.5000,
+    isFamous: true
   },
   {
-    id: 'kg-ala-archa',
-    name: 'Ala-Archa National Park',
+    id: 'song-kul',
+    name: 'Song-Kul Lake',
+    type: 'ATTRACTION',
     country: 'Kyrgyzstan',
-    address: 'Ala-Archa National Park, Kyrgyzstan',
-    coordinates: { lat: 42.5667, lng: 74.5000 },
-    type: 'landmark',
-    description: 'Alpine national park near Bishkek',
-    isPopular: true,
+    latitude: 41.8333,
+    longitude: 75.1333,
+    isFamous: true,
+    searchTerms: ['song kul', 'songkul']
   },
   {
-    id: 'kg-song-kol',
-    name: 'Song-Kol Lake',
-    country: 'Kyrgyzstan',
-    address: 'Song-Kol Lake, Naryn Region, Kyrgyzstan',
-    coordinates: { lat: 41.8333, lng: 75.1333 },
-    type: 'landmark',
-    description: 'High-altitude alpine lake',
-    isPopular: true,
-  },
-  {
-    id: 'kg-jeti-oguz',
-    name: 'Jeti-Oguz (Seven Bulls)',
-    country: 'Kyrgyzstan',
-    address: 'Jeti-Oguz, Issyk-Kul Region, Kyrgyzstan',
-    coordinates: { lat: 42.3667, lng: 78.2333 },
-    type: 'landmark',
-    description: 'Red rock formations',
-    isPopular: true,
-  },
-  {
-    id: 'kg-burana-tower',
-    name: 'Burana Tower',
-    country: 'Kyrgyzstan',
-    address: 'Burana Tower, Chuy Region, Kyrgyzstan',
-    coordinates: { lat: 42.7833, lng: 75.2500 },
-    type: 'landmark',
-    description: 'Ancient minaret',
-    isPopular: true,
-  },
-  {
-    id: 'kg-tash-rabat',
+    id: 'tash-rabat',
     name: 'Tash Rabat',
+    type: 'LANDMARK',
     country: 'Kyrgyzstan',
-    address: 'Tash Rabat, Naryn Region, Kyrgyzstan',
-    coordinates: { lat: 40.3167, lng: 75.2333 },
-    type: 'landmark',
-    description: 'Ancient caravanserai',
-    isPopular: true,
+    latitude: 40.3167,
+    longitude: 75.3167,
+    isFamous: true
   },
   {
-    id: 'kg-sary-chelek',
-    name: 'Sary-Chelek Lake',
+    id: 'burana-tower',
+    name: 'Burana Tower',
+    type: 'LANDMARK',
     country: 'Kyrgyzstan',
-    address: 'Sary-Chelek Lake, Jalal-Abad Region, Kyrgyzstan',
-    coordinates: { lat: 41.7833, lng: 71.9667 },
-    type: 'landmark',
-    description: 'Mountain lake biosphere reserve',
-    isPopular: true,
-  },
+    latitude: 42.8986,
+    longitude: 75.2586,
+    isFamous: true
+  }
 ];
 
-/**
- * All famous locations combined
- */
-export const ALL_FAMOUS_LOCATIONS: FamousLocation[] = [
-  ...KAZAKHSTAN_LOCATIONS,
-  ...KYRGYZSTAN_LOCATIONS,
-];
-
-/**
- * Get popular locations (for quick suggestions)
- */
-export function getPopularLocations(): FamousLocation[] {
-  return ALL_FAMOUS_LOCATIONS.filter((loc) => loc.isPopular);
-}
-
-/**
- * Search locations by name or description
- */
-export function searchLocations(query: string): FamousLocation[] {
+// Search function with fuzzy matching
+export function searchLocations(query: string, limit: number = 8): FamousLocation[] {
   const lowerQuery = query.toLowerCase().trim();
   
-  if (!lowerQuery) {
-    return getPopularLocations();
+  if (lowerQuery.length < 2) {
+    return [];
   }
 
-  return ALL_FAMOUS_LOCATIONS.filter((loc) => {
-    const nameMatch = loc.name.toLowerCase().includes(lowerQuery);
-    const addressMatch = loc.address.toLowerCase().includes(lowerQuery);
-    const descMatch = loc.description?.toLowerCase().includes(lowerQuery);
-    const countryMatch = loc.country.toLowerCase().includes(lowerQuery);
-    
-    return nameMatch || addressMatch || descMatch || countryMatch;
-  }).sort((a, b) => {
-    // Prioritize popular locations
-    if (a.isPopular && !b.isPopular) return -1;
-    if (!a.isPopular && b.isPopular) return 1;
-    
-    // Then prioritize exact matches
-    const aExact = a.name.toLowerCase() === lowerQuery;
-    const bExact = b.name.toLowerCase() === lowerQuery;
-    if (aExact && !bExact) return -1;
-    if (!aExact && bExact) return 1;
-    
-    // Then prioritize starts with
-    const aStarts = a.name.toLowerCase().startsWith(lowerQuery);
-    const bStarts = b.name.toLowerCase().startsWith(lowerQuery);
-    if (aStarts && !bStarts) return -1;
-    if (!aStarts && bStarts) return 1;
-    
-    return 0;
-  });
-}
-
-/**
- * Get locations by country
- */
-export function getLocationsByCountry(country: 'Kazakhstan' | 'Kyrgyzstan'): FamousLocation[] {
-  return ALL_FAMOUS_LOCATIONS.filter((loc) => loc.country === country);
-}
-
-/**
- * Get location by ID
- */
-export function getLocationById(id: string): FamousLocation | undefined {
-  return ALL_FAMOUS_LOCATIONS.find((loc) => loc.id === id);
-}
-
-/**
- * Calculate distance between two locations (in km)
- * Using Haversine formula
- */
-export function calculateDistance(
-  from: { lat: number; lng: number },
-  to: { lat: number; lng: number }
-): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = toRad(to.lat - from.lat);
-  const dLon = toRad(to.lng - from.lng);
-  
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(from.lat)) *
-    Math.cos(toRad(to.lat)) *
-    Math.sin(dLon / 2) *
-    Math.sin(dLon / 2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  
-  return Math.round(distance);
-}
-
-function toRad(degrees: number): number {
-  return (degrees * Math.PI) / 180;
-}
-
-/**
- * Get estimated travel time (in hours) based on distance
- * Assumes average speed of 60 km/h for mountain roads
- */
-export function estimateTravelTime(distanceKm: number): number {
-  const avgSpeed = 60; // km/h
-  return Math.round((distanceKm / avgSpeed) * 10) / 10; // Round to 1 decimal
+  return famousLocations
+    .filter(location => {
+      const nameMatch = location.name.toLowerCase().includes(lowerQuery);
+      const searchTermsMatch = location.searchTerms?.some(term => 
+        term.toLowerCase().includes(lowerQuery)
+      );
+      return nameMatch || searchTermsMatch;
+    })
+    .sort((a, b) => {
+      // Famous locations first
+      if (a.isFamous && !b.isFamous) return -1;
+      if (!a.isFamous && b.isFamous) return 1;
+      
+      // Cities before other types
+      if (a.type === 'CITY' && b.type !== 'CITY') return -1;
+      if (a.type !== 'CITY' && b.type === 'CITY') return 1;
+      
+      // Alphabetical
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, limit);
 }

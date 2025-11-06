@@ -71,7 +71,3 @@
 
 ## Gate Assignment
 **Gate 2** (OTP verification required before booking)
-
----
-
-**Note:** This story replaces the old password-based registration. Lean OTP flow reduces friction for travelers.

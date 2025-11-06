@@ -1,22 +1,52 @@
-# User Story: 1 - View Trip Urgency Status
+# User Story: Epic A.1 - Browse Trips with Urgency Status
 
-**As a** potential passenger,
-**I want** to see a countdown timer with color-coded urgency indicators on trip cards,
-**so that** I can quickly understand how much time is left to join a trip and make timely booking decisions.
+**Epic:** A — Trip Discovery & Details (Public, no login)
+
+**As a** traveler (no login required),
+**I want** to browse available trips with urgency indicators,
+**so that** I can quickly find trips and understand booking deadlines.
 
 ## Acceptance Criteria
 
-* Countdown timer displays directly under trip title
-* Timer shows time remaining until departure in appropriate units (days/hours/minutes)
-* Timer color changes based on departure time:
-  - Teal: More than 72 hours remaining
-  - Amber: 24-72 hours remaining  
-  - Red: Less than 24 hours remaining
-  - Gray: Trip has departed
+### Display Requirements
+* Trip list shows ≥1 card if trips available
+* Each card displays:
+  - Origin → Destination
+  - Departure date & time
+  - Available seats (for shared trips)
+  - Price per seat OR "Private trip available"
+  - Countdown timer with color-coded urgency
+* Trips sorted by soonest departure first
+
+### Urgency Indicators
+* Timer shows time remaining until departure (days/hours/minutes)
+* Color coding:
+  - Teal: >72 hours remaining
+  - Amber: 24-72 hours remaining
+  - Red: <24 hours remaining
+  - Gray: Trip departed
 * Timer updates in real-time without page refresh
-* Timer calculation is server-side to avoid timezone issues
+* Server-side calculation prevents timezone issues
 
-## Notes
+### Visibility Rules
+* Public list shows:
+  - Shared trips with available seats
+  - Private trips awaiting first booking
+* Public list DOES NOT show:
+  - Private trips already accepted by driver
+  - Shared trips at full capacity
+  - Draft/pending approval trips
 
-* Visual urgency cues are critical for driving booking decisions
-* Server-side calculation ensures consistency across different user timezones
+### Call-to-Action
+* "Book This Trip" CTA visible on each card
+* Clicking CTA navigates to trip detail page (Story A.2)
+
+## Technical Notes
+
+* Trip visibility: `status = 'live' AND (is_private = false OR (is_private = true AND driver_assignment = null))`
+* Server-side timer calculation ensures consistency across user timezones
+* PostHog event: `trip_list_viewed` (see Epic F)
+
+## Gate Assignment
+**Gate 1** (Core browsing - COMPLETED)
+**Gate 2** (Private/shared visibility logic)
