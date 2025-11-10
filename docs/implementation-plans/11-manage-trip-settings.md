@@ -538,6 +538,28 @@ src/
     └── admin-permissions.ts ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Trips to manage (BLOCKER)
+- [07-register-as-passenger.md](./07-register-as-passenger.md) - Driver authentication
+
+**Enables**:
+- Drivers to edit existing trips
+- Trip visibility and availability control
+
+**Works With**:
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Updates reflected in browsing
+
+**Related Epics**:
+- **Epic D - Driver Portal**: Driver trip management
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic D
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#11---manage-trip-settings)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

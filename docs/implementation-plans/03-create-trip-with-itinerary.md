@@ -468,6 +468,33 @@ src/
     └── activity-types.ts ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [07-register-as-passenger.md](./07-register-as-passenger.md) - Driver authentication (uses same OTP system)
+- [04-search-locations-autocomplete.md](./04-search-locations-autocomplete.md) - Location selection for itinerary activities
+
+**Builds On**:
+- [02-view-trip-itinerary.md](./02-view-trip-itinerary.md) - Creates content that passengers view
+
+**Enables**:
+- [11-manage-trip-settings.md](./11-manage-trip-settings.md) - Edit created trips
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Trips to browse
+
+**Works With**:
+- [08-apply-as-driver.md](./08-apply-as-driver.md) - Driver must be approved first
+- [05-view-dynamic-trip-pricing.md](./05-view-dynamic-trip-pricing.md) - Pricing for created trips
+
+**Related Epics**:
+- **Epic D - Driver Portal**: Core driver functionality
+- **Epic B - Booking**: Creates bookable trips
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic D
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#03---create-trip-with-itinerary)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

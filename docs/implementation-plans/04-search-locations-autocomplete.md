@@ -459,6 +459,28 @@ src/
     └── google.env ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Required By**:
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Location selection in trip creation (BLOCKER)
+- [14-zone-based-itinerary-pricing.md](./14-zone-based-itinerary-pricing.md) - Location data for zone calculations
+
+**Works With**:
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Search functionality on browse page
+
+**Related Epics**:
+- **Epic D - Driver Portal**: Essential for trip creation
+- **Epic A - Discovery**: Enables search functionality
+
+**External Dependencies**:
+- ⚠️ **Google Places API Key** - Must be configured before implementation
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: External Services
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#04---search-locations-autocomplete)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

@@ -532,6 +532,37 @@ src/
     └── payment-config.ts ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [07-register-as-passenger.md](./07-register-as-passenger.md) - User authentication (BLOCKER)
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Users browse before booking
+- [05-view-dynamic-trip-pricing.md](./05-view-dynamic-trip-pricing.md) - Price information
+- Booking model
+
+**Enables**:
+- Revenue generation (CRITICAL)
+- Trip booking completion
+- Driver payouts (future)
+
+**Works With**:
+- [06-view-driver-profile.md](./06-view-driver-profile.md) - Driver info shown during checkout
+- Platform fee calculations
+
+**Related Epics**:
+- **Epic C.1 - Payments (Stripe Integration)**: Core payment processing
+- **Epic B - Booking**: Completes booking flow
+
+**External Dependencies**:
+- ⚠️ **Stripe Account** - Payment processing (REQUIRED)
+- Webhook infrastructure
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic C.1
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#09---pay-for-trip-booking)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

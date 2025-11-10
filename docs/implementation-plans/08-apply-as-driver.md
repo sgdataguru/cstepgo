@@ -584,6 +584,27 @@ src/
     └── driver-requirements.ts ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [07-register-as-passenger.md](./07-register-as-passenger.md) - OTP authentication (BLOCKER)
+- File upload/storage system
+
+**Enables**:
+- [15-admin-manual-driver-registration.md](./15-admin-manual-driver-registration.md) - Admin approval of applications
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Approved drivers create trips
+- [06-view-driver-profile.md](./06-view-driver-profile.md) - Driver profiles for approved drivers
+
+**Related Epics**:
+- **Epic E.2 - Admin (Driver Management)**: Driver onboarding
+- **Epic D - Driver Portal**: Driver access foundation
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic E.2
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#08---apply-as-driver)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

@@ -554,6 +554,31 @@ src/
     └── verification-badges.ts ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [08-apply-as-driver.md](./08-apply-as-driver.md) - Driver onboarding creates profiles
+- [15-admin-manual-driver-registration.md](./15-admin-manual-driver-registration.md) - Admin-created driver profiles
+- Driver model with verification data
+
+**Works With**:
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Driver names shown on trip cards
+- Review and rating system
+
+**Enables**:
+- Trust-building for bookings
+- [09-pay-for-trip-booking.md](./09-pay-for-trip-booking.md) - Users see driver before payment
+
+**Related Epics**:
+- **Epic D - Driver Portal**: Driver identity and verification
+- **Epic A - Discovery**: Trust signals for browsing users
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic D & E
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#06---view-driver-profile)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED
