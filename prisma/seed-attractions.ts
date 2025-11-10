@@ -493,21 +493,26 @@ async function seedAttractions() {
 
   for (const attraction of attractionsData) {
     try {
-      await prisma.attraction.upsert({
-        where: {
-          name: attraction.name,
-        },
-        update: {},
-        create: {
-          ...attraction,
-        },
+      // Try to find by name first
+      const existing = await prisma.attraction.findFirst({
+        where: { name: attraction.name },
       });
-      created++;
-      console.log(`✅ Created: ${attraction.name} (Zone ${attraction.zone})`);
+
+      if (existing) {
+        skipped++;
+        console.log(`⏭️  Skipped: ${attraction.name} (already exists)`);
+      } else {
+        await prisma.attraction.create({
+          data: {
+            ...attraction,
+          },
+        });
+        created++;
+        console.log(`✅ Created: ${attraction.name} (Zone ${attraction.zone})`);
+      }
     } catch (error) {
-      // If attraction already exists (unique constraint on name), skip it
+      console.error(`❌ Error creating ${attraction.name}:`, error);
       skipped++;
-      console.log(`⏭️  Skipped: ${attraction.name} (already exists)`);
     }
   }
 
