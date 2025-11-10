@@ -9,6 +9,7 @@ import { useRegistrationPrompt } from '@/hooks/useRegistrationPrompt';
 import TripListingSchema from '@/components/seo/TripListingSchema';
 import { TripListingSkeleton } from '@/components/skeletons/TripCardSkeleton';
 import Pagination from '@/components/ui/Pagination';
+import SortDropdown, { SortOption } from '@/components/filters/SortDropdown';
 
 /**
  * Trips Page - Browse all available trips with filters (No registration required)
@@ -34,6 +35,12 @@ export default function TripsPage() {
   const [originFilter, setOriginFilter] = useState('');
   const [destFilter, setDestFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [currentSortOption, setCurrentSortOption] = useState<SortOption>({
+    value: 'date-asc',
+    label: 'Date: Soonest First',
+    sortBy: 'departureTime',
+    sortOrder: 'asc',
+  });
 
   // Fetch trips from API
   useEffect(() => {
@@ -50,6 +57,8 @@ export default function TripsPage() {
       const params = new URLSearchParams();
       params.append('page', currentPage.toString());
       params.append('limit', '20');
+      params.append('sortBy', currentSortOption.sortBy);
+      params.append('sortOrder', currentSortOption.sortOrder);
       if (filters?.origin) params.append('origin', filters.origin);
       if (filters?.destination) params.append('destination', filters.destination);
       if (filters?.date) params.append('date', filters.date);
@@ -89,6 +98,13 @@ export default function TripsPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleSortChange = (option: SortOption) => {
+    setCurrentSortOption(option);
+    setCurrentPage(1); // Reset to first page on sort change
+    // Trigger a new fetch with the updated sort
+    setTimeout(() => fetchTrips(), 0);
+  };
+
   const handleBook = (tripId: string) => {
     // Open registration prompt for non-authenticated users
     const trip = trips.find(t => t.id === tripId);
@@ -121,7 +137,7 @@ export default function TripsPage() {
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 From
@@ -157,6 +173,10 @@ export default function TripsPage() {
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
               />
             </div>
+            <SortDropdown
+              currentSort={currentSortOption.value}
+              onSortChange={handleSortChange}
+            />
             <div className="flex items-end">
               <button 
                 onClick={handleSearch}
