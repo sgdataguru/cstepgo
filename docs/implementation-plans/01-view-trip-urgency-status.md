@@ -271,6 +271,28 @@ src/
     └── countdown.module.css ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- Trip model (existing from Gate 1)
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Trip cards to display urgency badges
+
+**Works With**:
+- [02-view-trip-itinerary.md](./02-view-trip-itinerary.md) - Both enhance trip discovery
+- [05-view-dynamic-trip-pricing.md](./05-view-dynamic-trip-pricing.md) - Complementary trip card features
+
+**Enables**:
+- Better user engagement and booking conversion
+
+**Related Epics**:
+- **Epic A - Discovery**: Enhances anonymous browsing experience
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) for overall architecture
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#01---view-trip-urgency-status)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

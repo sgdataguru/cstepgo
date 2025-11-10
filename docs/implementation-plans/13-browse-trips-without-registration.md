@@ -573,6 +573,28 @@ src/
     └── trip.ts ⬜                         # PublicTrip interface
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [07-register-as-passenger.md](./07-register-as-passenger.md) - OTP authentication for registration modal (B.1)
+- [01-view-trip-urgency-status.md](./01-view-trip-urgency-status.md) - Urgency badges on trip cards
+- [02-view-trip-itinerary.md](./02-view-trip-itinerary.md) - Itinerary viewing in trip details
+- [05-view-dynamic-trip-pricing.md](./05-view-dynamic-trip-pricing.md) - Dynamic pricing display
+
+**Enables**:
+- [09-pay-for-trip-booking.md](./09-pay-for-trip-booking.md) - Payment flow after user browses trips
+- [06-view-driver-profile.md](./06-view-driver-profile.md) - Driver profiles linked from trip cards
+
+**Related Epics**:
+- **Epic A - Discovery**: This is the primary anonymous browsing feature
+- **Epic B - Booking**: Provides entry point to booking flow
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic A
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#13---browse-trips-without-registration)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

@@ -1,5 +1,14 @@
 # 12 Receive Driver Payouts - Implementation Planning
 
+> **⚠️ ARCHIVED**  
+> This implementation plan has been archived and is no longer active.  
+> **Reason**: Feature deferred to Gate 3 (Financial Operations phase)  
+> **Archived Date**: October 2025  
+> **Status**: 🗄️ Deferred - will be revisited after payment infrastructure matures  
+> **See**: [README.md](./README.md) for current active plans
+
+---
+
 ## Project Context
 **Technical Stack**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui
 **Backend**: NestJS, PostgreSQL, Redis, BullMQ

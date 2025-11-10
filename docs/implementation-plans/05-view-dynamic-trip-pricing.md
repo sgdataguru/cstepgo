@@ -513,6 +513,33 @@ src/
     └── pricing.module.css ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- Trip model with pricing parameters (existing from Gate 1)
+- Real-time booking count system
+
+**Works With**:
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Price display on trip cards
+- [01-view-trip-urgency-status.md](./01-view-trip-urgency-status.md) - Both enhance trip card UX
+- [02-view-trip-itinerary.md](./02-view-trip-itinerary.md) - Both provide trip details
+
+**Builds On**:
+- [14-zone-based-itinerary-pricing.md](./14-zone-based-itinerary-pricing.md) - Advanced pricing algorithm
+
+**Enables**:
+- [09-pay-for-trip-booking.md](./09-pay-for-trip-booking.md) - Shows prices before payment
+
+**Related Epics**:
+- **Epic C - Payments**: Core pricing display
+- **Epic A - Discovery**: Transparent pricing drives conversion
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic C
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#05---view-dynamic-trip-pricing)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

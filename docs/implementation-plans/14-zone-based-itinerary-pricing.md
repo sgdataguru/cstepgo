@@ -779,6 +779,31 @@ prisma/
 └── schema.prisma ⬜                           # Add Attraction model, Zone enum
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [04-search-locations-autocomplete.md](./04-search-locations-autocomplete.md) - Location data
+- [05-view-dynamic-trip-pricing.md](./05-view-dynamic-trip-pricing.md) - Base pricing system
+- PostGIS extension (database)
+
+**Enhances**:
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Advanced pricing for itineraries
+- [09-pay-for-trip-booking.md](./09-pay-for-trip-booking.md) - More sophisticated pricing
+
+**Related Epics**:
+- **Epic C - Payments (Advanced)**: Zone-based pricing model
+
+**External Dependencies**:
+- ⚠️ **PostGIS Extension** - Must be enabled in Supabase (REQUIRED)
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: PostGIS & Geofilter
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#14---zone-based-itinerary-pricing)
+
+**Note**: **P2 Priority** - Advanced feature, can be deferred to post-MVP
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

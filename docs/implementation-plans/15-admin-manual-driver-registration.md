@@ -751,6 +751,34 @@ prisma/
 └── schema.prisma ⬜                            # Driver, User models
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- [08-apply-as-driver.md](./08-apply-as-driver.md) - Driver applications to approve (BLOCKER)
+- Admin authentication system
+- File storage system
+
+**Enables**:
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Approved drivers create trips
+- [06-view-driver-profile.md](./06-view-driver-profile.md) - Public driver profiles
+- [11-manage-trip-settings.md](./11-manage-trip-settings.md) - Driver trip management
+
+**Works With**:
+- [07-register-as-passenger.md](./07-register-as-passenger.md) - Uses same OTP/auth system
+
+**Related Epics**:
+- **Epic E.2 - Admin (Driver Management)**: Driver approval workflow
+- **Epic D - Driver Portal**: Creates driver access
+
+**External Dependencies**:
+- ⚠️ **Twilio/WhatsApp** - Credential delivery to drivers
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic E.2
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#15---admin-manual-driver-registration)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

@@ -403,6 +403,28 @@ src/
     └── itinerary.module.css ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Depends On**:
+- Trip model with itinerary JSON (existing from Gate 1)
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Trip cards to display "View Itinerary" button
+
+**Works With**:
+- [01-view-trip-urgency-status.md](./01-view-trip-urgency-status.md) - Both enhance trip discovery
+- [05-view-dynamic-trip-pricing.md](./05-view-dynamic-trip-pricing.md) - Complementary trip details
+
+**Enables**:
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Shows what drivers create
+
+**Related Epics**:
+- **Epic A - Discovery**: Enhances trip information transparency
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) for overall architecture
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#02---view-trip-itinerary)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

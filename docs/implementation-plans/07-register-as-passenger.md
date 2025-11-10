@@ -510,6 +510,31 @@ src/
     └── countries.ts ⬜
 ```
 
+## Cross-References
+
+### Related Implementation Plans
+
+**Enables** (BLOCKER for):
+- [03-create-trip-with-itinerary.md](./03-create-trip-with-itinerary.md) - Driver authentication
+- [08-apply-as-driver.md](./08-apply-as-driver.md) - Driver application
+- [09-pay-for-trip-booking.md](./09-pay-for-trip-booking.md) - Payment requires authentication
+- [11-manage-trip-settings.md](./11-manage-trip-settings.md) - Trip management requires auth
+
+**Used By**:
+- [13-browse-trips-without-registration.md](./13-browse-trips-without-registration.md) - Registration modal on booking
+
+**Related Epics**:
+- **Epic B.1 - Booking (Authentication)**: Core authentication system
+- **Foundation for all authenticated features**
+
+**External Dependencies**:
+- ⚠️ **Twilio Account** - SMS OTP delivery (REQUIRED)
+- ⚠️ **Resend Account** - Email OTP delivery (REQUIRED)
+
+**Master Plan Reference**: See [00-GATE2-MASTER-PLAN.md](./00-GATE2-MASTER-PLAN.md) Section: Epic B.1
+
+**Status Tracking**: See [IMPLEMENTATION-STATUS.md](./IMPLEMENTATION-STATUS.md#07---traveler-identity-otp-verification)
+
 ## Implementation Status
 
 **OVERALL STATUS**: ⬜ NOT STARTED

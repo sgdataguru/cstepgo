@@ -1,5 +1,14 @@
 # 10 Join WhatsApp Group - Implementation Planning
 
+> **⚠️ ARCHIVED**  
+> This implementation plan has been archived and is no longer active.  
+> **Reason**: Feature replaced by in-app chat functionality  
+> **Archived Date**: October 2025  
+> **Status**: 🗄️ Not implemented  
+> **See**: [README.md](./README.md) for current active plans
+
+---
+
 ## Project Context
 **Technical Stack**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui
 **Backend**: NestJS, PostgreSQL, Redis, BullMQ
