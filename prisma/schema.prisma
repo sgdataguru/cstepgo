@@ -73,37 +73,46 @@ model Driver {
 }
 
 model Trip {
-  id             String     @id @default(cuid())
-  title          String
-  description    String
-  organizerId    String
-  driverId       String?
-  departureTime  DateTime
-  returnTime     DateTime
-  timezone       String     @default("Asia/Almaty")
-  originName     String
-  originAddress  String
-  originLat      Float
-  originLng      Float
-  destName       String
-  destAddress    String
-  destLat        Float
-  destLng        Float
-  totalSeats     Int
-  availableSeats Int
-  basePrice      Decimal
-  currency       String     @default("KZT")
-  platformFee    Decimal
-  itinerary      Json
-  status         TripStatus @default(DRAFT)
-  metadata       Json?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  publishedAt    DateTime?
-  cancelledAt    DateTime?
-  bookings       Booking[]
-  driver         Driver?    @relation(fields: [driverId], references: [id])
-  organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
+  id                     String           @id @default(cuid())
+  title                  String
+  description            String
+  organizerId            String
+  driverId               String?
+  departureTime          DateTime
+  returnTime             DateTime
+  timezone               String           @default("Asia/Almaty")
+  originName             String
+  originAddress          String
+  originLat              Float
+  originLng              Float
+  destName               String
+  destAddress            String
+  destLat                Float
+  destLng                Float
+  totalSeats             Int
+  availableSeats         Int
+  basePrice              Decimal
+  currency               String           @default("KZT")
+  platformFee            Decimal
+  itinerary              Json
+  status                 TripStatus       @default(DRAFT)
+  metadata               Json?
+  // Zone-based pricing fields
+  zonesCovered           String[]         @default([])
+  totalDistanceKm        Int?
+  estimatedDurationHours Int?
+  basePriceZoneAdjusted  Decimal?
+  requiresOvernight      Boolean          @default(false)
+  crossZonePenalty       Decimal          @default(0)
+  vehicleType            String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  publishedAt            DateTime?
+  cancelledAt            DateTime?
+  bookings               Booking[]
+  tripAttractions        TripAttraction[]
+  driver                 Driver?          @relation(fields: [driverId], references: [id])
+  organizer              User             @relation("TripOrganizer", fields: [organizerId], references: [id])
 
   @@index([organizerId])
   @@index([driverId])
@@ -271,4 +280,48 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
+}
+
+enum Zone {
+  A // City Center (0-10km)
+  B // Suburban (10-50km)
+  C // Regional (50-200km)
+}
+
+model Attraction {
+  id                     String   @id @default(cuid())
+  name                   String   @unique
+  description            String?
+  zone                   Zone     @default(A)
+  latitude               Float
+  longitude              Float
+  basePriceImpact        Decimal  @default(0)
+  estimatedDurationHours Int      @default(1)
+  isActive               Boolean  @default(true)
+  imageUrl               String?
+  category               String?  // "Natural", "Cultural", "Historical"
+  address                String?
+  city                   String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  tripAttractions        TripAttraction[]
+  
+  @@index([zone])
+  @@index([isActive])
+  @@index([category])
+}
+
+model TripAttraction {
+  id           String     @id @default(cuid())
+  tripId       String
+  attractionId String
+  orderIndex   Int        // For route ordering
+  createdAt    DateTime   @default(now())
+  
+  trip         Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  attraction   Attraction @relation(fields: [attractionId], references: [id])
+  
+  @@unique([tripId, attractionId])
+  @@index([tripId, orderIndex])
 }
