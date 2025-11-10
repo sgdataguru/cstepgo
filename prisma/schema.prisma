@@ -12,10 +12,11 @@ model User {
   email           String           @unique
   phone           String?          @unique
   name            String
-  passwordHash    String
+  passwordHash    String?          // Optional for OTP-only registration
   role            UserRole         @default(PASSENGER)
   emailVerified   Boolean          @default(false)
   phoneVerified   Boolean          @default(false)
+  preferredLanguage String?        // User's preferred language
   avatar          String?
   bio             String?
   createdAt       DateTime         @default(now())
@@ -40,6 +41,23 @@ model Session {
 
   @@index([userId])
   @@index([token])
+}
+
+model OTP {
+  id        String   @id @default(cuid())
+  contact   String   // email or phone number
+  code      String   // 6-digit OTP code
+  type      OTPType  // EMAIL or SMS
+  purpose   String   @default("REGISTRATION") // REGISTRATION, LOGIN, PASSWORD_RESET
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  verifiedAt DateTime?
+
+  @@index([contact])
+  @@index([code])
+  @@index([expiresAt])
 }
 
 model Driver {
@@ -271,4 +289,9 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
+}
+
+enum OTPType {
+  EMAIL
+  SMS
 }
