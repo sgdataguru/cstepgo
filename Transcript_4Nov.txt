@@ -1,0 +1,515 @@
+Okay, so I think so the first thing first, right? So when we start this interaction, right?
+I think Ming was very good friends and that's why I didn't ask for any documentation. I just
+started working on it without this stuff, right? So let's do the documentation stuff right now,
+right now. So I have created a small slide for this whole interaction. So it becomes easier for
+everybody what exactly is going on, right? So wherever you feel like I need to stop,
+you can let me tell me, I can stop there, okay? So you can see my screen.
+Yes, yes, perfect. So today I'm going to do a demo on what we have done. So what I have done,
+I have divided the whole thing into three gates, or you can say face, okay? So this is the new
+thing which I use called as gates, okay? So gate 1, gate 2, gate 3, gate 4, okay? So today
+I'm going to do a demo on gate 1, okay? What we have developed, okay? So the links what you see here
+are all repo link which you have access to now, okay? You can actually go to the documentations,
+right? So there's a proper implementation plan. There's a whole idea about what kind of user
+story I'm going to work on, okay? This all thing is there. The third link is the source, the source
+code, what I'm going to show you, the source code behind that, how is it being done, okay?
+So Ming, if you have time, what I will do, I will give you the access, I will make you as a collaborator too, okay?
+Okay, thanks. Wait, one thing just to clarify, it's step go, step refers to the wide open planes
+of Central Asia, that's a typo, no R, step go, S-T-E-P-P-E, it's pronounced as S-T-E-P-E.
+Yeah, yeah, yeah, yeah. Okay, guys, Ming, sorry, I'm really sorry.
+So I saw that there is already company registered step here. So I think they show that means we cannot
+use step here, the name, but I think if you just add R, step here goes, maybe, which is
+makes difference to another company that we can use this name, is there's a new company registered
+step here. Okay, step is already existing, someone's already took the name.
+Somebody already took that name, okay. I see somebody already took that name, okay. Okay,
+so we can call it step-go, or we can call it step-goer. That is not the daily breaker,
+yeah, you can actually decide about it, right? So I think so, I just use the group name,
+the group name is step-go, that's why. Okay, so what I have understood, okay, till now,
+it is a ride sharing platform, connecting the driver and the passenger, making it cost effective,
+right? So I used a concept called, I don't know, Ming would know, there's something called blah, blah
+car, okay, where it is kind of a hitching in this part of the world, and at the same time,
+ooh by certain combination of both, that's what I've understood when I was reading through the
+whole thing, right? The target market is Kyrgyzstan, Kyrgyzstan and other stuff, you can always let me
+know what is the actual target market, but that is not, that is something for my understanding,
+okay. If you want to make it much more clearer, much more better, you can always help me to
+define the thing properly, because what happens, right, when we are creating some stuff, right,
+I don't like to assume stuff, because once we start assuming the stuff, right, we go in
+arena, which we don't know, right? So the more it's, so more you can clear what exactly it is,
+it's better for us to make it better, okay. So that's why I've just put three,
+the two, three lines, but I think so this is very important that you can just
+put some ideas, what exactly we are doing, okay. So yes, so as I was sharing the gate one,
+so basically, if you go through that report, right, we have put for the implementation plan,
+I have divided the whole thing into three, four gates, gate one, gate two, gate three, gate four,
+right. Today, I'm going to do a implementation or a demo of gate one right now. Remember,
+this is something which is running in my local host, in my system right now, but it is very easy
+to deploy it into production, that's not a problem, okay. So let me click on it. So it is going to
+take me to the website. Remember, again, it is running on my own system, the local host 3000.
+So if I, if you click on browse details, browse the trips, it is going to show me all the trips,
+which I have put forward in a database, okay. Again, the numbers, the figures are something
+random, right. We can be much more clearer, but the idea was to have a placeholder and just to
+showcase how it looks like, okay. So let's for example, I take the first, first let's take the
+fourth one. Sorry, Mahesh, one question. Are you recording this? I cannot record it because I don't
+have the, because I'm not using the, what do you say, the paid version of teams, you know.
+Okay, no worries, no worries, no worries, no worries. Okay, then I was trying to find the recording
+option. Share the slides, people, so something that's great. Yeah, I'm going to share the slides,
+don't worry. Yeah. And don't worry, I can actually record this and I can share it with you also.
+Yeah. So Asana Business Express, I'm going, what I'm going to do, I'm going to click on you,
+the itinerary, this is the itinerary of it, where there are three seats available. One is,
+one is already taken. This is the price, what is being asked. If you click on book this trip,
+then it goes to the payment, payment site. Right now, if you click book now, technically,
+what is going, what should happen is it should ask for the customer details and it should take
+you to the payment site. But that is something which I have put forward in the gate to, not right
+now. Okay, so this is, this is, this is the, this is the view of it. The test driver is again,
+the driver information, it is test driver right now, because I don't have the information of the
+drivers. If I go back, go back again, I can actually create a trip to, let's for example,
+a driver wants to create a trip. So he can come forward, they can say that say, for example,
+Alma D2, some other place like Shem and Kand. Next, it can define when he wants to do it.
+Let's for example, tomorrow 5th of November, it can be at 9am. The available seats are four,
+I can put 10,000 as the price, my car is sit down. I can go next. If I want to add some more
+description of what exactly is going to happen in that itinerary, I can add more details. But
+right now I'm just going to go ahead and we're going to create the trip.
+I'm really sorry. Is your slide is swapping? Because the first slide I saw is still existing.
+So I'm a little bit confused. Ah, wait, wait, wait. You're still on the gate one slide.
+Correct. I'm still page one. Yeah, I'm really sorry. Okay. Now you can see. So sorry. Yeah,
+okay. Let's go. Yeah, now I can. I think now I can go. Yeah, sorry. So, so once I click on
+browse, so this is this is the front end. Again, the front end can be always modified. Okay,
+but this is just just entry point to exactly what we are thinking about. So it is the browse,
+the trip. So what I'm doing is let's for example, I go and click on the Alma D2,
+some shaman can't express. I see the itinerary. This is the itinerary from
+Alma D airport. So the available seats are three seats available. This is the price for per person.
+If I go and click on book that book this trip, so it is going to give me a bit more information
+about it, which car and all at what time it is going to start, right? And who is the driver for
+it? Once once it is done, right? So basically, let's for example, if I want to go ahead and
+book this, then technically the users should click on book now. And we should take the information
+of the customer. Let's for example, their name, their phone number, what's the details and all,
+and then he would be able to go and go to payment details right now, because I don't have these
+trips, the stripe account details. So I won't be able to create this link. So I just put it in the
+gate to implementation. Right? I'm going to back to my trip. And I'm going back to the main site.
+If I let's for example, if a driver wants to create a trip, click on the strip,
+you can put forward Almaty. Let's say same tool, some icon next, I can put forward day after
+tomorrow dates. Then I can say 9am. The force is available, three seats available. Okay, 10,000
+per seat. It's a sedan car. Go next. If I want to add a bit more identity, like add more details
+on understanding, I can do that. I'm going to click on create the trip. So this is the trip
+it's been created now. Right? Of course, so basically, before this trip is being published,
+there has to be one level of approval needs to be done. Like for example, the driver has been in
+the list of the confirmed people or some other confirmation or other validation which is required
+can be done at the same time and then can be recorded. Okay, open for the people to book these
+trips. Okay, so this is the implementation what I have done till now at the same time. So all this
+information is being stored in a database. So I can show you the database details also.
+So these are the tables what we have created, analytical event. Technically, once all those
+action what are happening around it, it's going to be tracked here. So right now we have, I have
+something in booking. So what I have done, the driver information is a test one. The trips,
+I have created 10 trips. Right? The one more trip what I have created right now is tracked here
+right now. The users, there are three users, passenger driver and admin right now. So these
+are all the tables what I have created. So this is the thing what is being done in the gate one
+of implementation. Coming back to my slides. Okay, so this is the demo what I have done. So
+basically, so if you see the demo is in the localhost 3000 localhost 55555 database stuff.
+The technical stack which is being used to create the whole thing is can divide it into two parts,
+front end and the back end. The front end is majorly on the on on type script, I would say.
+Right? The back end is no JS kind of back end. There are there are some level of
+database usage using the super base for selective deployment and all. The quality is nothing but
+I have put forward multiple validation script, which makes sure that before we even showcase
+you think these things right, it passes those validation skip. Again, these validation scripts
+are available in the repo. Okay. What is the next phase? So in the gate two, what what I have planned
+to have the all the authentication and the user stuff. So basically, creating the OTP based
+phone registration, the email option, profile management, all those stuff, the administrative
+stuff, having those booking system. So basically, if you saw the demo where I it was showing me
+it is going to be a gate two information. So creating the booking system for people to book
+the payment integration. Once the bookings once the once the information is being tracked, then
+taking the people from from from that to the payment system. The best is the stripe right now
+because stripes available globally. So we can do that. And the I would say all the analytical features
+to track all the events what is happening, which user has came forward, which user has clicked,
+all those events can be tried in the post hoc and other other stuff of services, which I would like
+to have in the gate two. Okay. So this is something I have put forward eight weeks, but can be done
+faster than that for sure. Okay. So this is this is a very, very important part, I would say the cost
+structure. So basically, all the things which I've started talking about the stripe, the post hoc,
+the recent, the two low, the abstract, right? It is, it is, it has their own free version,
+but it is not going to be free for everyone. Right. There is a limitation to that. For example,
+stripe is never free. Okay. Stripe is going to charge you from the day one for every payment,
+your every payment is being done. So if you want to know about the, about the charges, you can,
+you can actually, I can share you the details for it. It is 2.5% plus 30 cent for every transaction
+is being done. Okay. Post hoc is nothing but a logging feature. So anything which is happening
+around the website, user is coming, user is booking. So all those are being logged. So one
+minute events are going to be free. And then after that is going to be charged. I can,
+I can create the whole thing for you, like how much would be the charges for that. Okay.
+For right now, the stripe and Tulo is going to be charged from the day one. Okay. Something which
+you have to manage the estimate basically for the demo and all right, I have put forward,
+it is going to be somewhere 50, $50 monthly because you have to understand even I have to do
+multiple demos from my side. Okay. So it would need some, some level of what we say
+buffer amount needs to be there. Okay. After the production is done, I would say that you would
+need to spend somewhere $100 to $500 for this. Okay. This is an estimation from your side for you.
+Now, something which I was just asking you right, understanding the domain,
+the business restrictions of Kazakhstan, the account details which for the stripe,
+the post hoc and the Tulo account. So all this setup needs to be done because I don't want to
+create an account in my name and then do a transfer because transfer is going to take a lot of
+manual effort then creating fresh. Creating fresh is going to take some time, but it is going to
+be one time activity, not multiple activity. Right. So that's why I was, I was asking, do you
+have a domain? If you don't have a domain, I can help you in that thing. Once the domain is created,
+we can create one user ID for IT services for yourself or for the main auto and in a sales
+person stuff. Right. And then we start creating the different different accounts like the stripe,
+the post hoc, the Tulo account and all. Okay. For stripe, I would also need your
+account registration because it needs, it is a bit strict in that. It cannot be done without
+account registration. Now, this is the gate 2 and gate 3 plan. For the gate 2, I have put forward
+all the setups which needs to be done as part of the, and then once it's been done, then I can go
+forward and do the deployment. So deployment is technically is my gate 3. Okay. Setup and
+development is gate 2 and gate 3 is my deployment. For deployment also, I will, I would, I don't need
+the confirmation now, but we need to plan it where exactly we need to deploy. Do you want to do it in
+a cloud-based or do you want to do, so there are few platforms which are there to deploy. Okay.
+We need to decide, I can share you the pros and cons of all the platforms, but we need to decide
+which platform we need to deploy. Okay. So yeah, so approval, what I need right now, right? So I
+think, so I have told this to Ming that we can divide the whole thing into three parts because
+it's bit, it's taking much more risk if I, if I just charge you at the end because there are
+a lot of people working on it. So I would have, I've divided the whole thing into three parts.
+The first part is what I have shared right now. So once, once you see that everything's okay,
+I can, I can, we can go and release the 30% of the payment. Okay. The gate, gate 2 budget in
+timeline. So I have, I have some additional budget which I will need to do the administrative task
+what I have put forward. Okay. So right now for the domain, for the stripe, for the tuilo, for the,
+all the administrative stuff what I have put because it would need some time from my,
+from my side to work on it. So I have put somewhere around $300 extra to do all the stuff.
+And eight weeks is a timeline, but I'm very sure we can be
+faster than that. But still to, to be on the safer side, I've, I've put forward that
+eight week would be the production timeline from here onwards. Right. So these are the things
+what I have right now. So I'm open for questions if you have any questions. So all the documentation
+are available in the repo, but it is, till the time you have the questions, I can go and show you
+the repo also. Okay. Thank you. Great job. I think you understand everything what we need.
+Also a very raw layout, everything I like, very good. So we have a company called in Kazakhstan
+in driver. I don't know if you heard or not this one. It's a sharing taxi sharing a platform.
+So drivers can create their trips to between cities. So that's it. But so you mentioned that
+drivers can create their trips. I was thinking, who is this create their trips? And then we forwarded
+this to the driver. That was my understanding that was what we wanted. So what's the difference?
+This thing, my, my first question. This, this thing, what do you think this one is? What's
+the difference between this? Yeah, this is my first question, bro.
+I need to see, I need to see this site, what exactly it is, city to city, delivery in delivery.
+But right now we are just focusing on the city rights. Am I right? A city time city, city to city.
+These two tracks. Yeah. So I see that platform, we have only share writings, right? So someone
+created trips. And then some other people see how many seats available. And one person registers
+the price will be down. So it's just imagine that the car is four seater.
+And the full seat is like $100. Okay, one person set up, the price should be like $75,000.
+And the, the, the, the car, whatever it shows, if in case one more person set up, register the price
+down 50, like, like this, you understand what I mean? Okay, let me, let me put forward scenario.
+Okay, let me, let me go to a blind page. Okay.
+Customer books creates a trip. Okay. From, from A to B. And it asks for, let's say,
+a sedan car, four seater, and $10,000. Just $100. Just for an example purpose. Okay.
+So the driver would accept the ride. Am I right?
+Yes. Yes. Okay. This is, this is scenario, scenario one.
+Scenario two is there, there are trips available in the ecosystem or in the platform.
+Customer can select the trips and number of seats required.
+Okay, that trip is available. For example, let's say, trip A, trip from A to B.
+And there are three seats available. Customer can select the trip and let's say two, two seats
+is required. So this is the scenario you're talking about. Am I right?
+Great. So it was like a, mainly we are encouraging the person to set up the based on the price.
+That's like this, because the person when it goes to the platform, they can see
+in case I enroll this trip, the price can be down to any person, 25%, whatever like this.
+So it's like encouraging people and everything's open, new hidden things like that.
+I got it. So this is, this is created by customer. Okay. Who creates this scenario?
+So I was thinking to create the, the tourists, the tourists who want to go somewhere. So you
+wanted to go to the lake. So you go to the website, you create what where you want to go,
+you customize your itinerary and you set up. So based on, for example, we have a different
+kind of cars based on the seats, 12 seats or a six seat and the price shows if you choose the six
+seat car, the per person price will be like this. If you choose the 12 seat, the price will be this
+per person, like this. And if you choose the four seat price will be like that. So it's like
+more comfortable, small sizes, like this. That's the idea. Okay. So I hope you understand. Got it.
+So basically tourists, let's say tourists creates a trip. Okay. From A to B. Okay. And it's for 12
+seats. Okay. So for this 12 seats, right, the price is going to be fixed. Am I right?
+Price will be fixed, but the price will be going to be down based on how many people
+set up. For example, the website should show this trip already, like sign up two person,
+that means two person is available like this. And in departure time in 24 hours, 10 minutes,
+departure in this location like this. Got it. So 12 seats. So basically, the tourist creates this
+trip A to B, the 12 seats at the start, the price is fixed per seat. No. Okay. The price is fixed.
+Correct. And price fixed also that all the attractions fixed, but we like offer like 100
+attractions just imagine. So the point the person creating the customized itinerary, the person
+choose, for example, I make a very simple example. So you just imagine a city, we have a city.
+Hello. Let me, yeah, let's sing a song. Okay. Okay. Let's say Singapore. Singapore is a city,
+right? So we have a three zones in the Singapore. So city center going to be one zone. They have
+a one fixed price. So from the city, 10 kilometers range, one zone, that's a fixed price. So from
+outside of the 10 kilometers range, like 100 kilometers inside, we will have a one fixed price
+song. So whatever you selected, like the attractions in the city, A zone, B zone, C zone, the price
+can be ultimately calculated using some formula or whatever like this. That's my idea.
+Okay. That is that's an addition complexity. I'm still on the basic part right now. Okay.
+Let's say for example, the tourist creates a trip from point A to point B. Okay. And then it is a
+dual-seater van. Okay. The price is the price is like a dual-seater. It is, let's say,
+thousand dollars, just for example, okay, thousand dollars. Now, let's say there are six tourists
+who, who shows interest to take the trip. Okay. Then the thousand dollars are going to be divided
+by six. Am I right? Yes, correct. But this, this price, this price is not going to be taken on spot.
+It would be not going to be taken at the end. Yeah. So right now, for example, right now,
+I have to just take the interest of the people, not the money at the start.
+Yeah. So like, for example, let's say like, okay, this car is four-seater. I have chosen four-seater.
+So now like a temperature time is already, now is like in 10 minutes kind of temperature one or two
+hours, right? So only we are two percent. So there are also the platform offers. Okay. You continue
+pay the whole car, the more additional money for the two seats and take the tour or cancel your
+this ride like this. So when you say try something like this, I do understand. I don't know.
+Yeah, explain me. Yeah, I'm listening to you.
+Yeah, I think, yeah, yeah. That's what, that's the idea.
+Yeah. I think that these are these two scenarios can actually be two different modules because like
+in Singapore, right? We have got grad car where the passenger says where he wants to go. Okay.
+And then the driver will accept the call will accept. And then the other one is grab share
+where the passenger says where he wants to go. But you know, the booking is open
+even after the driver accepts it. So the other people who are going the same way, maybe they can
+they can share the ride because it might be better to have these as two separate modules
+because of some people, let's say it's a woman, single woman, and she's not comfortable sharing
+the ride with a stranger. So that'll be scenario one. She creates the ride. I want to go from A
+to B. I'm willing to pay this much amount. That's fine. Then scenario B could be, hey, you've got
+a couple of backpackers, two guys or one guy and a girl or two girls. And they feel like, okay,
+you know, they don't mind sharing it. So we will say we like to go from unmarked to coached like
+tomorrow and you create the ride. And then the drivers for three seats, he accepts it for tomorrow,
+but there's still one empty seat that somebody else can accept. Is that what you're thinking,
+Reese, you know, that other people can accept the can take the vacant seats. But you are saying
+that the pricing will will go downwards, right? So the third person maybe will pay less and all
+three will pay less, right? The driver will get more because he has three people. He'll get more
+than if he had taken just that one lady or just the two backpackers. And then but with the third
+person overall, he gets more and the three passengers overall, they individually pay less.
+Is that what you mean, Reese?
+I quite didn't understand the whole thing. I'm really sorry. But anyway, something like that,
+for example, just imagine a hundred bucks you have in one car. So there's only two persons sign up,
+two persons end up the trade. There's nobody signed up. Okay. So yeah, the two person it's the two
+person what we need to do is the platform should be divided for the registered two person. That
+means you're supposed to pay $25, right? But yeah, now once you committed to take the door. So you
+pay $50 and you take the whole car. Yeah.
+Okay. What you can do is you can block all the seats. You can take the entire car
+yourself. I got it. I think so. Don't worry about the payments. Okay. Don't worry about the pricing
+right now. Let's just do the modules as as as Ming is sharing, right? So I so one module is that you
+just book the whole car. Second module is to share with the people. Am I right?
+Correct. 100%. Yes. Okay. Pricing and all right. We can we can add the complexity of the pricing
+later. That's that's not a problem. Okay. That is that is going to be that. Okay. Now my third
+question here is the drivers. Okay. The drivers are going to be online. So let's for example,
+I there is a total different kind of module. So basically this the one which you are seeing it
+is only for the customers. The other the other one would be where the drivers can see all the
+bookings which are coming. Am I right? So yes, correct. All the bookings are coming. We will
+take it availability. Yeah. And they have to accept what they find it.
+Correct. If they I think we should give a time to accept the driver in case the drivers so I think
+the booking schedule should be shown in different drivers. So whoever accepts first that person
+takes or in case the person ticked the tool accepted the driver but like in very in the last
+minute you are not you get something urgent so you don't want to continue the tool. So this
+has to be like transferred to the other driver or something like that either something like this
+but I don't know how that is. It works. Okay. Yes. I think the payment module that one is a bit
+more complicated. We can discuss it later. You know what to do in case of cancellations
+because in Singapore we had some these cheating cases where the the driver would cancel the trip
+or tell the passenger to cancel the trip and ask the passenger to pay him cash
+and then the platform doesn't get paid or halfway during the trip the passenger cancels the trip
+and in the end the driver doesn't get paid. So these kind of situations you know when we get the
+payment online when we get strike online you know we can we can discuss it and sort it out okay
+that will be the payment module but now the booking module so we see that there are these two
+different scenarios and then we will treat them as two separate modules. Yeah I got that. Yeah anyway
+there's three things yeah. I mean the four two things that's the thing.
+Sorry sorry sorry. Yeah you continue. Yeah I mean the many four two things is one is we call it
+private tool. Second is we call it joiner or something like this either is a private or joiner
+you can customize based on a zone based on season like this. So the a zone attractions can be
+customized in within the a zone or season attractions can be customized in the week in
+seasons like this. So because it's kind of a different days like multiple days so what's
+a good idea. Yeah so they don't have to go to the exact same destination as long as you know all
+the passengers are going to the same zone right that's a good idea okay. Because you cannot like
+you select one attraction 100 kilometers away from the city and then you cannot select to the other
+side of the country which is doesn't make sense right I know it's very price. Okay just hear hear
+this out okay. In the scenario one okay I think so that that has to be in scenario one in scenario
+to both technically right. So the customer can come forward and put forward the request
+and then the driver needs to accept and share the pricing what is the pricing of it am I right.
+Yes okay if if the driver puts forward the pricing then the complexity of the payment
+the complexity of the price depends upon the driver not on us. Okay now this is something
+that we have to discuss because what may happen is that if there are too many drivers right they
+undercut one another and then nobody earns anything they will go bankrupt and then in the end we
+the price should be price should be fixed because price is should be fixed first but in demand for
+example as you say the price too many drivers or too many people for example university drop right
+when it's raining everyone applies for a taxi the price is going to be go up kind of it's like
+yes it's a normal thing. Yeah we can do something like this but it shouldn't be like very high maybe
+like 10 percent jump or 5 percent or 5 percent cheaper like this something we can do something
+formula. So can you collect the we need the data from you on how much is being charged currently
+and then use that as a base a starting point right because we will get paid a percentage I guess
+or I don't know how we're going to get paid but our what we get paid will also depend on what the
+drivers get paid right like for instance in Singapore in graph don't worry our payment
+because we get enough money it's like you based on the other shitting apps we get a 20 percent or 10
+percent whatever. Yeah try just 25 percent here in Singapore but you know that's maybe a bit too much
+yeah okay good yeah so yeah those are the two we need to start if we start forward
+okay so okay we can discuss it later yeah my my thing is not not the payment my I want to just
+keep it simple at the start right so I understood the scenario one and this was scenario I'm just
+thinking from the driver perspective the driver is going to get all this list of request and he
+approves it okay and we need to make sure the driver once the driver approves it um is he available
+to add add more or he has to just go with that one you got my question let's for example I'm a driver
+I'm seeing the list of your question sorry I think it depends on this thing yeah yeah no uh I mean
+we are we must be very strict because it's this is concerned because also safety issue you know
+so you got from the platform two percent the two percent that booked for the driver but driver
+cannot take any extra person uh unlisting inform you before or to the admin or somewhere yeah because
+it's safety thing you don't know who's joining okay is it no I I'm I'm just thinking the complexity
+of the driver perspective so is the is it my understanding right uh for both the version
+is for both that the the amount the number of drivers are not not huge are very less number
+of drivers in Kazakhstan uh no we we have about 100 drivers right now I have uh ended up data
+pictures the car type seats everything I have a license so it's it's still a only I cannot
+so this is for start but but in the warm term of course we have a many hundred drivers I hope it
+is in Kyrgyzstan Uzbekistan Kazakhstan like we want to slowly expand right so is it important
+no numbers of the drivers because why I'm asking this um it is going to be a very uh
+because from the technical point of view right you need to understand it needs to be very cut to
+cut let's for example there are two drivers okay and he accepts the same trip okay so we have to
+be very cautious that it doesn't allow them to choose the same trip it it needs to be very cautious
+that it needs to just accept one second it should tell the other driver that it's been accepted by
+somebody else so that's why I'm just thinking that is there any parallelism is going to happen or
+what like that that would go so like I understand your uh when you when someone accepts someone's
+trip this trip should be disappears from the dashboard or from the upper because it's already
+accepts and it should be transferred to the next page only uh like uh only you can see as a driver
+your upcoming trip or something like this and when you finish the trip you need to click some
+bottom that trip is completed like this that's that's what I understanding otherwise we cannot
+monitor what's happening is the driver did the driver go to pick up the case and is it
+now going on or not is it going to be complete if the driver is finished this like because you cannot
+monitor hundreds of drivers in like by physical right so what do you think uh you accepted their
+whole you accepted the offer and then the when you accepted it should be shifted to the next page
+which is for only the driver that was accepted and then it's going on we see but when the trip
+in the driver should click a bottom that pre completed something like that and when the trip
+completed uh there is a should be a notification for the tourist which is you can read or write
+review about the driver that's that's my my idea okay okay I hear you okay uh let me let me think
+about it let me let me let me just absorb this much and and the customers which are the customers
+are only going to be your own customer which are there in the um in your in your resort or
+in the customer the customer can be anybody in the public yeah anybody anybody this local can be
+foreign or anybody okay cool and the customer needs to also do one level of
+registration right it cannot be like a random customer
+uh I think registration is should be very easy uh you don't need to like feel lots of form maybe
+you just receive a verification code on a bi email or the whatsapp so then you can sign up and
+when you pay me I don't know the all apple payment but it should be very simple and easy
+that's what I know I don't know the other things because I'm not an expert anyway it should be very
+easy not complicated to sign up so like one two steps then sign up like this do we need to
+force them for sign up for example I'm asking this let's say for example right now if you see the
+the website right it it uh it goes and shows you all the trips up front and then once you are registering
+for any of the trips right then you have then you can ask for your details or this other approach
+is that once you're logging right then he would ask you please register and then once
+once registration is done then he goes inside and see all the stuff so do you want to keep it open
+or do you want to make it only for the users no it should be open whatever you are registered or
+not you should be see all upcoming trips and the prices everything otherwise we cannot attract people
+I think so if you wanted to join the 100% to apply for the ticket this trip and then you can sign up
+so we don't collect too much data like at the beginning once you get popular everyone knows
+I think then we can force people to sign up slowly that's what I'm thinking because yeah
+then we can do this what is it called the self-adapting language module then collect the data
+and improve the site in real time but at the beginning we need to be flexible uh that's
+that's what I think okay this is for the customer and the driver always has to sign up right
+driver we register from outside for now that because now nobody knows our platform if I ask
+the driver it can you sign up please because driver never had any trip from mass and there's a
+trust issue that I would don't trust don't want to register their ID card anything like that
+so we gonna at the first we're gonna manually sign up from our own company like the drivers and then
+we forward the trips to the driver but later sometime when the when the platform gets a bit
+popular and then we will make it auto registration from driver we will tell them driver to sign up
+monitor your trip by your own is that what do you think what is this because I'm not you know the
+expert for software distinctions what do you think this one I'm sorry uh from the business
+perspective I'm I'm see I'll keep it open you consider it me as a just a technical person
+um you think about the requirement and let me know but I from if you ask me um the perspective
+of doing the sign up affrontly for the drivers and making sure that they don't have to do this
+headache stuff it's it's fine for me from technical perspective I would have to still
+create a login page for that for example so you so that you can or somebody from your team can
+actually do this thing one by one right and then the driver needs to have this let's for example
+let's say Mahesh is going to be the driver so somebody from from your team registers Mahesh
+but with the given details and all right so Mahesh is going to get an id and a password
+right there has to be an id and password because the or else how the driver is going to see all
+those stuff right so that's gonna be too much job right that's gonna be like too much job for our
+staff so you mean if the person whoever wants to take the tour they should sign up themselves
+then it's gonna be much easier I said I don't I don't I don't um say that they need to sign up
+sign you can be done by anybody okay my thought process is that what the driver is going to see
+and how is going to see okay so let's say if Mahesh is the driver and Mahesh opens this application
+Mahesh should see the available thing what is for Mahesh not for everybody else in this
+yeah I'm here
+yeah so driver should be signed up driver have a should be page on logging user page profile
+so driver can see everything uh that that has to be like this we register the driver
+driver should have a sign up like this then they should have their own profile what do you think
+so you can do the sign up at the start and then you can just give him the id and the password it
+can be any random randomly chosen id in the password but very unique for that person for Mahesh has
+its own id and a password and Ming has his own id in a password so that when Mahesh logs in right
+then he can see all the things and when he approves he can just see the things which are approved by
+me not what are approved by me okay so Ming can think Ming can just focus on the things
+what he has approved and I can focus on the thing what I have approved so it's an individual view
+for everybody am I right Chris that makes sense correct correct okay so yeah okay cool makes sense
+um I think so let me let me let me try to absorb this much okay for the time being I will focus on
+the customer part of it the driver part of it I will I will say that still it is very very simple
+if you keep it simple but let me try to finish the customer part of it and I can say that at least
+the gate one has been finished am I okay yeah okay um let me absorb this let me let me say
+gate one is finished so Mahesh we are asking for a thousand two hundred six dollars right
+to be released the 30 percent okay I'll get that um do you take pay now and I pay now to your mobile
+number you can you can do that yeah but at the same time right um there is see for example
+the driver part is I can still absorb the driver part is also okay the payment part right the what
+you say the the the calculation right that is something which we have to think make because
+that is that would be bit complex okay but again I don't I don't want to I don't want to overestimate
+the stuff right but yeah we can we can we can we can see what we can do but right now we can do
+the gate one and gate two for sure yeah okay I see that our time limit is nearly up so
+we will continue um discussing this okay Mahesh you have a thing about it and then
+as and when necessary you can grab me and Reese again you can talk in doing more detail but
+more importantly first of all I will release the 30 percent to you then you put in your estimates
+for the other gates okay then we have a clear picture what the funding is needed and the timeline
+because I cannot stress too much that this is actually very time sensitive because we are
+coming into the peak winter season yeah so the sooner we can get this done the better
+if it's going to be you know like the pricing is going to be more complicated it's going to take
+more time maybe you know gate four gate three gate four um you need a bit more money you just put it
+into your estimates and get it to as quick because right now we talked about four thousand which is
+you know more than what Reese wanted Reese was getting quotes for five hundred dollars on fiber
+which I did not think was realistic okay but if you feel that now given the scope of what we're
+talking about um you want to charge us a bit more than four thousand we can discuss it okay the most
+important thing is that it has to get done as soon as possible because we want to catch the peak
+winter season okay um so what I will do okay um I will I will put a gate one gate two and gate
+three gate three is the actual deployment part where the productionization happens right that would
+be the thing which would be available for the users for the customer and for the drivers to look
+into it keeping it very simple okay so let's for example the price can be fixed at at the end of the
+day you would be able to showcase this to your client and it would be a way you can say that it's a
+very pilot very beta stage right things are still in an enhancement stage where there would be gate
+four gate five where things are going to be much better with a much better logic can I say that like that
+please please are you there is that correct yeah okay guys so you guys discuss I think I agree with
+me so this money this kind of things are either very interesting so uh let's talk later okay please
+go ahead so so I actually so right so right now you just give us your estimates you and you give us
+any further questions Reese has to go because he's not driving 12 hours around or so so he's busy
+okay no no no so right now right me um I would need the 13 percent and the administrative
+so basically because the domain is important okay the stripe is important because these all the
+things are what's the total users just message in the chat group what the total is and now what's
+up to you okay what's up to you right right away okay okay okay and then give us your timeline
+you know give us your estimates um I think Reese Reese is not objecting because I'm the one that's
+paying and I'm not objecting because I know you can deliver okay my ass so that's why it was going to
+be a bit more than four thousand you know if it's going to be a bit more than four thousand you get
+it delivered earlier you know let us know but what do you think okay how many trips are we expecting
+let's for example I'm I'm thinking from the driver perspective
+am I expecting 10 trips 20 trips 50 trips 60 trips how many tips are I'm expecting
+okay so it's not like Singapore all right if the driver is driving to Kyrgyzstan he's only
+going to be maybe making that one trip for two days okay he's gonna maybe drive them down across
+the border and maybe they want him to hang around and then drive them back okay so it's not going to
+be that many trips also okay if we get cut off we just continue on what's up okay but but that's the
+thing it's different from grab in the sense that because of the distances involved hundreds of
+kilometers no it's a short city tour then maybe maybe three two three trips a day you know you're
+seeing from the driver so you're like seeing from the how much the driver can do the driver
+because let's say I have I have 100 customers I'm just giving a rough estimate okay let's say
+I have only 20 customers also okay if I 20 customers 20 customers would have 10 10 of the
+private ones and 10 of the shared ones okay so for the driver now he is able to see 20 trips
+available okay so he has to scroll 20 trips which are there okay so these trips so try to
+see from the experience point of view of the driver so if if I'm going to scroll 20 trips right
+it is going to scale to hundred hundred and fifty trips very soon as a number of people
+starts start game the traction and all right so I don't want the answer right now I want what I want
+I need you guys to think how to make the driver's experience better let's say for example he's not
+in Kazakhstan it's not in the Almaty also right so we have to be very sure we don't show him the
+things which are in Almaty we need to make sure only he can see the things which are available
+in his preview in his vicinity okay okay wait let me let me hang up to this call I'll call
+you what's up okay give me a minute yeah okay
+okay thank you very much for your time I had to keep you but carry on from where we left off
+you have a very good point um and yeah I guess that is the problem well should the driver only see
+the pickups in his location um or should he be allowed to see you know pickups maybe well maybe
+that's a choice you know we can put a fill you know we can put a fill down like at the start
+we would be only able to see the things what is available in his 50 kilometers of radius after
+that if you want to see everything you can see everything also yeah something like property
+guru you know and then he says okay look there are no pickups within 50 kilometers of me okay
+then no choice I would see if any passenger wants to be picked up a hundred kilometers from for me
+you know and then if he's willing to drive a hundred kilometers to pick up the passenger
+to try to passenger to inspect his time or something like that then yeah then that's good
+I mean you know if it's worth it for him then you will do it you might do it right you drive
+one and a half hours pick up the passenger and then drive the rest of the day to inspect his time
+or something yeah so that's a good point yeah filter yeah exactly okay okay okay okay
+okay so um let's keep thinking of this question so ask uh Reese would have the detail because he's
+on the ground right I'm basically helping him to because he doesn't have any Sunsea in Singapore
+so I will be you send what your gate one uh requires a mountainous and I will
+what's up you go pay now you today okay okay okay okay okay
+okay me that's it okay now going forward my head so if you get this done and on time and you know
+according to what we want then we should talk about you know is there any you might have to train
+some people would you want to do that you might we might have to keep you on as a consultant
+you know to tweak it to upgrade it yeah I think I think we have to do that and I would want you
+to be able to support us so my history think about it whether you would be interested in
+willing to enable to support us as this project takes off you need to we need to think at least
+at least one guy and we need to train that one guy to to be expert in this application
+where he can take and he can let's for example if there is an issue in this application let's
+say somebody is not able to log in or something like that he needs to know where exactly to do that
+so that is that is that is a very l1 cannot support put like that l1 cannot support l2 where
+somebody would be able to go inside the code and do the tweaking okay so a person who can do both
+would be fantastic but you need I think so we need to find out how we don't have someone like that we
+need to find it it may have to be me so should I attend the sql course little academy it's having
+this they bought only 45 seats for the sql course is there something that I should attend then for
+sql no it's not as good it's it's much more complex than sql okay okay okay so okay so maybe one
+of my partners maybe I should hire jabin then you think she can do it jabin but why are you
+hiring somebody from sync up or is going to be very expensive yeah that's okay no but it just
+really takes off I mean I'm very impressed that my husband's already got a hundred drivers signed up
+you know he's got all their particulars and all and he's very enterprising okay and he's come a long
+way since this business started last year last October so I believe in him and I do think that
+this business will be a success even if it's

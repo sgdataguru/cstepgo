@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Search } from 'lucide-react';
 import { LocationInput } from './LocationInput';
 import { SwapButton } from './SwapButton';
 import { DatePicker } from './DatePicker';
@@ -38,7 +39,8 @@ export function SearchWidget() {
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isSearching, setIsSearching] = useState(false);
+  const [isCreatingTrip, setIsCreatingTrip] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Update max passengers when booking type changes
   const maxPassengers = formData.bookingType === 'Private' ? 13 : 4;
@@ -80,34 +82,81 @@ export function SearchWidget() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSearch = () => {
+  const handleCreateTrip = async () => {
     if (!validateForm()) {
       return;
     }
 
-    setIsSearching(true);
+    setIsCreatingTrip(true);
 
-    // Build query parameters
-    const params = new URLSearchParams({
-      origin_city: formData.origin.name,
-      destination_city: formData.destination.name,
-      departure_date: formData.departureDate.toISOString().split('T')[0],
-      is_private: (formData.bookingType === 'Private').toString(),
-      passengers: formData.passengers.toString()
-    });
+    try {
+      // Build query parameters
+      const params = new URLSearchParams({
+        origin_city: formData.origin.name,
+        destination_city: formData.destination.name,
+        departure_date: formData.departureDate.toISOString().split('T')[0],
+        is_private: (formData.bookingType === 'Private').toString(),
+        passengers: formData.passengers.toString()
+      });
 
+      // Track analytics
+      if (typeof window !== 'undefined' && (window as any).posthog) {
+        (window as any).posthog.capture('trip_creation_started', {
+          bookingType: formData.bookingType,
+          origin: formData.origin.name,
+          destination: formData.destination.name,
+          passengers: formData.passengers
+        });
+      }
+
+      if (formData.bookingType === 'Private') {
+        // For Private: immediately search for available transport options
+        router.push(`/trips?${params.toString()}`);
+      } else {
+        // For Share: save trip intent and show success message
+        
+        // TODO: Save trip intent to database
+        // await fetch('/api/trips/intent', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     origin: formData.origin,
+        //     destination: formData.destination,
+        //     departureDate: formData.departureDate,
+        //     passengers: formData.passengers
+        //   })
+        // });
+
+        // Show success message
+        setShowSuccessMessage(true);
+
+        // Track shared trip creation
+        if (typeof window !== 'undefined' && (window as any).posthog) {
+          (window as any).posthog.capture('shared_trip_created', {
+            origin: formData.origin.name,
+            destination: formData.destination.name,
+            passengers: formData.passengers
+          });
+        }
+
+        // After 3 seconds, redirect to browse shared trips
+        setTimeout(() => {
+          router.push(`/trips?${params.toString()}&show_all=true`);
+        }, 3000);
+      }
+    } finally {
+      setIsCreatingTrip(false);
+    }
+  };
+
+  const handleBrowseAllTrips = () => {
     // Track analytics
     if (typeof window !== 'undefined' && (window as any).posthog) {
-      (window as any).posthog.capture('landing_search_started', {
-        bookingType: formData.bookingType,
-        origin: formData.origin.name,
-        destination: formData.destination.name,
-        passengers: formData.passengers
-      });
+      (window as any).posthog.capture('browse_all_trips_clicked');
     }
 
-    // Redirect to trips listing page
-    router.push(`/trips?${params.toString()}`);
+    // Navigate to all shared trips
+    router.push('/trips?show_all=true');
   };
 
   return (
@@ -205,22 +254,85 @@ export function SearchWidget() {
         />
       </div>
 
-      {/* Search Button */}
-      <button
-        onClick={handleSearch}
-        disabled={isSearching}
-        className="
-          w-full h-[60px] text-lg font-semibold 
-          bg-[#FFD700] text-gray-900 rounded-xl 
-          hover:bg-[#FFD700]/90 hover:shadow-lg hover:-translate-y-0.5 
-          active:translate-y-0 
-          disabled:opacity-50 disabled:cursor-not-allowed
-          transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50
-        "
-      >
-        {isSearching ? 'Searching...' : 'Search'}
-      </button>
+      {/* Success Message for Shared Trip */}
+      {showSuccessMessage && formData.bookingType === 'Share' && (
+        <div className="mb-6 p-4 bg-gradient-to-r from-[#40E0D0]/10 to-[#FFD700]/10 border border-[#40E0D0]/30 rounded-xl">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">✅</div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">
+                Your shared trip request is live!
+              </h3>
+              <p className="text-sm text-gray-600">
+                Other travelers can now find and join your trip. You'll be redirected to browse all shared trips...
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Create Trip - Context-aware primary action */}
+        <button
+          onClick={handleCreateTrip}
+          disabled={isCreatingTrip}
+          className="
+            flex-1 h-[60px] text-lg font-semibold 
+            bg-[#FFD700] text-gray-900 rounded-xl 
+            hover:bg-[#FFD700]/90 hover:shadow-lg hover:-translate-y-0.5 
+            active:translate-y-0 
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50
+          "
+        >
+          {isCreatingTrip ? (
+            <span className="flex items-center justify-center gap-2">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Creating...
+            </span>
+          ) : (
+            `Create Trip ${formData.bookingType === 'Private' ? '(Search Private)' : '(Request Share)'}`
+          )}
+        </button>
+
+        {/* Browse All Shared Trips - Always visible */}
+        <button
+          onClick={handleBrowseAllTrips}
+          disabled={isCreatingTrip}
+          className="
+            flex-1 h-[60px] text-lg font-semibold 
+            flex items-center justify-center gap-2
+            bg-white border-2 border-[#40E0D0] text-[#40E0D0]
+            rounded-xl 
+            hover:bg-[#40E0D0] hover:text-white hover:shadow-lg hover:-translate-y-0.5 
+            active:translate-y-0 
+            disabled:opacity-50 disabled:cursor-not-allowed
+            transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-[#40E0D0]/50
+          "
+        >
+          <Search className="w-5 h-5" />
+          Browse All Shared Trips
+        </button>
+      </div>
+
+      {/* Help Text */}
+      <div className="mt-4 text-center text-sm text-gray-500">
+        {formData.bookingType === 'Private' ? (
+          <p>
+            🚗 <span className="font-medium">Private:</span> Find available transport options instantly
+          </p>
+        ) : (
+          <p>
+            👥 <span className="font-medium">Share:</span> Post your trip and connect with other travelers
+          </p>
+        )}
+      </div>
     </div>
   );
 }
