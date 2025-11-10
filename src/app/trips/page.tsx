@@ -4,15 +4,25 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TripCard from './components/TripCard';
 import { Trip } from '@/types/trip-types';
+import RegistrationPromptModal from '@/components/modals/RegistrationPromptModal';
+import { useRegistrationPrompt } from '@/hooks/useRegistrationPrompt';
+import TripListingSchema from '@/components/seo/TripListingSchema';
 
 /**
- * Trips Page - Browse all available trips with filters
+ * Trips Page - Browse all available trips with filters (No registration required)
  */
 export default function TripsPage() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  
+  // Registration prompt modal
+  const registrationPrompt = useRegistrationPrompt({
+    redirectUrl: selectedTrip ? `/trips/${selectedTrip.id}` : undefined,
+    tripTitle: selectedTrip?.title,
+  });
   
   // Filter states
   const [originFilter, setOriginFilter] = useState('');
@@ -60,8 +70,12 @@ export default function TripsPage() {
   };
 
   const handleBook = (tripId: string) => {
-    // TODO: Implement booking flow in Gate 2
-    router.push(`/trips/${tripId}` as any);
+    // Open registration prompt for non-authenticated users
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+      setSelectedTrip(trip);
+      registrationPrompt.open();
+    }
   };
 
   const handleViewDetails = (tripId: string) => {
@@ -69,7 +83,11 @@ export default function TripsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <>
+      {/* SEO: Structured Data for Search Engines */}
+      {trips.length > 0 && <TripListingSchema trips={trips} />}
+
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -189,7 +207,7 @@ export default function TripsPage() {
         {/* Footer CTA */}
         <div className="mt-12 text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Don't see a trip you like?
+            Don&apos;t see a trip you like?
           </p>
           <a
             href="/trips/create"
@@ -199,6 +217,15 @@ export default function TripsPage() {
           </a>
         </div>
       </div>
-    </div>
+
+      {/* Registration Prompt Modal */}
+      <RegistrationPromptModal
+        isOpen={registrationPrompt.isOpen}
+        onClose={registrationPrompt.close}
+        redirectUrl={registrationPrompt.redirectUrl}
+        tripTitle={registrationPrompt.tripTitle}
+      />
+      </div>
+    </>
   );
 }
