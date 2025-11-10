@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import { nanoid } from 'nanoid';
+import crypto from 'crypto';
 
 /**
  * Generate a unique driver ID in format: DRV-YYYYMMDD-XXXXX
@@ -24,9 +25,19 @@ export function generateTemporaryPassword(length: number = 12): string {
   const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
   let password = '';
   
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    password += charset[randomIndex];
+  // Use cryptographically secure random number generator
+  // Generate enough random bytes to avoid modulo bias
+  const charsetLength = charset.length;
+  const maxValidValue = Math.floor(256 / charsetLength) * charsetLength;
+  
+  while (password.length < length) {
+    const randomByte = crypto.randomBytes(1)[0];
+    
+    // Reject values that would cause modulo bias
+    if (randomByte < maxValidValue) {
+      const randomIndex = randomByte % charsetLength;
+      password += charset[randomIndex];
+    }
   }
   
   return password;
