@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-// GET /api/trips - List all trips with optional filters
+// GET /api/trips - List all trips with optional filters, pagination, and sorting
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -9,6 +9,15 @@ export async function GET(request: NextRequest) {
     const destination = searchParams.get('destination');
     const date = searchParams.get('date');
     const status = searchParams.get('status') || 'PUBLISHED';
+    
+    // Pagination parameters
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const skip = (page - 1) * limit;
+    
+    // Sorting parameters
+    const sortBy = searchParams.get('sortBy') || 'departureTime';
+    const sortOrder = searchParams.get('sortOrder') || 'asc';
 
     // Build dynamic where clause
     const where: any = {
@@ -40,8 +49,23 @@ export async function GET(request: NextRequest) {
       };
     }
 
+    // Get total count for pagination
+    const totalCount = await prisma.trip.count({ where });
+
+    // Build orderBy based on sortBy parameter
+    const orderBy: any = {};
+    if (sortBy === 'price') {
+      orderBy.basePrice = sortOrder;
+    } else if (sortBy === 'departureTime') {
+      orderBy.departureTime = sortOrder;
+    } else {
+      orderBy[sortBy] = sortOrder;
+    }
+
     const trips = await prisma.trip.findMany({
       where,
+      skip,
+      take: limit,
       include: {
         organizer: {
           select: {
@@ -71,9 +95,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: {
-        departureTime: 'asc',
-      },
+      orderBy,
     });
 
     // Transform to match frontend Trip type
@@ -129,11 +151,17 @@ export async function GET(request: NextRequest) {
       updatedAt: trip.updatedAt,
     }));
 
-    // Return transformed trips
+    // Return transformed trips with pagination info
     return NextResponse.json({
       success: true,
       data: transformedTrips,
-      count: transformedTrips.length,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasMore: skip + trips.length < totalCount,
+      },
     });
   } catch (error) {
     console.error('Error fetching trips:', error);
@@ -167,6 +195,7 @@ export async function POST(request: NextRequest) {
       basePrice,
       vehicleType,
       itinerary,
+      selectedAttractions, // Array of attraction IDs
     } = body;
 
     if (!title || !origin || !destination || !departureDate || !departureTime) {
@@ -232,6 +261,7 @@ export async function POST(request: NextRequest) {
         basePrice: Number(basePrice),
         currency: 'KZT',
         platformFee,
+        vehicleType: vehicleType || 'sedan',
         itinerary: itinerary || {
           version: '1.0',
           days: [
@@ -282,6 +312,19 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Create trip-attraction relationships if attractions were selected
+    if (selectedAttractions && Array.isArray(selectedAttractions) && selectedAttractions.length > 0) {
+      const tripAttractions = selectedAttractions.map((attractionId: string, index: number) => ({
+        tripId: trip.id,
+        attractionId,
+        orderIndex: index,
+      }));
+
+      await prisma.tripAttraction.createMany({
+        data: tripAttractions,
+      });
+    }
 
     return NextResponse.json({
       success: true,

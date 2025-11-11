@@ -8,27 +8,11 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  phone           String?          @unique
-  name            String
-  passwordHash    String?          // Optional for OTP-only registration
-  role            UserRole         @default(PASSENGER)
-  emailVerified   Boolean          @default(false)
-  phoneVerified   Boolean          @default(false)
-  preferredLanguage String?        // User's preferred language
-  avatar          String?
-  bio             String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  analyticsEvents AnalyticsEvent[]
-  bookings        Booking[]
-  driverProfile   Driver?
-  sessions        Session[]
-  trips           Trip[]           @relation("TripOrganizer")
+
 
   @@index([email])
   @@index([phone])
+  @@index([role])
 }
 
 model Session {
@@ -61,67 +45,81 @@ model OTP {
 }
 
 model Driver {
-  id              String       @id @default(cuid())
-  userId          String       @unique
-  status          DriverStatus @default(PENDING)
-  vehicleType     String
-  vehicleModel    String
-  vehicleMake     String
-  vehicleYear     Int
-  licensePlate    String
-  vehicleColor    String?
-  licenseNumber   String
-  licenseExpiry   DateTime
-  documentsUrl    Json
-  rating          Float        @default(0)
-  completedTrips  Int          @default(0)
-  totalEarnings   Decimal      @default(0)
-  appliedAt       DateTime     @default(now())
-  approvedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payouts         Payout[]
-  trips           Trip[]
+  id                   String                     @id @default(cuid())
+  driverId             String                     @unique // Format: DRV-YYYYMMDD-XXXXX
+  userId               String                     @unique
+  status               DriverStatus               @default(PENDING)
+  vehicleType          String
+  vehicleModel         String
+  vehicleMake          String
+  vehicleYear          Int
+  licensePlate         String
+  vehicleColor         String?
+  licenseNumber        String
+  licenseExpiry        DateTime
+  documentsUrl         Json
+  rating               Float                      @default(0)
+  completedTrips       Int                        @default(0)
+  totalEarnings        Decimal                    @default(0)
+  appliedAt            DateTime                   @default(now())
+  approvedAt           DateTime?
+  rejectedAt           DateTime?
+  rejectionReason      String?
+  registeredBy         String? // Admin user ID who registered this driver
+  registrationMethod   String                     @default("self") // 'self' or 'admin'
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  user                 User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payouts              Payout[]
+  trips                Trip[]
+  credentialDeliveries DriverCredentialDelivery[]
 
   @@index([userId])
   @@index([status])
+  @@index([driverId])
 }
 
 model Trip {
-  id             String     @id @default(cuid())
-  title          String
-  description    String
-  organizerId    String
-  driverId       String?
-  departureTime  DateTime
-  returnTime     DateTime
-  timezone       String     @default("Asia/Almaty")
-  originName     String
-  originAddress  String
-  originLat      Float
-  originLng      Float
-  destName       String
-  destAddress    String
-  destLat        Float
-  destLng        Float
-  totalSeats     Int
-  availableSeats Int
-  basePrice      Decimal
-  currency       String     @default("KZT")
-  platformFee    Decimal
-  itinerary      Json
-  status         TripStatus @default(DRAFT)
-  metadata       Json?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  publishedAt    DateTime?
-  cancelledAt    DateTime?
-  bookings       Booking[]
-  driver         Driver?    @relation(fields: [driverId], references: [id])
-  organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
+  id                     String           @id @default(cuid())
+  title                  String
+  description            String
+  organizerId            String
+  driverId               String?
+  departureTime          DateTime
+  returnTime             DateTime
+  timezone               String           @default("Asia/Almaty")
+  originName             String
+  originAddress          String
+  originLat              Float
+  originLng              Float
+  destName               String
+  destAddress            String
+  destLat                Float
+  destLng                Float
+  totalSeats             Int
+  availableSeats         Int
+  basePrice              Decimal
+  currency               String           @default("KZT")
+  platformFee            Decimal
+  itinerary              Json
+  status                 TripStatus       @default(DRAFT)
+  metadata               Json?
+  // Zone-based pricing fields
+  zonesCovered           String[]         @default([])
+  totalDistanceKm        Int?
+  estimatedDurationHours Int?
+  basePriceZoneAdjusted  Decimal?
+  requiresOvernight      Boolean          @default(false)
+  crossZonePenalty       Decimal          @default(0)
+  vehicleType            String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  publishedAt            DateTime?
+  cancelledAt            DateTime?
+  bookings               Booking[]
+  tripAttractions        TripAttraction[]
+  driver                 Driver?          @relation(fields: [driverId], references: [id])
+  organizer              User             @relation("TripOrganizer", fields: [organizerId], references: [id])
 
   @@index([organizerId])
   @@index([driverId])
