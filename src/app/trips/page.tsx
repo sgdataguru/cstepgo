@@ -4,25 +4,49 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TripCard from './components/TripCard';
 import { Trip } from '@/types/trip-types';
+import RegistrationPromptModal from '@/components/modals/RegistrationPromptModal';
+import { useRegistrationPrompt } from '@/hooks/useRegistrationPrompt';
+import TripListingSchema from '@/components/seo/TripListingSchema';
+import { TripListingSkeleton } from '@/components/skeletons/TripCardSkeleton';
+import Pagination from '@/components/ui/Pagination';
+import SortDropdown, { SortOption } from '@/components/filters/SortDropdown';
 
 /**
- * Trips Page - Browse all available trips with filters
+ * Trips Page - Browse all available trips with filters (No registration required)
  */
 export default function TripsPage() {
   const router = useRouter();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Registration prompt modal
+  const registrationPrompt = useRegistrationPrompt({
+    redirectUrl: selectedTrip ? `/trips/${selectedTrip.id}` : undefined,
+    tripTitle: selectedTrip?.title,
+  });
   
   // Filter states
   const [originFilter, setOriginFilter] = useState('');
   const [destFilter, setDestFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [currentSortOption, setCurrentSortOption] = useState<SortOption>({
+    value: 'date-asc',
+    label: 'Date: Soonest First',
+    sortBy: 'departureTime',
+    sortOrder: 'asc',
+  });
 
   // Fetch trips from API
   useEffect(() => {
     fetchTrips();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   const fetchTrips = async (filters?: { origin?: string; destination?: string; date?: string }) => {
     try {
@@ -31,6 +55,10 @@ export default function TripsPage() {
 
       // Build query params
       const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', '20');
+      params.append('sortBy', currentSortOption.sortBy);
+      params.append('sortOrder', currentSortOption.sortOrder);
       if (filters?.origin) params.append('origin', filters.origin);
       if (filters?.destination) params.append('destination', filters.destination);
       if (filters?.date) params.append('date', filters.date);
@@ -43,6 +71,11 @@ export default function TripsPage() {
       }
 
       setTrips(data.data || []);
+      
+      // Update pagination info
+      if (data.pagination) {
+        setTotalPages(data.pagination.totalPages);
+      }
     } catch (err) {
       console.error('Error fetching trips:', err);
       setError(err instanceof Error ? err.message : 'Failed to load trips');
@@ -52,6 +85,7 @@ export default function TripsPage() {
   };
 
   const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page on new search
     fetchTrips({
       origin: originFilter,
       destination: destFilter,
@@ -59,9 +93,25 @@ export default function TripsPage() {
     });
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSortChange = (option: SortOption) => {
+    setCurrentSortOption(option);
+    setCurrentPage(1); // Reset to first page on sort change
+    // Trigger a new fetch with the updated sort
+    setTimeout(() => fetchTrips(), 0);
+  };
+
   const handleBook = (tripId: string) => {
-    // TODO: Implement booking flow in Gate 2
-    router.push(`/trips/${tripId}` as any);
+    // Open registration prompt for non-authenticated users
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+      setSelectedTrip(trip);
+      registrationPrompt.open();
+    }
   };
 
   const handleViewDetails = (tripId: string) => {
@@ -69,7 +119,11 @@ export default function TripsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <>
+      {/* SEO: Structured Data for Search Engines */}
+      {trips.length > 0 && <TripListingSchema trips={trips} />}
+
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -83,7 +137,7 @@ export default function TripsPage() {
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 From
@@ -119,6 +173,10 @@ export default function TripsPage() {
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
               />
             </div>
+            <SortDropdown
+              currentSort={currentSortOption.value}
+              onSortChange={handleSortChange}
+            />
             <div className="flex items-end">
               <button 
                 onClick={handleSearch}
@@ -131,12 +189,7 @@ export default function TripsPage() {
         </div>
 
         {/* Loading State */}
-        {loading && (
-          <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-modernSg mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading trips...</p>
-          </div>
-        )}
+        {loading && <TripListingSkeleton count={6} />}
 
         {/* Error State */}
         {error && (
@@ -173,23 +226,35 @@ export default function TripsPage() {
               )}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {trips.map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  trip={trip}
-                  onBookClick={() => handleBook(trip.id)}
-                  onViewDetails={() => handleViewDetails(trip.id)}
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {trips.map((trip) => (
+                  <TripCard
+                    key={trip.id}
+                    trip={trip}
+                    onBookClick={() => handleBook(trip.id)}
+                    onViewDetails={() => handleViewDetails(trip.id)}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                  className="mt-12"
                 />
-              ))}
-            </div>
+              )}
+            </>
           )
         )}
 
         {/* Footer CTA */}
         <div className="mt-12 text-center">
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Don't see a trip you like?
+            Don&apos;t see a trip you like?
           </p>
           <a
             href="/trips/create"
@@ -199,6 +264,15 @@ export default function TripsPage() {
           </a>
         </div>
       </div>
-    </div>
+
+      {/* Registration Prompt Modal */}
+      <RegistrationPromptModal
+        isOpen={registrationPrompt.isOpen}
+        onClose={registrationPrompt.close}
+        redirectUrl={registrationPrompt.redirectUrl}
+        tripTitle={registrationPrompt.tripTitle}
+      />
+      </div>
+    </>
   );
 }
