@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import TripCard from './components/TripCard';
 import { Trip } from '@/types/trip-types';
 import RegistrationPromptModal from '@/components/modals/RegistrationPromptModal';
@@ -16,6 +16,7 @@ import SortDropdown, { SortOption } from '@/components/filters/SortDropdown';
  */
 export default function TripsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // NEW: Read URL search params
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,11 +45,35 @@ export default function TripsPage() {
 
   // Fetch trips from API
   useEffect(() => {
-    fetchTrips();
+    // Read URL parameters on mount
+    const origin = searchParams.get('origin_city') || '';
+    const dest = searchParams.get('destination_city') || '';
+    const date = searchParams.get('departure_date') || '';
+    const tripType = searchParams.get('tripType') || '';
+    const showAll = searchParams.get('show_all') || '';
+    
+    setOriginFilter(origin);
+    setDestFilter(dest);
+    setDateFilter(date);
+    
+    // Fetch trips with URL parameters
+    fetchTrips({ 
+      origin, 
+      destination: dest, 
+      date,
+      tripType: tripType || (showAll === 'true' ? 'SHARED' : ''),
+      showAll: showAll === 'true'
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage]);
+  }, [currentPage, searchParams]);
 
-  const fetchTrips = async (filters?: { origin?: string; destination?: string; date?: string }) => {
+  const fetchTrips = async (filters?: { 
+    origin?: string; 
+    destination?: string; 
+    date?: string;
+    tripType?: string;
+    showAll?: boolean;
+  }) => {
     try {
       setLoading(true);
       setError(null);
@@ -62,6 +87,8 @@ export default function TripsPage() {
       if (filters?.origin) params.append('origin', filters.origin);
       if (filters?.destination) params.append('destination', filters.destination);
       if (filters?.date) params.append('date', filters.date);
+      if (filters?.tripType) params.append('tripType', filters.tripType); // NEW
+      if (filters?.showAll) params.append('show_all', 'true'); // NEW
 
       const response = await fetch(`/api/trips?${params.toString()}`);
       const data = await response.json();
