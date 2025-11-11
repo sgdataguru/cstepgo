@@ -8,30 +8,7 @@ datasource db {
 }
 
 model User {
-  id                   String                     @id @default(cuid())
-  email                String                     @unique
-  phone                String?                    @unique
-  name                 String
-  passwordHash         String
-  role                 UserRole                   @default(PASSENGER)
-  emailVerified        Boolean                    @default(false)
-  phoneVerified        Boolean                    @default(false)
-  avatar               String?
-  bio                  String?
-  temporaryPassword    Boolean                    @default(false)
-  passwordExpiresAt    DateTime?
-  forcePasswordChange  Boolean                    @default(false)
-  createdBy            String?
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
-  lastLoginAt          DateTime?
-  analyticsEvents      AnalyticsEvent[]
-  bookings             Booking[]
-  driverProfile        Driver?
-  sessions             Session[]
-  trips                Trip[]                     @relation("TripOrganizer")
-  credentialDeliveries DriverCredentialDelivery[]
-  adminActions         AdminActionLog[]
+
 
   @@index([email])
   @@index([phone])
@@ -48,6 +25,23 @@ model Session {
 
   @@index([userId])
   @@index([token])
+}
+
+model OTP {
+  id        String   @id @default(cuid())
+  contact   String   // email or phone number
+  code      String   // 6-digit OTP code
+  type      OTPType  // EMAIL or SMS
+  purpose   String   @default("REGISTRATION") // REGISTRATION, LOGIN, PASSWORD_RESET
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  verifiedAt DateTime?
+
+  @@index([contact])
+  @@index([code])
+  @@index([expiresAt])
 }
 
 model Driver {
@@ -293,4 +287,9 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
+}
+
+enum OTPType {
+  EMAIL
+  SMS
 }
