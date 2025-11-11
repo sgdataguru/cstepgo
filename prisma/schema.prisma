@@ -8,26 +8,34 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  phone           String?          @unique
-  name            String
-  passwordHash    String
-  role            UserRole         @default(PASSENGER)
-  emailVerified   Boolean          @default(false)
-  phoneVerified   Boolean          @default(false)
-  avatar          String?
-  bio             String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  analyticsEvents AnalyticsEvent[]
-  bookings        Booking[]
-  driverProfile   Driver?
-  sessions        Session[]
-  trips           Trip[]           @relation("TripOrganizer")
+  id                   String                     @id @default(cuid())
+  email                String                     @unique
+  phone                String?                    @unique
+  name                 String
+  passwordHash         String
+  role                 UserRole                   @default(PASSENGER)
+  emailVerified        Boolean                    @default(false)
+  phoneVerified        Boolean                    @default(false)
+  avatar               String?
+  bio                  String?
+  temporaryPassword    Boolean                    @default(false)
+  passwordExpiresAt    DateTime?
+  forcePasswordChange  Boolean                    @default(false)
+  createdBy            String?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  lastLoginAt          DateTime?
+  analyticsEvents      AnalyticsEvent[]
+  bookings             Booking[]
+  driverProfile        Driver?
+  sessions             Session[]
+  trips                Trip[]                     @relation("TripOrganizer")
+  credentialDeliveries DriverCredentialDelivery[]
+  adminActions         AdminActionLog[]
 
   @@index([email])
   @@index([phone])
+  @@index([role])
 }
 
 model Session {
@@ -43,33 +51,38 @@ model Session {
 }
 
 model Driver {
-  id              String       @id @default(cuid())
-  userId          String       @unique
-  status          DriverStatus @default(PENDING)
-  vehicleType     String
-  vehicleModel    String
-  vehicleMake     String
-  vehicleYear     Int
-  licensePlate    String
-  vehicleColor    String?
-  licenseNumber   String
-  licenseExpiry   DateTime
-  documentsUrl    Json
-  rating          Float        @default(0)
-  completedTrips  Int          @default(0)
-  totalEarnings   Decimal      @default(0)
-  appliedAt       DateTime     @default(now())
-  approvedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payouts         Payout[]
-  trips           Trip[]
+  id                   String                     @id @default(cuid())
+  driverId             String                     @unique // Format: DRV-YYYYMMDD-XXXXX
+  userId               String                     @unique
+  status               DriverStatus               @default(PENDING)
+  vehicleType          String
+  vehicleModel         String
+  vehicleMake          String
+  vehicleYear          Int
+  licensePlate         String
+  vehicleColor         String?
+  licenseNumber        String
+  licenseExpiry        DateTime
+  documentsUrl         Json
+  rating               Float                      @default(0)
+  completedTrips       Int                        @default(0)
+  totalEarnings        Decimal                    @default(0)
+  appliedAt            DateTime                   @default(now())
+  approvedAt           DateTime?
+  rejectedAt           DateTime?
+  rejectionReason      String?
+  registeredBy         String? // Admin user ID who registered this driver
+  registrationMethod   String                     @default("self") // 'self' or 'admin'
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  user                 User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payouts              Payout[]
+  trips                Trip[]
+  credentialDeliveries DriverCredentialDelivery[]
 
   @@index([userId])
   @@index([status])
+  @@index([driverId])
 }
 
 model Trip {
@@ -280,48 +293,4 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
-}
-
-enum Zone {
-  A // City Center (0-10km)
-  B // Suburban (10-50km)
-  C // Regional (50-200km)
-}
-
-model Attraction {
-  id                     String   @id @default(cuid())
-  name                   String   @unique
-  description            String?
-  zone                   Zone     @default(A)
-  latitude               Float
-  longitude              Float
-  basePriceImpact        Decimal  @default(0)
-  estimatedDurationHours Int      @default(1)
-  isActive               Boolean  @default(true)
-  imageUrl               String?
-  category               String?  // "Natural", "Cultural", "Historical"
-  address                String?
-  city                   String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  
-  tripAttractions        TripAttraction[]
-  
-  @@index([zone])
-  @@index([isActive])
-  @@index([category])
-}
-
-model TripAttraction {
-  id           String     @id @default(cuid())
-  tripId       String
-  attractionId String
-  orderIndex   Int        // For route ordering
-  createdAt    DateTime   @default(now())
-  
-  trip         Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  attraction   Attraction @relation(fields: [attractionId], references: [id])
-  
-  @@unique([tripId, attractionId])
-  @@index([tripId, orderIndex])
 }
