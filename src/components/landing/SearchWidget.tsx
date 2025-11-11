@@ -95,7 +95,7 @@ export function SearchWidget() {
         origin_city: formData.origin.name,
         destination_city: formData.destination.name,
         departure_date: formData.departureDate.toISOString().split('T')[0],
-        is_private: (formData.bookingType === 'Private').toString(),
+        tripType: formData.bookingType === 'Private' ? 'PRIVATE' : 'SHARED', // NEW: Pass trip type
         passengers: formData.passengers.toString()
       });
 

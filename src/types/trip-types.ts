@@ -7,6 +7,7 @@ export interface Trip {
   returnTime: Date;
   timezone: string;
   status: TripStatus;
+  tripType?: 'PRIVATE' | 'SHARED'; // NEW: Trip type
   pricing: TripPricing;
   itinerary: TripItinerary;
   capacity: TripCapacity;

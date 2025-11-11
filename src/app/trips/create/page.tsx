@@ -19,6 +19,7 @@ export default function CreateTripPage() {
   const [totalSeats, setTotalSeats] = useState(4);
   const [basePrice, setBasePrice] = useState('');
   const [vehicleType, setVehicleType] = useState('');
+  const [tripType, setTripType] = useState<'PRIVATE' | 'SHARED'>('SHARED'); // NEW: Trip type selector
   const [showItineraryBuilder, setShowItineraryBuilder] = useState(false);
   const [itinerary, setItinerary] = useState<TripItinerary | null>(null);
   const [selectedAttractionIds, setSelectedAttractionIds] = useState<string[]>([]);
@@ -73,7 +74,7 @@ export default function CreateTripPage() {
         },
         body: JSON.stringify({
           title,
-          description: `Comfortable shared ride from ${origin.name} to ${destination.name}`,
+          description: `Comfortable ${tripType.toLowerCase()} ride from ${origin.name} to ${destination.name}`,
           origin,
           destination,
           departureDate,
@@ -83,6 +84,7 @@ export default function CreateTripPage() {
           totalSeats,
           basePrice: Number(basePrice),
           vehicleType,
+          tripType, // NEW: Send trip type
           itinerary,
           selectedAttractions: selectedAttractionIds,
         }),
@@ -204,6 +206,41 @@ export default function CreateTripPage() {
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
                 Trip Details
               </h2>
+
+              {/* NEW: Trip Type Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Trip Type
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tripType"
+                      value="SHARED"
+                      checked={tripType === 'SHARED'}
+                      onChange={(e) => setTripType('SHARED')}
+                      className="w-4 h-4 accent-primary-modernSg cursor-pointer"
+                    />
+                    <span className="text-gray-900 dark:text-white">
+                      Shared - Open to other travelers
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="tripType"
+                      value="PRIVATE"
+                      checked={tripType === 'PRIVATE'}
+                      onChange={(e) => setTripType('PRIVATE')}
+                      className="w-4 h-4 accent-primary-modernSg cursor-pointer"
+                    />
+                    <span className="text-gray-900 dark:text-white">
+                      Private - For specific passengers only
+                    </span>
+                  </label>
+                </div>
+              </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>

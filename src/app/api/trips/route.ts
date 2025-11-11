@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     const destination = searchParams.get('destination');
     const date = searchParams.get('date');
     const status = searchParams.get('status') || 'PUBLISHED';
+    const tripType = searchParams.get('tripType'); // NEW: Filter by PRIVATE or SHARED
+    const showAll = searchParams.get('show_all'); // NEW: Show all shared trips
     
     // Pagination parameters
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -23,6 +25,14 @@ export async function GET(request: NextRequest) {
     const where: any = {
       status: status as any,
     };
+
+    // NEW: Filter by trip type
+    if (tripType) {
+      where.tripType = tripType;
+    } else if (showAll === 'true') {
+      // When show_all=true, only show SHARED trips
+      where.tripType = 'SHARED';
+    }
 
     if (origin) {
       where.originName = {
@@ -107,6 +117,7 @@ export async function GET(request: NextRequest) {
       returnTime: trip.returnTime,
       timezone: trip.timezone,
       status: trip.status.toLowerCase(),
+      tripType: trip.tripType, // NEW: Include trip type
       location: {
         origin: {
           name: trip.originName,
@@ -196,6 +207,7 @@ export async function POST(request: NextRequest) {
       vehicleType,
       itinerary,
       selectedAttractions, // Array of attraction IDs
+      tripType, // NEW: PRIVATE or SHARED
     } = body;
 
     if (!title || !origin || !destination || !departureDate || !departureTime) {
@@ -248,6 +260,7 @@ export async function POST(request: NextRequest) {
         departureTime: departureDateTime,
         returnTime: returnDateTime,
         timezone: 'Asia/Almaty',
+        tripType: tripType || 'SHARED', // NEW: Default to SHARED if not specified
         originName: origin.name,
         originAddress: origin.address,
         originLat: origin.coordinates.lat,

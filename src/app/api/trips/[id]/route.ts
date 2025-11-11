@@ -72,6 +72,7 @@ export async function GET(
       returnTime: trip.returnTime,
       timezone: trip.timezone,
       status: trip.status.toLowerCase(),
+      tripType: trip.tripType, // NEW: Include trip type
       location: {
         origin: {
           name: trip.originName,
