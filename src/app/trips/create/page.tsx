@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import FamousLocationAutocomplete from '@/components/FamousLocationAutocomplete';
 import ItineraryBuilder from './components/ItineraryBuilder';
+import AttractionSelector from './components/AttractionSelector';
 import { Location, TripItinerary } from '@/types/trip-types';
+import { VehicleType } from '@/lib/zones';
 
 export default function CreateTripPage() {
   const router = useRouter();
@@ -19,8 +21,22 @@ export default function CreateTripPage() {
   const [vehicleType, setVehicleType] = useState('');
   const [showItineraryBuilder, setShowItineraryBuilder] = useState(false);
   const [itinerary, setItinerary] = useState<TripItinerary | null>(null);
+  const [selectedAttractionIds, setSelectedAttractionIds] = useState<string[]>([]);
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleAttractionsChange = useCallback((attractionIds: string[]) => {
+    setSelectedAttractionIds(attractionIds);
+  }, []);
+
+  const handlePriceChange = useCallback((price: number) => {
+    setCalculatedPrice(price);
+    // Update base price if attractions are selected
+    if (price > 0) {
+      setBasePrice(Math.round(price).toString());
+    }
+  }, []);
 
   const handleNext = () => {
     setStep(step + 1);
@@ -68,6 +84,7 @@ export default function CreateTripPage() {
           basePrice: Number(basePrice),
           vehicleType,
           itinerary,
+          selectedAttractions: selectedAttractionIds,
         }),
       });
 
@@ -109,7 +126,7 @@ export default function CreateTripPage() {
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center gap-4">
-            {[1, 2, 3].map((stepNum) => (
+            {[1, 2, 3, 4].map((stepNum) => (
               <div key={stepNum} className="flex items-center">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
@@ -120,9 +137,9 @@ export default function CreateTripPage() {
                 >
                   {stepNum}
                 </div>
-                {stepNum < 3 && (
+                {stepNum < 4 && (
                   <div
-                    className={`w-20 h-1 ${
+                    className={`w-16 h-1 ${
                       step > stepNum ? 'bg-primary-modernSg' : 'bg-gray-300'
                     }`}
                   />
@@ -130,15 +147,18 @@ export default function CreateTripPage() {
               </div>
             ))}
           </div>
-          <div className="flex justify-center gap-20 mt-2">
+          <div className="flex justify-center gap-12 mt-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">Route</span>
             <span className="text-sm text-gray-600 dark:text-gray-400">Details</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Attractions</span>
             <span className="text-sm text-gray-600 dark:text-gray-400">Itinerary</span>
           </div>
         </div>
 
         {/* Form Card */}
-        <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <div className={`mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 ${
+          step === 3 ? 'max-w-7xl' : 'max-w-3xl'
+        }`}>
           {/* Step 1: Route */}
           {step === 1 && (
             <div className="space-y-6">
@@ -257,9 +277,8 @@ export default function CreateTripPage() {
                 >
                   <option value="">Select vehicle type</option>
                   <option value="sedan">Sedan</option>
-                  <option value="suv">SUV</option>
-                  <option value="van">Van/Minibus</option>
-                  <option value="bus">Bus</option>
+                  <option value="van">Van</option>
+                  <option value="minibus">Minibus</option>
                 </select>
               </div>
 
@@ -281,8 +300,35 @@ export default function CreateTripPage() {
             </div>
           )}
 
-          {/* Step 3: Itinerary */}
+          {/* Step 3: Attractions */}
           {step === 3 && (
+            <div className="space-y-6">
+              <AttractionSelector
+                vehicleType={(vehicleType as VehicleType) || VehicleType.SEDAN}
+                passengers={totalSeats}
+                onAttractionsChange={handleAttractionsChange}
+                onPriceChange={handlePriceChange}
+              />
+
+              <div className="flex justify-between gap-4 mt-8">
+                <button
+                  onClick={handleBack}
+                  className="bg-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handleNext}
+                  className="bg-primary-modernSg text-white px-8 py-3 rounded-lg font-semibold hover:bg-primary-modernSg/90 transition-colors"
+                >
+                  {selectedAttractionIds.length > 0 ? 'Next →' : 'Skip →'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Itinerary */}
+          {step === 4 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
                 Build Your Itinerary (Optional)
