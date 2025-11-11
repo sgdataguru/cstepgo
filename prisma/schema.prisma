@@ -86,37 +86,46 @@ model Driver {
 }
 
 model Trip {
-  id             String     @id @default(cuid())
-  title          String
-  description    String
-  organizerId    String
-  driverId       String?
-  departureTime  DateTime
-  returnTime     DateTime
-  timezone       String     @default("Asia/Almaty")
-  originName     String
-  originAddress  String
-  originLat      Float
-  originLng      Float
-  destName       String
-  destAddress    String
-  destLat        Float
-  destLng        Float
-  totalSeats     Int
-  availableSeats Int
-  basePrice      Decimal
-  currency       String     @default("KZT")
-  platformFee    Decimal
-  itinerary      Json
-  status         TripStatus @default(DRAFT)
-  metadata       Json?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  publishedAt    DateTime?
-  cancelledAt    DateTime?
-  bookings       Booking[]
-  driver         Driver?    @relation(fields: [driverId], references: [id])
-  organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
+  id                     String           @id @default(cuid())
+  title                  String
+  description            String
+  organizerId            String
+  driverId               String?
+  departureTime          DateTime
+  returnTime             DateTime
+  timezone               String           @default("Asia/Almaty")
+  originName             String
+  originAddress          String
+  originLat              Float
+  originLng              Float
+  destName               String
+  destAddress            String
+  destLat                Float
+  destLng                Float
+  totalSeats             Int
+  availableSeats         Int
+  basePrice              Decimal
+  currency               String           @default("KZT")
+  platformFee            Decimal
+  itinerary              Json
+  status                 TripStatus       @default(DRAFT)
+  metadata               Json?
+  // Zone-based pricing fields
+  zonesCovered           String[]         @default([])
+  totalDistanceKm        Int?
+  estimatedDurationHours Int?
+  basePriceZoneAdjusted  Decimal?
+  requiresOvernight      Boolean          @default(false)
+  crossZonePenalty       Decimal          @default(0)
+  vehicleType            String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  publishedAt            DateTime?
+  cancelledAt            DateTime?
+  bookings               Booking[]
+  tripAttractions        TripAttraction[]
+  driver                 Driver?          @relation(fields: [driverId], references: [id])
+  organizer              User             @relation("TripOrganizer", fields: [organizerId], references: [id])
 
   @@index([organizerId])
   @@index([driverId])
@@ -284,46 +293,4 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
-}
-
-model DriverCredentialDelivery {
-  id           String    @id @default(cuid())
-  driverId     String
-  userId       String
-  channel      String // 'whatsapp', 'sms', 'email'
-  recipient    String // Phone number or email
-  status       String // 'pending', 'sent', 'delivered', 'failed'
-  messageId    String? // External message ID from provider
-  credentials  Json // Encrypted credentials sent
-  sentAt       DateTime?
-  deliveredAt  DateTime?
-  failedAt     DateTime?
-  errorMessage String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  driver       Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([driverId])
-  @@index([userId])
-  @@index([status])
-  @@index([channel])
-}
-
-model AdminActionLog {
-  id         String   @id @default(cuid())
-  adminId    String
-  action     String // 'driver_registered', 'driver_approved', 'credentials_sent', etc.
-  targetType String // 'driver', 'user', 'trip', etc.
-  targetId   String
-  details    Json?
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime @default(now())
-  admin      User     @relation(fields: [adminId], references: [id])
-
-  @@index([adminId])
-  @@index([action])
-  @@index([targetType])
-  @@index([createdAt])
 }

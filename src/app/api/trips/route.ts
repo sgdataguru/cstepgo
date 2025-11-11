@@ -167,6 +167,7 @@ export async function POST(request: NextRequest) {
       basePrice,
       vehicleType,
       itinerary,
+      selectedAttractions, // Array of attraction IDs
     } = body;
 
     if (!title || !origin || !destination || !departureDate || !departureTime) {
@@ -232,6 +233,7 @@ export async function POST(request: NextRequest) {
         basePrice: Number(basePrice),
         currency: 'KZT',
         platformFee,
+        vehicleType: vehicleType || 'sedan',
         itinerary: itinerary || {
           version: '1.0',
           days: [
@@ -282,6 +284,19 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
+    // Create trip-attraction relationships if attractions were selected
+    if (selectedAttractions && Array.isArray(selectedAttractions) && selectedAttractions.length > 0) {
+      const tripAttractions = selectedAttractions.map((attractionId: string, index: number) => ({
+        tripId: trip.id,
+        attractionId,
+        orderIndex: index,
+      }));
+
+      await prisma.tripAttraction.createMany({
+        data: tripAttractions,
+      });
+    }
 
     return NextResponse.json({
       success: true,
