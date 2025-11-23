@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { driverId: string } }
 ) {
   try {
     const { id } = params;
