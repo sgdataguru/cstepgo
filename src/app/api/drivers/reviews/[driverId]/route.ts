@@ -18,7 +18,8 @@ export async function GET(
     // Parse query parameters
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const sort = searchParams.get('sort') || 'recent'; // 'recent' or 'rating'
+    const sortParam = searchParams.get('sort');
+    const sort = ['recent', 'rating'].includes(sortParam || '') ? sortParam : 'recent'; // Validate sort param
 
     // Validate pagination params
     const validPage = Math.max(1, page);

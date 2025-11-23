@@ -227,12 +227,12 @@ export default function RatingsPage() {
 
                 {/* Review Comment */}
                 {review.comment && (
-                  <p className="text-gray-700 mb-3 ml-15">{review.comment}</p>
+                  <p className="text-gray-700 mb-3 ml-16">{review.comment}</p>
                 )}
 
                 {/* Driver Response */}
                 {review.response ? (
-                  <div className="ml-15 bg-blue-50 rounded-lg p-4 mt-3">
+                  <div className="ml-16 bg-blue-50 rounded-lg p-4 mt-3">
                     <div className="flex items-start">
                       <MessageSquare className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
                       <div className="flex-1">
@@ -245,7 +245,7 @@ export default function RatingsPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="ml-15 mt-3">
+                  <div className="ml-16 mt-3">
                     {respondingTo === review.id ? (
                       <div>
                         <textarea

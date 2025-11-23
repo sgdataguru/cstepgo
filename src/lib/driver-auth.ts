@@ -1,3 +1,5 @@
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+
 /**
  * Safely parse driver data from localStorage
  * Returns null if parsing fails or data is invalid
@@ -32,7 +34,7 @@ export function getDriverSessionFromStorage(): string | null {
  * Check if driver is authenticated and redirect if not
  * Returns driver data and session if authenticated
  */
-export function requireDriverAuth(router: any): { driverData: { id: string }, session: string } | null {
+export function requireDriverAuth(router: AppRouterInstance): { driverData: { id: string }, session: string } | null {
   const driverData = getDriverDataFromStorage();
   const session = getDriverSessionFromStorage();
   
