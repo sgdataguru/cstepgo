@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: { driverId: string } }
 ) {
   try {
-    const { id } = params;
+    const { driverId } = params;
     const { searchParams } = new URL(request.url);
     
     // Parse query parameters
@@ -32,13 +32,13 @@ export async function GET(
     // Fetch reviews with pagination
     const [reviews, totalReviews] = await Promise.all([
       prisma.review.findMany({
-        where: { driverId: id },
+        where: { driverId: driverId },
         orderBy,
         skip: (validPage - 1) * validLimit,
         take: validLimit,
       }),
       prisma.review.count({
-        where: { driverId: id },
+        where: { driverId: driverId },
       }),
     ]);
 
@@ -46,11 +46,11 @@ export async function GET(
     const [ratingStats, driver] = await Promise.all([
       prisma.review.groupBy({
         by: ['rating'],
-        where: { driverId: id },
+        where: { driverId: driverId },
         _count: { rating: true },
       }),
       prisma.driver.findUnique({
-        where: { id },
+        where: { id: driverId },
         select: {
           rating: true,
           reviewCount: true,

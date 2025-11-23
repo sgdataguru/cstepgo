@@ -17,7 +17,7 @@ import {
 
 interface DriverProfilePageProps {
   params: {
-    id: string;
+    driverId: string;
   };
 }
 
@@ -40,7 +40,7 @@ async function getDriverProfile(driverId: string) {
 }
 
 export async function generateMetadata({ params }: DriverProfilePageProps): Promise<Metadata> {
-  const data = await getDriverProfile(params.id);
+  const data = await getDriverProfile(params.driverId);
   
   if (!data?.driver) {
     return {
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: DriverProfilePageProps): Prom
 }
 
 export default async function DriverProfilePage({ params }: DriverProfilePageProps) {
-  const data = await getDriverProfile(params.id);
+  const data = await getDriverProfile(params.driverId);
 
   if (!data?.driver) {
     notFound();
@@ -169,7 +169,7 @@ export default async function DriverProfilePage({ params }: DriverProfilePagePro
                   View profile
                 </Link>
                 <Link
-                  href={`/trips?driver=${params.id}`}
+                  href={`/trips?driver=${params.driverId}`}
                   className="flex-1 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-center transition-colors"
                 >
                   Book now
@@ -425,7 +425,7 @@ export default async function DriverProfilePage({ params }: DriverProfilePagePro
               {driver.rating.count > 5 && (
                 <div className="mt-6 text-center">
                   <Link
-                    href={`/drivers/${params.id}/reviews`}
+                    href={`/drivers/${params.driverId}/reviews`}
                     className="text-blue-500 hover:text-blue-600 font-medium"
                   >
                     View all {driver.rating.count} reviews →
