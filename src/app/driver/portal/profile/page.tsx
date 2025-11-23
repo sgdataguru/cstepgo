@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { requireDriverAuth } from '@/lib/driver-auth';
 import { 
   User, 
   Mail, 
@@ -66,15 +67,11 @@ export default function DriverProfilePage() {
   const loadProfile = async () => {
     try {
       setIsLoading(true);
-      const driverId = localStorage.getItem('driver_data');
-      const session = localStorage.getItem('driver_session');
       
-      if (!driverId || !session) {
-        router.push('/driver/login');
-        return;
-      }
-
-      const driverData = JSON.parse(driverId);
+      const auth = requireDriverAuth(router);
+      if (!auth) return;
+      
+      const { driverData, session } = auth;
       
       const response = await fetch('/api/drivers/profile', {
         headers: {
@@ -104,15 +101,10 @@ export default function DriverProfilePage() {
       setError('');
       setSuccess('');
 
-      const driverId = localStorage.getItem('driver_data');
-      const session = localStorage.getItem('driver_session');
+      const auth = requireDriverAuth(router);
+      if (!auth) return;
       
-      if (!driverId || !session) {
-        router.push('/driver/login');
-        return;
-      }
-
-      const driverData = JSON.parse(driverId);
+      const { driverData, session } = auth;
 
       const response = await fetch('/api/drivers/profile', {
         method: 'PUT',
