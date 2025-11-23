@@ -135,6 +135,13 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
   const DRIVER_EARNINGS_RATE = 0.85;
   const REFRESH_INTERVAL_MS = 30000; // 30 seconds
   const POLL_INTERVAL_MS = 5000; // 5 seconds
+  
+  // Text constants
+  const TEXT = {
+    TODAY_EARNINGS: "Today's Earnings",
+    NO_TRIPS: "We'll notify you when new trips become available",
+    ALL_CAUGHT_UP: "You're all caught up!",
+  };
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -151,7 +158,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     checkActiveOffers(driverId);
 
     return () => clearInterval(pollInterval);
-  }, [driverId, checkActiveOffers, POLL_INTERVAL_MS]);
+  }, [driverId, checkActiveOffers]);
 
   const loadNotifications = useCallback(() => {
     // Demo notifications for development
@@ -278,7 +285,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     // Refresh data periodically
     const refreshInterval = setInterval(loadDashboardData, REFRESH_INTERVAL_MS);
     return () => clearInterval(refreshInterval);
-  }, [driverId, loadDemoData, loadNotifications, REFRESH_INTERVAL_MS]);
+  }, [driverId, loadDemoData, loadNotifications]);
 
   const markNotificationAsRead = (notificationId: string) => {
     setNotifications(prev => 
@@ -471,7 +478,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Today&apos;s Earnings</p>
+                    <p className="text-sm font-medium text-gray-600">{TEXT.TODAY_EARNINGS}</p>
                     <p className="text-3xl font-bold text-green-600">{formatCurrency(dashboardData.earnings.today)}</p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-green-500" />
@@ -551,7 +558,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                     <p className="text-lg font-medium mb-2">No active trip offers</p>
-                    <p>We&apos;ll notify you when new trips become available</p>
+                    <p>{TEXT.NO_TRIPS}</p>
                   </div>
                 )}
               </div>
@@ -728,7 +735,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                     <DollarSign className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-green-800">Today&apos;s Earnings</p>
+                    <p className="text-sm font-medium text-green-800">{TEXT.TODAY_EARNINGS}</p>
                     <p className="text-2xl font-bold text-green-900">
                       {formatCurrency(dashboardData.earnings.today)}
                     </p>
@@ -880,7 +887,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                   <div className="p-12 text-center text-gray-500">
                     <Bell className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                     <p className="text-lg font-medium mb-2">No Notifications</p>
-                    <p>You&apos;re all caught up!</p>
+                    <p>{TEXT.ALL_CAUGHT_UP}</p>
                   </div>
                 )}
               </div>
