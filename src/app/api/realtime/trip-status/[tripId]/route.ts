@@ -4,12 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, TripStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import {
+  addConnection,
+  removeConnection,
+  broadcastStatusUpdate as broadcastUpdate,
+} from '@/lib/realtime/broadcast';
 
 const prisma = new PrismaClient();
-
-// Store active SSE connections
-const connections = new Map<string, Set<ReadableStreamDefaultController>>();
 
 /**
  * GET /api/realtime/trip-status/[tripId] - Subscribe to trip status updates
@@ -50,10 +52,7 @@ export async function GET(
   const stream = new ReadableStream({
     start(controller) {
       // Add this controller to the connections map
-      if (!connections.has(tripId)) {
-        connections.set(tripId, new Set());
-      }
-      connections.get(tripId)?.add(controller);
+      addConnection(tripId, controller);
 
       // Send initial connection message with current status
       const initialMessage = `data: ${JSON.stringify({
@@ -90,12 +89,7 @@ export async function GET(
       const cleanup = () => {
         isClosed = true;
         clearInterval(heartbeatInterval);
-        connections.get(tripId)?.delete(controller);
-        
-        // Remove trip from connections map if no more listeners
-        if (connections.get(tripId)?.size === 0) {
-          connections.delete(tripId);
-        }
+        removeConnection(tripId, controller);
         
         try {
           controller.close();
@@ -164,23 +158,8 @@ export async function POST(
       );
     }
 
-    // Get connected clients for this trip
-    const tripConnections = connections.get(tripId);
-
-    if (!tripConnections || tripConnections.size === 0) {
-      console.log(`No active connections for trip ${tripId}`);
-      return NextResponse.json({
-        success: true,
-        message: 'No active connections to broadcast to',
-        connections: 0,
-      });
-    }
-
-    // Prepare broadcast message
-    const encoder = new TextEncoder();
-    const updateMessage = `data: ${JSON.stringify({
-      type: 'status_update',
-      tripId,
+    // Get connected clients for this trip and broadcast
+    const result = broadcastUpdate(tripId, {
       tripTitle: trip.title,
       previousStatus,
       newStatus: status,
@@ -188,32 +167,13 @@ export async function POST(
       notes,
       originName: trip.originName,
       destName: trip.destName,
-      timestamp: new Date().toISOString(),
-    })}\n\n`;
-
-    const encodedMessage = encoder.encode(updateMessage);
-
-    // Broadcast to all connected clients
-    let successCount = 0;
-    let failCount = 0;
-
-    tripConnections.forEach((controller) => {
-      try {
-        controller.enqueue(encodedMessage);
-        successCount++;
-      } catch (error) {
-        console.error('Failed to send to client:', error);
-        failCount++;
-        // Remove failed connection
-        tripConnections.delete(controller);
-      }
     });
 
     return NextResponse.json({
       success: true,
       message: 'Status update broadcasted',
-      connections: successCount,
-      failed: failCount,
+      connections: result.connections,
+      failed: result.failed,
     });
   } catch (error) {
     console.error('Broadcast error:', error);
@@ -222,20 +182,4 @@ export async function POST(
       { status: 500 }
     );
   }
-}
-
-/**
- * Get active connection count for monitoring
- */
-export function getConnectionCount(tripId?: string): number {
-  if (tripId) {
-    return connections.get(tripId)?.size || 0;
-  }
-  
-  // Return total connections across all trips
-  let total = 0;
-  connections.forEach((set) => {
-    total += set.size;
-  });
-  return total;
 }

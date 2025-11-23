@@ -208,10 +208,3 @@ export function getRateLimitStatus(key: string, config: RateLimitConfig): {
     resetAt: new Date(bucket.lastRefill + config.refillInterval),
   };
 }
-
-// Setup periodic cleanup
-if (typeof global !== 'undefined') {
-  setInterval(() => {
-    cleanupOldBuckets();
-  }, 60 * 60 * 1000); // Run every hour
-}

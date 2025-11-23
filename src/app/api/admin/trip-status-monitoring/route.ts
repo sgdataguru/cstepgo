@@ -11,9 +11,18 @@ const prisma = new PrismaClient();
 // Simple admin authentication check
 async function isAdmin(request: NextRequest): Promise<boolean> {
   const adminToken = request.headers.get('x-admin-token');
-  // TODO: Implement proper admin authentication
-  // For now, just check if token exists
-  return !!adminToken;
+  
+  // TODO: Implement proper admin JWT token validation
+  // For now, check against environment variable
+  const validAdminToken = process.env.ADMIN_API_TOKEN;
+  
+  if (!validAdminToken) {
+    // If no admin token is configured, deny access for security
+    console.warn('ADMIN_API_TOKEN not configured. Admin access denied.');
+    return false;
+  }
+  
+  return adminToken === validAdminToken;
 }
 
 /**

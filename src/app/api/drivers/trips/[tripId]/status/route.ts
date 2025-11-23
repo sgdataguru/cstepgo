@@ -5,6 +5,7 @@ import {
   shouldNotifyPassengers 
 } from '@/lib/notifications/trip-status-notifications';
 import { rateLimit, RATE_LIMIT_CONFIGS, getClientIp } from '@/lib/utils/rate-limit';
+import { broadcastStatusUpdate } from '@/lib/realtime/broadcast';
 
 const prisma = new PrismaClient();
 
@@ -333,17 +334,14 @@ export async function PUT(
     
     // Broadcast status update to real-time listeners
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/realtime/trip-status/${result.trip.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: status,
-          previousStatus: result.previousStatus,
-          driverName: driver.user.name,
-          notes: notes,
-        }),
+      broadcastStatusUpdate(result.trip.id, {
+        tripTitle: result.trip.title,
+        previousStatus: result.previousStatus,
+        newStatus: status as TripStatus,
+        driverName: driver.user.name,
+        notes: notes,
+        originName: result.trip.originName,
+        destName: result.trip.destName,
       });
     } catch (broadcastError) {
       console.error('Failed to broadcast status update:', broadcastError);
