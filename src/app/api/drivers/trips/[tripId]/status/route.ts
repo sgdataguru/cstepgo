@@ -305,6 +305,25 @@ export async function PUT(
       }
     }
     
+    // Broadcast status update to real-time listeners
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/realtime/trip-status/${result.trip.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: status,
+          previousStatus: result.previousStatus,
+          driverName: driver.user.name,
+          notes: notes,
+        }),
+      });
+    } catch (broadcastError) {
+      console.error('Failed to broadcast status update:', broadcastError);
+      // Don't fail the request if broadcast fails
+    }
+    
     // Prepare status-specific response data
     const getStatusMessage = (status: string) => {
       const messages: { [key: string]: string } = {
