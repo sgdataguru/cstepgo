@@ -120,6 +120,7 @@ model Driver {
   vehicles                Vehicle[]
   reviews                 Review[]
   credentialDeliveries    DriverCredentialDelivery[]
+  statusUpdates           TripStatusUpdate[]
 
   @@index([userId])
   @@index([status])
@@ -258,6 +259,7 @@ model Trip {
   bookings       Booking[]
   driverVisibility TripDriverVisibility[]
   acceptanceLog  TripAcceptanceLog[]
+  statusUpdates  TripStatusUpdate[]
   driver         Driver?    @relation(fields: [driverId], references: [id])
   organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
 
@@ -447,6 +449,30 @@ model TripAcceptanceLog {
   @@index([responseTimeSeconds])
 }
 
+model TripStatusUpdate {
+  id                String     @id @default(cuid())
+  tripId            String     @map("trip_id")
+  driverId          String     @map("driver_id")
+  previousStatus    TripStatus @map("previous_status")
+  newStatus         TripStatus @map("new_status")
+  notes             String?
+  location          Json?      // {latitude, longitude, accuracy, speed, heading}
+  notificationsSent Int        @default(0) @map("notifications_sent")
+  metadata          Json?      // Additional contextual data
+  ipAddress         String?    @map("ip_address")
+  userAgent         String?    @map("user_agent")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  
+  // Relations
+  trip              Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  driver            Driver     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  @@index([tripId, createdAt])
+  @@index([driverId, createdAt])
+  @@index([newStatus, createdAt])
+  @@map("trip_status_updates")
+}
+
 enum UserRole {
   PASSENGER
   DRIVER
@@ -466,6 +492,13 @@ enum TripStatus {
   OFFERED
   FULL
   IN_PROGRESS
+  DEPARTED
+  EN_ROUTE
+  DRIVER_ARRIVED
+  PASSENGERS_BOARDED
+  IN_TRANSIT
+  DELAYED
+  ARRIVED
   COMPLETED
   CANCELLED
 }

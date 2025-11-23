@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TripStatus } from '@prisma/client';
+import { 
+  notifyPassengersOfStatusChange, 
+  shouldNotifyPassengers 
+} from '@/lib/notifications/trip-status-notifications';
 
 const prisma = new PrismaClient();
 
@@ -49,16 +53,20 @@ export async function PUT(
       );
     }
     
-    const validStatuses = [
-      'IN_PROGRESS',     // Trip accepted by driver
-      'DRIVER_ARRIVED',  // Driver arrived at pickup
-      'PASSENGERS_BOARDED', // Passengers got in
-      'IN_TRANSIT',      // Trip in progress
-      'COMPLETED',       // Trip finished
-      'CANCELLED'        // Trip cancelled
+    const validStatuses: TripStatus[] = [
+      'IN_PROGRESS',
+      'DEPARTED',
+      'EN_ROUTE',
+      'DRIVER_ARRIVED',
+      'PASSENGERS_BOARDED',
+      'IN_TRANSIT',
+      'DELAYED',
+      'ARRIVED',
+      'COMPLETED',
+      'CANCELLED'
     ];
     
-    if (!validStatuses.includes(status)) {
+    if (!validStatuses.includes(status as TripStatus)) {
       return NextResponse.json(
         { error: `Invalid status. Valid statuses: ${validStatuses.join(', ')}` },
         { status: 400 }
@@ -114,16 +122,20 @@ export async function PUT(
       const currentStatus = trip.status;
       
       // Define valid status transitions
-      const validTransitions: { [key: string]: string[] } = {
-        'IN_PROGRESS': ['DRIVER_ARRIVED', 'CANCELLED'],
-        'DRIVER_ARRIVED': ['PASSENGERS_BOARDED', 'CANCELLED'],
-        'PASSENGERS_BOARDED': ['IN_TRANSIT', 'CANCELLED'],
-        'IN_TRANSIT': ['COMPLETED', 'CANCELLED'],
+      const validTransitions: { [key: string]: TripStatus[] } = {
+        'IN_PROGRESS': ['DEPARTED', 'EN_ROUTE', 'DRIVER_ARRIVED', 'DELAYED', 'CANCELLED'],
+        'DEPARTED': ['EN_ROUTE', 'DRIVER_ARRIVED', 'DELAYED', 'CANCELLED'],
+        'EN_ROUTE': ['DRIVER_ARRIVED', 'DELAYED', 'CANCELLED'],
+        'DRIVER_ARRIVED': ['PASSENGERS_BOARDED', 'DELAYED', 'CANCELLED'],
+        'PASSENGERS_BOARDED': ['IN_TRANSIT', 'DELAYED', 'CANCELLED'],
+        'IN_TRANSIT': ['ARRIVED', 'DELAYED', 'CANCELLED'],
+        'DELAYED': ['DEPARTED', 'EN_ROUTE', 'DRIVER_ARRIVED', 'PASSENGERS_BOARDED', 'IN_TRANSIT', 'CANCELLED'],
+        'ARRIVED': ['COMPLETED', 'CANCELLED'],
         'COMPLETED': [], // Final state
         'CANCELLED': []  // Final state
-      };
+      } as const;
       
-      if (!validTransitions[currentStatus]?.includes(status)) {
+      if (!validTransitions[currentStatus]?.includes(status as TripStatus)) {
         throw new Error(
           `Invalid status transition from ${currentStatus} to ${status}`
         );
@@ -132,8 +144,8 @@ export async function PUT(
       // Special validations for certain statuses
       if (status === 'COMPLETED') {
         // Ensure trip has actually started
-        if (!['IN_TRANSIT', 'PASSENGERS_BOARDED'].includes(currentStatus)) {
-          throw new Error('Trip must be in transit before it can be completed');
+        if (!['ARRIVED', 'IN_TRANSIT', 'PASSENGERS_BOARDED'].includes(currentStatus)) {
+          throw new Error('Trip must have arrived or be in transit before it can be completed');
         }
         
         // Check if trip is not in the future
@@ -147,7 +159,7 @@ export async function PUT(
       const updatedTrip = await tx.trip.update({
         where: { id: tripId },
         data: {
-          status: status
+          status: status as TripStatus
         },
         include: {
           organizer: {
@@ -158,6 +170,26 @@ export async function PUT(
               phone: true
             }
           }
+        }
+      });
+      
+      // Create status update log entry
+      const clientIp = request.headers.get('x-forwarded-for') || 
+                       request.headers.get('x-real-ip') || 
+                       'unknown';
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+      
+      const statusUpdateLog = await tx.tripStatusUpdate.create({
+        data: {
+          tripId: tripId,
+          driverId: driver.id,
+          previousStatus: currentStatus,
+          newStatus: status as TripStatus,
+          notes: notes || null,
+          location: location ? JSON.stringify(location) : null,
+          notificationsSent: 0, // Will be updated after notifications
+          ipAddress: clientIp,
+          userAgent: userAgent,
         }
       });
       
@@ -239,16 +271,50 @@ export async function PUT(
       return {
         trip: updatedTrip,
         previousStatus: currentStatus,
-        passengers: trip.bookings
+        passengers: trip.bookings,
+        statusUpdateLogId: statusUpdateLog.id
       };
     });
+    
+    // Send notifications to passengers if this status change requires it
+    let notificationResult = { success: true, notificationsSent: 0, errors: [] };
+    
+    if (shouldNotifyPassengers(status as TripStatus)) {
+      notificationResult = await notifyPassengersOfStatusChange({
+        tripId: result.trip.id,
+        tripTitle: result.trip.title,
+        driverName: driver.user.name,
+        driverPhone: driver.user.phone || undefined,
+        previousStatus: result.previousStatus,
+        newStatus: status as TripStatus,
+        notes: notes,
+        location: location,
+        departureTime: result.trip.departureTime,
+        originName: result.trip.originName,
+        destName: result.trip.destName,
+      });
+      
+      // Update the status log with notification count
+      if (notificationResult.notificationsSent > 0) {
+        await prisma.tripStatusUpdate.update({
+          where: { id: result.statusUpdateLogId },
+          data: {
+            notificationsSent: notificationResult.notificationsSent
+          }
+        });
+      }
+    }
     
     // Prepare status-specific response data
     const getStatusMessage = (status: string) => {
       const messages: { [key: string]: string } = {
+        'DEPARTED': 'You have departed. En route to pickup location.',
+        'EN_ROUTE': 'Status updated to en route.',
         'DRIVER_ARRIVED': 'You have arrived at the pickup location. Contact passengers if needed.',
         'PASSENGERS_BOARDED': 'Passengers have boarded. You can now start the trip.',
         'IN_TRANSIT': 'Trip is now in progress. Drive safely!',
+        'DELAYED': 'Trip has been marked as delayed. Passengers have been notified.',
+        'ARRIVED': 'You have arrived at the destination.',
         'COMPLETED': 'Trip completed successfully. You are now available for new trips.',
         'CANCELLED': 'Trip has been cancelled. You are now available for new trips.'
       };
@@ -258,6 +324,16 @@ export async function PUT(
     
     const getNextActions = (status: string): string[] => {
       const actions: { [key: string]: string[] } = {
+        'DEPARTED': [
+          'Navigate to pickup location',
+          'Contact passengers if needed',
+          'Update status when you arrive'
+        ],
+        'EN_ROUTE': [
+          'Continue to pickup location',
+          'Keep passengers informed',
+          'Update status when you arrive'
+        ],
         'DRIVER_ARRIVED': [
           'Contact passengers to confirm pickup',
           'Wait for passengers to board',
@@ -272,6 +348,16 @@ export async function PUT(
           'Drive safely to destination',
           'Update passengers on progress if needed',
           'Complete trip when you arrive'
+        ],
+        'DELAYED': [
+          'Inform passengers of the delay reason',
+          'Provide estimated time update',
+          'Update status when ready to proceed'
+        ],
+        'ARRIVED': [
+          'Confirm arrival at destination',
+          'Help passengers with luggage',
+          'Complete the trip'
         ],
         'COMPLETED': [
           'Trip earnings have been processed',
@@ -310,6 +396,11 @@ export async function PUT(
           seatsBooked: booking.seatsBooked,
           user: booking.user
         })),
+        notifications: {
+          sent: notificationResult.notificationsSent,
+          success: notificationResult.success,
+          errors: notificationResult.errors
+        },
         nextActions: getNextActions(status),
         location: location || null
       }
@@ -466,19 +557,34 @@ export async function GET(
         timeline: [
           { status: 'IN_PROGRESS', label: 'Trip Accepted', completed: true },
           { 
+            status: 'DEPARTED', 
+            label: 'Departed', 
+            completed: ['DEPARTED', 'EN_ROUTE', 'DRIVER_ARRIVED', 'PASSENGERS_BOARDED', 'IN_TRANSIT', 'ARRIVED', 'COMPLETED'].includes(trip.status) 
+          },
+          { 
+            status: 'EN_ROUTE', 
+            label: 'En Route to Pickup', 
+            completed: ['EN_ROUTE', 'DRIVER_ARRIVED', 'PASSENGERS_BOARDED', 'IN_TRANSIT', 'ARRIVED', 'COMPLETED'].includes(trip.status) 
+          },
+          { 
             status: 'DRIVER_ARRIVED', 
             label: 'Arrived at Pickup', 
-            completed: ['DRIVER_ARRIVED', 'PASSENGERS_BOARDED', 'IN_TRANSIT', 'COMPLETED'].includes(trip.status) 
+            completed: ['DRIVER_ARRIVED', 'PASSENGERS_BOARDED', 'IN_TRANSIT', 'ARRIVED', 'COMPLETED'].includes(trip.status) 
           },
           { 
             status: 'PASSENGERS_BOARDED', 
             label: 'Passengers Boarded', 
-            completed: ['PASSENGERS_BOARDED', 'IN_TRANSIT', 'COMPLETED'].includes(trip.status) 
+            completed: ['PASSENGERS_BOARDED', 'IN_TRANSIT', 'ARRIVED', 'COMPLETED'].includes(trip.status) 
           },
           { 
             status: 'IN_TRANSIT', 
             label: 'Trip in Progress', 
-            completed: ['IN_TRANSIT', 'COMPLETED'].includes(trip.status) 
+            completed: ['IN_TRANSIT', 'ARRIVED', 'COMPLETED'].includes(trip.status) 
+          },
+          { 
+            status: 'ARRIVED', 
+            label: 'Arrived at Destination', 
+            completed: ['ARRIVED', 'COMPLETED'].includes(trip.status) 
           },
           { 
             status: 'COMPLETED', 
