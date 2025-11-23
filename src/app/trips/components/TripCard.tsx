@@ -13,7 +13,7 @@ import ItineraryModal from './ItineraryModal';
 import type { Trip } from '@/types/trip-types';
 import { format } from 'date-fns';
 import { calculatePriceBreakdown, estimatePricingFromDistance } from '@/lib/pricing/calculations';
-import { calculateDistance, estimateTravelTime } from '@/lib/locations/famous-locations';
+import { calculateDistance, estimateTravelTime } from '@/lib/utils/distance';
 
 export interface TripCardProps {
   trip: Trip;
@@ -46,7 +46,8 @@ const TripCard: React.FC<TripCardProps> = ({
       )
     : 300; // Default estimate
   
-  const duration = estimateTravelTime(distance);
+  const durationInfo = estimateTravelTime(distance);
+  const durationInHours = durationInfo.totalMinutes / 60;
   
   // Calculate dynamic pricing
   const pricingParams = estimatePricingFromDistance(
@@ -223,7 +224,7 @@ const TripCard: React.FC<TripCardProps> = ({
           origin: trip.location.origin.name,
           destination: trip.location.destination.name,
           distance,
-          duration,
+          duration: durationInHours,
         }}
         seatInfo={{
           total: trip.capacity.total,
