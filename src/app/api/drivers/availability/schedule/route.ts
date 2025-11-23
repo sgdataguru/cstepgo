@@ -190,27 +190,30 @@ export async function POST(request: NextRequest) {
     // If this is a current/immediate schedule, update driver availability
     const now = new Date();
     if (startTime <= now && endTime >= now && validatedData.scheduleType !== 'custom') {
-      await prisma.driver.update({
-        where: { id: driver.id },
-        data: {
-          availability: validatedData.scheduleType === 'break' ? 'BUSY' : 'OFFLINE',
-          lastActivityAt: new Date()
-        }
-      });
-      
-      // Log availability change
-      await prisma.driverAvailabilityHistory.create({
-        data: {
-          driverId: driver.id,
-          previousStatus: driver.availability,
-          newStatus: validatedData.scheduleType === 'break' ? 'BUSY' : 'OFFLINE',
-          changeReason: `Scheduled ${validatedData.scheduleType}: ${validatedData.reason || 'No reason provided'}`,
-          triggeredBy: 'system',
-          metadata: {
-            scheduleId: schedule.id,
-            scheduleType: validatedData.scheduleType
+      // Use transaction to ensure atomicity
+      await prisma.$transaction(async (tx) => {
+        await tx.driver.update({
+          where: { id: driver.id },
+          data: {
+            availability: validatedData.scheduleType === 'break' ? 'BUSY' : 'OFFLINE',
+            lastActivityAt: new Date()
           }
-        }
+        });
+        
+        // Log availability change
+        await tx.driverAvailabilityHistory.create({
+          data: {
+            driverId: driver.id,
+            previousStatus: driver.availability,
+            newStatus: validatedData.scheduleType === 'break' ? 'BUSY' : 'OFFLINE',
+            changeReason: `Scheduled ${validatedData.scheduleType}: ${validatedData.reason || 'No reason provided'}`,
+            triggeredBy: 'system',
+            metadata: {
+              scheduleId: schedule.id,
+              scheduleType: validatedData.scheduleType
+            }
+          }
+        });
       });
     }
     

@@ -130,7 +130,7 @@ export const AvailabilityToggle: React.FC<AvailabilityToggleProps> = ({
           acceptsPrivateTrips: data.data.acceptsPrivateTrips,
           acceptsSharedTrips: data.data.acceptsSharedTrips,
           acceptsLongDistance: data.data.acceptsLongDistance,
-          autoOfflineMinutes: preferences.autoOfflineMinutes
+          autoOfflineMinutes: data.data.autoOfflineMinutes || preferences.autoOfflineMinutes
         });
       } else {
         const errorData = await response.json();

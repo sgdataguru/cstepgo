@@ -213,7 +213,9 @@ export class AvailabilityNotificationService {
           subject: data.subject,
           body: data.body,
           status: 'pending',
-          createdAt: new Date()
+          createdAt: new Date(),
+          // Note: Notification model doesn't have metadata field in current schema
+          // Consider adding it if needed for future use
         }
       });
       

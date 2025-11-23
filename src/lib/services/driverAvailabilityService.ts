@@ -17,26 +17,39 @@ export class DriverAvailabilityService {
     const now = new Date();
     
     // Find drivers who are AVAILABLE or BUSY but haven't been active within their timeout window
-    const inactiveDrivers = await prisma.$queryRaw<Array<{
-      id: string;
-      driver_id: string;
-      last_activity_at: Date | null;
-      auto_offline_minutes: number;
-    }>>`
-      SELECT id, "driverId" as driver_id, last_activity_at, auto_offline_minutes
-      FROM "Driver"
-      WHERE status = 'APPROVED'
-        AND availability IN ('AVAILABLE', 'BUSY')
-        AND (
-          last_activity_at IS NULL 
-          OR last_activity_at < NOW() - (auto_offline_minutes || ' minutes')::INTERVAL
-        )
-    `;
+    // Using Prisma's type-safe methods to avoid SQL injection
+    const drivers = await prisma.driver.findMany({
+      where: {
+        status: 'APPROVED',
+        availability: {
+          in: ['AVAILABLE', 'BUSY']
+        },
+        OR: [
+          {
+            lastActivityAt: null
+          },
+          {
+            lastActivityAt: {
+              lt: new Date(Date.now() - 30 * 60 * 1000) // Default 30 minutes if not set
+            }
+          }
+        ]
+      }
+    });
+    
+    // Filter by individual auto_offline_minutes
+    const inactiveDrivers = drivers.filter(driver => {
+      if (!driver.lastActivityAt) return true;
+      const inactiveMinutes = (now.getTime() - driver.lastActivityAt.getTime()) / (1000 * 60);
+      return inactiveMinutes >= driver.autoOfflineMinutes;
+    });
     
     const updatedDrivers: Array<{ id: string; driverId: string; lastActivityAt: Date | null }> = [];
     
     for (const driver of inactiveDrivers) {
       try {
+        const previousAvailability = driver.availability;
+        
         // Update driver to offline
         const updatedDriver = await prisma.driver.update({
           where: { id: driver.id },
@@ -50,24 +63,24 @@ export class DriverAvailabilityService {
         await prisma.driverAvailabilityHistory.create({
           data: {
             driverId: driver.id,
-            previousStatus: 'AVAILABLE', // Could be AVAILABLE or BUSY
+            previousStatus: previousAvailability,
             newStatus: 'OFFLINE',
-            changeReason: `Auto-offline after ${driver.auto_offline_minutes} minutes of inactivity`,
+            changeReason: `Auto-offline after ${driver.autoOfflineMinutes} minutes of inactivity`,
             triggeredBy: 'system',
             metadata: {
-              lastActivityAt: driver.last_activity_at,
-              autoOfflineMinutes: driver.auto_offline_minutes
+              lastActivityAt: driver.lastActivityAt,
+              autoOfflineMinutes: driver.autoOfflineMinutes
             }
           }
         });
         
         updatedDrivers.push({
           id: driver.id,
-          driverId: driver.driver_id,
-          lastActivityAt: driver.last_activity_at
+          driverId: driver.driverId,
+          lastActivityAt: driver.lastActivityAt
         });
       } catch (error) {
-        console.error(`Failed to set driver ${driver.driver_id} offline:`, error);
+        console.error(`Failed to set driver ${driver.driverId} offline:`, error);
       }
     }
     
