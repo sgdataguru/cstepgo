@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { TripAcceptanceModal, useTripAcceptance, type TripOffer } from './TripAcceptanceModal';
 import { 
   Bell, 
@@ -111,42 +111,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     return () => clearInterval(pollInterval);
   }, [driverId, checkActiveOffers]);
 
-  // Load comprehensive dashboard data
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/drivers/dashboard`, {
-          headers: {
-            'x-driver-id': driverId
-          }
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            setDashboardData(result.data);
-            
-            // Load demo notifications if none exist
-            loadNotifications();
-          }
-        }
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        // Load demo data on error for development
-        loadDemoData();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDashboardData();
-    // Refresh data every 30 seconds
-    const refreshInterval = setInterval(loadDashboardData, 30000);
-    return () => clearInterval(refreshInterval);
-  }, [driverId]);
-
-  const loadNotifications = () => {
+  const loadNotifications = useCallback(() => {
     // Demo notifications for development
     const demoNotifications: Notification[] = [
       {
@@ -175,9 +140,9 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
       }
     ];
     setNotifications(demoNotifications);
-  };
+  }, []);
 
-  const loadDemoData = () => {
+  const loadDemoData = useCallback(() => {
     // Demo data for development when backend is not ready
     const demoData: DashboardData = {
       driver: {
@@ -236,7 +201,42 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     };
     setDashboardData(demoData);
     loadNotifications();
-  };
+  }, [driverId, loadNotifications]);
+
+  // Load comprehensive dashboard data
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/drivers/dashboard`, {
+          headers: {
+            'x-driver-id': driverId
+          }
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setDashboardData(result.data);
+            
+            // Load demo notifications if none exist
+            loadNotifications();
+          }
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        // Load demo data on error for development
+        loadDemoData();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+    // Refresh data every 30 seconds
+    const refreshInterval = setInterval(loadDashboardData, 30000);
+    return () => clearInterval(refreshInterval);
+  }, [driverId, loadDemoData, loadNotifications]);
 
   const markNotificationAsRead = (notificationId: string) => {
     setNotifications(prev => 
@@ -404,7 +404,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Today's Earnings</p>
+                    <p className="text-sm font-medium text-gray-600">Today&apos;s Earnings</p>
                     <p className="text-3xl font-bold text-green-600">{formatCurrency(dashboardData.earnings.today)}</p>
                   </div>
                   <TrendingUp className="w-8 h-8 text-green-500" />
@@ -484,7 +484,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                     <p className="text-lg font-medium mb-2">No active trip offers</p>
-                    <p>We'll notify you when new trips become available</p>
+                    <p>We&apos;ll notify you when new trips become available</p>
                   </div>
                 )}
               </div>
@@ -661,7 +661,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                     <DollarSign className="w-6 h-6 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-green-800">Today's Earnings</p>
+                    <p className="text-sm font-medium text-green-800">Today&apos;s Earnings</p>
                     <p className="text-2xl font-bold text-green-900">
                       {formatCurrency(dashboardData.earnings.today)}
                     </p>
@@ -815,7 +815,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                   <div className="p-12 text-center text-gray-500">
                     <Bell className="w-12 h-12 mx-auto mb-4 text-gray-400" />
                     <p className="text-lg font-medium mb-2">No Notifications</p>
-                    <p>You're all caught up!</p>
+                    <p>You&apos;re all caught up!</p>
                   </div>
                 )}
               </div>
