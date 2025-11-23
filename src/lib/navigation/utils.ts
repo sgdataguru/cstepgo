@@ -189,7 +189,10 @@ export function parseDirectionsResponse(response: any): NavigationRoute | null {
     const steps: RouteStep[] = leg.steps.map((step: any) => ({
       distance: step.distance.value,
       duration: step.duration.value,
-      instruction: step.html_instructions.replace(/<[^>]*>/g, ''), // Strip HTML
+      // Strip HTML tags from instructions using browser's DOMParser if available
+      instruction: typeof DOMParser !== 'undefined' 
+        ? new DOMParser().parseFromString(step.html_instructions, 'text/html').documentElement.textContent || step.html_instructions
+        : step.html_instructions.replace(/<[^>]*>/g, ''), // Fallback for server-side
       maneuver: step.maneuver,
       startLocation: {
         lat: step.start_location.lat,

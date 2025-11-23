@@ -207,7 +207,21 @@ export function useNavigation({
       },
       (err) => {
         console.error('Geolocation error:', err);
-        setError('Failed to get location');
+        let errorMessage = 'Failed to get location';
+        
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            errorMessage = 'Location permission denied. Please enable location access in your browser settings.';
+            break;
+          case err.POSITION_UNAVAILABLE:
+            errorMessage = 'Location information unavailable. Please check your GPS signal.';
+            break;
+          case err.TIMEOUT:
+            errorMessage = 'Location request timed out. Please try again.';
+            break;
+        }
+        
+        setError(errorMessage);
       },
       {
         enableHighAccuracy: true,

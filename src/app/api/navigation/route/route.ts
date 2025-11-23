@@ -65,7 +65,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       route,
-      alternatives: data.routes.length > 1 ? data.routes.slice(1).map(parseDirectionsResponse) : [],
+      alternatives: data.routes.length > 1 
+        ? data.routes.slice(1).map(parseDirectionsResponse).filter((r: any) => r !== null)
+        : [],
     });
     
   } catch (error) {
