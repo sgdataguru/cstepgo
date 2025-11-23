@@ -130,6 +130,12 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     handleTimeout
   } = useTripAcceptance();
 
+  // Constants
+  const PLATFORM_FEE_RATE = 0.15;
+  const DRIVER_EARNINGS_RATE = 0.85;
+  const REFRESH_INTERVAL_MS = 30000; // 30 seconds
+  const POLL_INTERVAL_MS = 5000; // 5 seconds
+
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,13 +145,13 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
   useEffect(() => {
     const pollInterval = setInterval(() => {
       checkActiveOffers(driverId);
-    }, 5000); // Check every 5 seconds
+    }, POLL_INTERVAL_MS);
 
     // Initial check
     checkActiveOffers(driverId);
 
     return () => clearInterval(pollInterval);
-  }, [driverId, checkActiveOffers]);
+  }, [driverId, checkActiveOffers, POLL_INTERVAL_MS]);
 
   const loadNotifications = useCallback(() => {
     // Demo notifications for development
@@ -269,10 +275,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     };
 
     loadDashboardData();
-    // Refresh data every 30 seconds
-    const refreshInterval = setInterval(loadDashboardData, 30000);
+    // Refresh data periodically
+    const refreshInterval = setInterval(loadDashboardData, REFRESH_INTERVAL_MS);
     return () => clearInterval(refreshInterval);
-  }, [driverId, loadDemoData, loadNotifications]);
+  }, [driverId, loadDemoData, loadNotifications, REFRESH_INTERVAL_MS]);
 
   const markNotificationAsRead = (notificationId: string) => {
     setNotifications(prev => 
@@ -284,8 +290,29 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  const formatCurrency = (amount: number) => {
-    return `₸${amount.toLocaleString()}`;
+  const formatCurrency = (amount: number, currency: string = 'KZT') => {
+    // Use Intl.NumberFormat for proper localization
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+    
+    // For KZT, use the ₸ symbol
+    if (currency === 'KZT') {
+      return `₸${amount.toLocaleString()}`;
+    }
+    
+    return formatter.format(amount);
+  };
+
+  const getNextMonday = () => {
+    const today = new Date();
+    const daysUntilMonday = (8 - today.getDay()) % 7 || 7;
+    const nextMonday = new Date(today);
+    nextMonday.setDate(today.getDate() + daysUntilMonday);
+    return nextMonday;
   };
 
   const formatDate = (dateString: string) => {
@@ -758,21 +785,21 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                       <p className="text-sm text-gray-600">Total revenue from trips</p>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(Math.round(dashboardData.earnings.thisWeek / 0.85))}
+                      {formatCurrency(Math.round(dashboardData.earnings.thisWeek / DRIVER_EARNINGS_RATE))}
                     </p>
                   </div>
                   <div className="flex justify-between items-center py-3 border-b">
                     <div>
-                      <p className="font-medium text-gray-900">Platform Fee (15%)</p>
+                      <p className="font-medium text-gray-900">Platform Fee ({Math.round(PLATFORM_FEE_RATE * 100)}%)</p>
                       <p className="text-sm text-gray-600">StepperGO service fee</p>
                     </div>
                     <p className="text-lg font-semibold text-red-600">
-                      -{formatCurrency(Math.round(dashboardData.earnings.thisWeek * 0.15 / 0.85))}
+                      -{formatCurrency(Math.round(dashboardData.earnings.thisWeek * PLATFORM_FEE_RATE / DRIVER_EARNINGS_RATE))}
                     </p>
                   </div>
                   <div className="flex justify-between items-center py-3">
                     <div>
-                      <p className="font-medium text-green-900">Net Earnings (85%)</p>
+                      <p className="font-medium text-green-900">Net Earnings ({Math.round(DRIVER_EARNINGS_RATE * 100)}%)</p>
                       <p className="text-sm text-gray-600">Your take-home pay</p>
                     </div>
                     <p className="text-xl font-bold text-green-600">
@@ -793,7 +820,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                     Earnings are automatically transferred to your registered bank account every Monday.
                   </p>
                   <p className="text-sm text-blue-800">
-                    Next payout date: <span className="font-semibold">Monday, {new Date(Date.now() + 86400000 * 7).toLocaleDateString()}</span>
+                    Next payout date: <span className="font-semibold">Monday, {getNextMonday().toLocaleDateString()}</span>
                   </p>
                 </div>
               </div>
