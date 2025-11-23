@@ -4,9 +4,17 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DriverDashboard } from '@/components/driver/DriverDashboard';
 
+interface DriverData {
+  driverId: string;
+  userId: string;
+  driverName: string;
+  email: string;
+  session: string;
+}
+
 export default function DriverDashboardPage() {
   const router = useRouter();
-  const [driverData, setDriverData] = useState<any>(null);
+  const [driverData, setDriverData] = useState<DriverData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

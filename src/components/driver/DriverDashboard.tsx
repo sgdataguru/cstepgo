@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { TripAcceptanceModal, useTripAcceptance, type TripOffer } from './TripAcceptanceModal';
 import { 
   Bell, 
@@ -40,6 +41,43 @@ interface Trip {
   actualEarnings?: number;
 }
 
+interface Passenger {
+  id: string;
+  seatsBooked: number;
+  user: {
+    id: string;
+    name: string;
+    phone: string;
+    avatar?: string;
+  };
+}
+
+interface ActiveTripDetails {
+  trip: {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    departureTime: string;
+    returnTime: string;
+    originName: string;
+    originAddress: string;
+    destName: string;
+    destAddress: string;
+    totalSeats: number;
+    bookedSeats: number;
+    estimatedEarnings: number;
+    organizer: {
+      id: string;
+      name: string;
+      phone: string;
+      avatar?: string;
+    };
+    minutesUntilDeparture: number | null;
+  };
+  passengers: Passenger[];
+}
+
 interface Notification {
   id: string;
   type: 'system' | 'passenger' | 'ride_update';
@@ -60,10 +98,7 @@ interface DashboardData {
     rating: number;
     totalTrips: number;
   };
-  activeTrip: {
-    trip: any;
-    passengers: any[];
-  } | null;
+  activeTrip: ActiveTripDetails | null;
   upcomingTrips: Trip[];
   recentTrips: Trip[];
   earnings: {
@@ -84,6 +119,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
   driverId,
   driverName
 }) => {
+  const router = useRouter();
   const {
     activeOffer,
     isModalOpen,
@@ -244,7 +280,11 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     );
   };
 
-  const formatCurrency = (amount: number, currency: string = 'KZT') => {
+  const markAllNotificationsAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const formatCurrency = (amount: number) => {
     return `₸${amount.toLocaleString()}`;
   };
 
@@ -318,14 +358,14 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
 
               {/* Profile & Settings */}
               <button 
-                onClick={() => window.location.href = '/driver/profile'}
+                onClick={() => router.push('/driver/profile')}
                 className="p-2 hover:bg-gray-100 rounded-full transition"
               >
                 <UserCircle className="w-6 h-6 text-gray-500" />
               </button>
 
               <button 
-                onClick={() => window.location.href = '/driver/settings'}
+                onClick={() => router.push('/driver/settings')}
                 className="p-2 hover:bg-gray-100 rounded-full transition"
               >
                 <Settings className="w-6 h-6 text-gray-500" />
@@ -769,9 +809,7 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                 <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
                 {unreadNotifications > 0 && (
                   <button 
-                    onClick={() => {
-                      notifications.forEach(n => markNotificationAsRead(n.id));
-                    }}
+                    onClick={markAllNotificationsAsRead}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Mark all as read
