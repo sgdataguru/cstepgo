@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import FamousLocationAutocomplete from '@/components/FamousLocationAutocomplete';
 import ItineraryBuilder from './components/ItineraryBuilder';
 import { Location, TripItinerary } from '@/types/trip-types';
 
 export default function CreateTripPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [origin, setOrigin] = useState<Location | null>(null);
   const [destination, setDestination] = useState<Location | null>(null);
@@ -17,10 +18,64 @@ export default function CreateTripPage() {
   const [totalSeats, setTotalSeats] = useState(4);
   const [basePrice, setBasePrice] = useState('');
   const [vehicleType, setVehicleType] = useState('');
+  const [isPrivate, setIsPrivate] = useState(true); // Default to private
   const [showItineraryBuilder, setShowItineraryBuilder] = useState(false);
   const [itinerary, setItinerary] = useState<TripItinerary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Initialize with URL parameters OR demo data
+  useEffect(() => {
+    // Check for URL parameters first
+    const originCity = searchParams.get('origin_city');
+    const destCity = searchParams.get('destination_city');
+    const depDate = searchParams.get('departure_date');
+    const isPrivateParam = searchParams.get('is_private');
+    const passengersParam = searchParams.get('passengers');
+
+    // Set origin if provided
+    if (originCity) {
+      setOrigin({ name: originCity });
+    }
+
+    // Set destination if provided
+    if (destCity) {
+      setDestination({ name: destCity });
+    }
+
+    // Set departure date (from URL or today)
+    if (depDate) {
+      setDepartureDate(depDate);
+    } else {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      setDepartureDate(dateStr);
+    }
+    
+    // Set current time (rounded to next 30 minutes)
+    const now = new Date();
+    const minutes = now.getMinutes();
+    const roundedMinutes = Math.ceil(minutes / 30) * 30;
+    now.setMinutes(roundedMinutes);
+    now.setSeconds(0);
+    const timeStr = now.toTimeString().slice(0, 5);
+    setDepartureTime(timeStr);
+    
+    // Set trip type
+    if (isPrivateParam) {
+      setIsPrivate(isPrivateParam === 'true');
+    }
+
+    // Set passengers
+    if (passengersParam) {
+      setTotalSeats(parseInt(passengersParam));
+    }
+
+    // Generate random demo price (between 3000-15000 KZT)
+    const randomPrice = Math.floor(Math.random() * (15000 - 3000 + 1)) + 3000;
+    const roundedPrice = Math.round(randomPrice / 500) * 500; // Round to nearest 500
+    setBasePrice(roundedPrice.toString());
+  }, [searchParams]);
 
   const handleNext = () => {
     setStep(step + 1);
@@ -98,11 +153,19 @@ export default function CreateTripPage() {
           >
             ← Back to Trips
           </Link>
-          <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">
-            Create a New Trip
-          </h1>
+          <div className="flex items-center gap-4 mb-2">
+            <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white">
+              Create a New Trip
+            </h1>
+            {isPrivate && (
+              <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2 shadow-lg">
+                <span>👑</span>
+                Private Cab
+              </span>
+            )}
+          </div>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Share your ride and split the costs
+            {isPrivate ? 'Exclusive ride just for you and your group' : 'Share your ride and split the costs'}
           </p>
         </div>
 
@@ -185,6 +248,66 @@ export default function CreateTripPage() {
                 Trip Details
               </h2>
 
+              {/* Trip Type Selector */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Trip Type
+                </label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsPrivate(true)}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                      isPrivate
+                        ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">👑</span>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          Private Cab
+                          {isPrivate && <span className="text-purple-500">✓</span>}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Exclusive ride for you and your group
+                        </div>
+                        <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
+                          No sharing • Premium comfort
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsPrivate(false)}
+                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                      !isPrivate
+                        ? 'border-primary-modernSg bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">👥</span>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          Shared Ride
+                          {!isPrivate && <span className="text-primary-modernSg">✓</span>}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Share with other passengers
+                        </div>
+                        <div className="text-xs text-primary-modernSg mt-1 font-medium">
+                          Split costs • Meet new people
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -216,7 +339,7 @@ export default function CreateTripPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Total Seats Available
+                  {isPrivate ? 'Seats Reserved (Your Group)' : 'Total Seats Available'}
                 </label>
                 <input
                   type="number"
@@ -227,11 +350,16 @@ export default function CreateTripPage() {
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                   required
                 />
+                {isPrivate && (
+                  <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
+                    ℹ️ All seats are reserved for your group only
+                  </p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Base Price per Seat (KZT)
+                  {isPrivate ? 'Total Price (for all seats)' : 'Base Price per Seat'} (KZT)
                 </label>
                 <input
                   type="number"
@@ -240,9 +368,14 @@ export default function CreateTripPage() {
                   min="0"
                   step="100"
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
-                  placeholder="e.g., 5000"
+                  placeholder={isPrivate ? "e.g., 20000" : "e.g., 5000"}
                   required
                 />
+                {isPrivate && (
+                  <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
+                    💰 Demo price generated: {basePrice} KZT (total trip cost)
+                  </p>
+                )}
               </div>
 
               <div>
@@ -350,9 +483,22 @@ export default function CreateTripPage() {
 
         {/* Trip Summary Preview */}
         {step > 1 && (
-          <div className="max-w-3xl mx-auto mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Trip Summary</h3>
+          <div className="max-w-3xl mx-auto mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-2 border-purple-200 dark:border-purple-800">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white">Trip Summary</h3>
+              {isPrivate && (
+                <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                  👑 Private
+                </span>
+              )}
+            </div>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                <span className="ml-2 text-gray-900 dark:text-white font-medium">
+                  {isPrivate ? '👑 Private Cab' : '👥 Shared Ride'}
+                </span>
+              </div>
               <div>
                 <span className="text-gray-600 dark:text-gray-400">From:</span>
                 <span className="ml-2 text-gray-900 dark:text-white font-medium">
@@ -382,13 +528,13 @@ export default function CreateTripPage() {
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">Seats:</span>
                     <span className="ml-2 text-gray-900 dark:text-white font-medium">
-                      {totalSeats}
+                      {totalSeats} {isPrivate ? '(Reserved)' : ''}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-600 dark:text-gray-400">Price:</span>
                     <span className="ml-2 text-gray-900 dark:text-white font-medium">
-                      {basePrice ? `${basePrice} KZT/seat` : '-'}
+                      {basePrice ? `${basePrice} KZT${isPrivate ? ' (total)' : '/seat'}` : '-'}
                     </span>
                   </div>
                 </>

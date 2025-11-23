@@ -16,7 +16,8 @@ interface FamousLocationAutocompleteProps {
 }
 
 /**
- * Location Autocomplete Component using Famous Kazakhstan/Kyrgyzstan Locations
+ * Location Autocomplete Component using Famous Central Asia Locations
+ * Supports Kazakhstan, Kyrgyzstan, and Uzbekistan
  */
 export default function FamousLocationAutocomplete({
   value,
@@ -63,9 +64,12 @@ export default function FamousLocationAutocomplete({
   const handleLocationSelect = (location: FamousLocation) => {
     const selectedLoc: Location = {
       name: location.name,
-      address: location.address,
-      placeId: location.placeId || location.id,
-      coordinates: location.coordinates,
+      address: `${location.type}, ${location.country}`,
+      placeId: location.id,
+      coordinates: {
+        lat: location.latitude,
+        lng: location.longitude,
+      },
     };
 
     setSelectedLocation(selectedLoc);
@@ -201,25 +205,29 @@ export default function FamousLocationAutocomplete({
                     <span className="font-medium text-gray-900 dark:text-white">
                       {location.name}
                     </span>
-                    {location.isPopular && (
+                    {location.isFamous && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 rounded-full">
-                        Popular
+                        Famous
                       </span>
                     )}
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {location.description || location.address}
+                    {location.type} • {location.country}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      location.type === 'city' 
+                      location.type === 'CITY' 
                         ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : location.type === 'AIRPORT'
+                        ? 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300'
+                        : location.type === 'LANDMARK'
+                        ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
                         : 'bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300'
                     }`}>
                       {location.type}
                     </span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {location.country}
+                      📍 {location.latitude.toFixed(4)}°, {location.longitude.toFixed(4)}°
                     </span>
                   </div>
                 </div>
@@ -238,7 +246,7 @@ export default function FamousLocationAutocomplete({
           <div className="text-center text-gray-500 dark:text-gray-400">
             <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
             <p className="text-sm">No locations found</p>
-            <p className="text-xs mt-1">Try searching for cities or landmarks in Kazakhstan or Kyrgyzstan</p>
+            <p className="text-xs mt-1">Try searching for cities or landmarks in Kazakhstan, Kyrgyzstan, or Uzbekistan</p>
           </div>
         </div>
       )}

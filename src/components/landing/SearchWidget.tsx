@@ -110,8 +110,8 @@ export function SearchWidget() {
       }
 
       if (formData.bookingType === 'Private') {
-        // For Private: immediately search for available transport options
-        router.push(`/trips?${params.toString()}`);
+        // For Private: redirect to trip creation page with pre-filled data
+        router.push(`/trips/create?${params.toString()}`);
       } else {
         // For Share: save trip intent and show success message
         

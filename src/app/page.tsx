@@ -5,6 +5,34 @@ import Link from 'next/link';
 export default function HomePage() {
   return (
     <main className="min-h-screen">
+      {/* Top Corner Action Buttons */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col sm:flex-row gap-2">
+        <Link
+          href="/module-overview"
+          className="bg-purple-500/90 backdrop-blur-sm hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+        >
+          <span className="text-lg">📊</span>
+          <span className="hidden sm:inline">Module Overview</span>
+          <span className="sm:hidden">Modules</span>
+        </Link>
+        <Link
+          href="/auth/register"
+          className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-900 px-4 py-2 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 border border-gray-200"
+        >
+          <span className="text-lg">👤</span>
+          <span className="hidden sm:inline">Register as Passenger</span>
+          <span className="sm:hidden">Passenger</span>
+        </Link>
+        <Link
+          href="/admin/drivers/new"
+          className="bg-primary-modernSg/90 backdrop-blur-sm hover:bg-primary-modernSg text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+        >
+          <span className="text-lg">🚗</span>
+          <span className="hidden sm:inline">Apply as Driver</span>
+          <span className="sm:hidden">Driver</span>
+        </Link>
+      </div>
+
       <HeroSection>
         {/* Main heading and search widget */}
         <div className="flex flex-col items-center justify-center min-h-screen px-4">

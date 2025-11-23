@@ -18,13 +18,19 @@ model User {
   phoneVerified   Boolean          @default(false)
   avatar          String?
   bio             String?
+  isFirstLogin    Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  analyticsEvents AnalyticsEvent[]
-  bookings        Booking[]
-  driverProfile   Driver?
-  sessions        Session[]
-  trips           Trip[]           @relation("TripOrganizer")
+  
+  // Relations
+  analyticsEvents      AnalyticsEvent[]
+  bookings            Booking[]
+  driverProfile       Driver?
+  sessions            Session[]
+  trips               Trip[]              @relation("TripOrganizer")
+  tripVisibility      TripDriverVisibility[]
+  tripAcceptanceLog   TripAcceptanceLog[] @relation("DriverAcceptanceLog")
+  driverLocation      DriverLocation?
 
   @@index([email])
   @@index([phone])
@@ -46,29 +52,163 @@ model Driver {
   id              String       @id @default(cuid())
   userId          String       @unique
   status          DriverStatus @default(PENDING)
+  
+  // Vehicle Information
   vehicleType     String
   vehicleModel    String
   vehicleMake     String
   vehicleYear     Int
   licensePlate    String
   vehicleColor    String?
+  passengerCapacity Int        @default(4)
+  luggageCapacity   Int        @default(2)
+  
+  // License & Documentation
   licenseNumber   String
   licenseExpiry   DateTime
   documentsUrl    Json
+  
+  // Profile Information
+  bio             String?
+  coverPhotoUrl   String?
+  yearsExperience Int          @default(0)
+  languages       Json?        // Array of {code, name, proficiency}
+  
+  // Verification
+  verificationBadges Json?     // Array of verification badges
+  verificationLevel  String    @default("BASIC") // BASIC, STANDARD, PREMIUM
+  isVerified      Boolean      @default(false)
+  
+  // Performance & Stats
   rating          Float        @default(0)
+  reviewCount     Int          @default(0)
   completedTrips  Int          @default(0)
+  totalDistance   Float        @default(0) // in kilometers
   totalEarnings   Decimal      @default(0)
+  onTimePercentage Float       @default(100)
+  cancellationRate Float       @default(0)
+  responseTime    String       @default("< 1 hour")
+  
+  // Availability
+  availability    String       @default("OFFLINE") // AVAILABLE, BUSY, OFFLINE
+  currentLocation String?      // e.g., "Currently in Almaty"
+  
+  // Application Status
   appliedAt       DateTime     @default(now())
   approvedAt      DateTime?
   rejectedAt      DateTime?
   rejectionReason String?
+  
+  // Admin Registration Fields
+  driverId        String       @unique // DRV-YYYYMMDD-XXXXX
+  fullName        String?
+  nationalId      String?
+  homeCity        String?
+  serviceRadiusKm Int          @default(50)
+  willingToTravel Json?        // Array of strings: ["domestic", "cross_border_kz"]
+  registeredBy    String?      // Admin user ID
+  lastLoginAt     DateTime?
+  
+  // Timestamps
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
-  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payouts         Payout[]
-  trips           Trip[]
+  
+  // Relations
+  user                    User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payouts                 Payout[]
+  trips                   Trip[]
+  vehicles                Vehicle[]
+  reviews                 Review[]
+  credentialDeliveries    DriverCredentialDelivery[]
 
   @@index([userId])
+  @@index([status])
+  @@index([availability])
+  @@index([rating])
+  @@index([driverId])
+}
+
+model Vehicle {
+  id                    String   @id @default(cuid())
+  driverId              String
+  
+  // Basic Info
+  make                  String
+  model                 String
+  year                  Int
+  color                 String
+  licensePlate          String
+  type                  String   // SEDAN, SUV, MINIBUS, BUS, VAN
+  
+  // Capacity
+  passengerCapacity     Int
+  luggageCapacity       Int
+  
+  // Features
+  amenities             Json     // Array of amenities
+  photos                Json     // Array of photo URLs
+  
+  // Documentation
+  insuranceExpiryDate   DateTime?
+  registrationExpiryDate DateTime?
+  
+  // Status
+  isActive              Boolean  @default(true)
+  
+  // Timestamps
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations
+  driver                Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([isActive])
+}
+
+model Review {
+  id              String   @id @default(cuid())
+  driverId        String
+  tripId          String
+  
+  // Review Content
+  rating          Int      // 1-5 stars
+  comment         String?
+  
+  // Reviewer Info
+  reviewerId      String
+  reviewerName    String
+  reviewerPhotoUrl String?
+  
+  // Driver Response
+  response        String?
+  respondedAt     DateTime?
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  driver          Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([tripId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
+model DriverCredentialDelivery {
+  id              String          @id @default(cuid())
+  driverId        String
+  channel         DeliveryChannel
+  status          DeliveryStatus
+  sentAt          DateTime        @default(now())
+  deliveredAt     DateTime?
+  errorMessage    String?
+  
+  driver          Driver          @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  @@index([driverId, channel])
   @@index([status])
 }
 
@@ -97,11 +237,27 @@ model Trip {
   itinerary      Json
   status         TripStatus @default(DRAFT)
   metadata       Json?
+  
+  // Driver Discovery Fields
+  driverDiscoveryRadius Int     @default(10) @map("driver_discovery_radius")
+  estimatedEarnings     Decimal? @map("estimated_earnings")
+  difficultyLevel       String  @default("normal") @map("difficulty_level")
+  tripUrgency          String  @default("normal") @map("trip_urgency")
+  
+  // Trip Acceptance Fields
+  acceptanceDeadline   DateTime? @map("acceptance_deadline")
+  offeredToDriverId    String?   @map("offered_to_driver_id")
+  acceptanceResponseTime Int?    @map("acceptance_response_time") // in seconds
+  
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   publishedAt    DateTime?
   cancelledAt    DateTime?
+  
+  // Relations
   bookings       Booking[]
+  driverVisibility TripDriverVisibility[]
+  acceptanceLog  TripAcceptanceLog[]
   driver         Driver?    @relation(fields: [driverId], references: [id])
   organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
 
@@ -109,6 +265,10 @@ model Trip {
   @@index([driverId])
   @@index([status])
   @@index([departureTime])
+  @@index([originLat, originLng])
+  @@index([status, driverDiscoveryRadius])
+  @@index([acceptanceDeadline])
+  @@index([offeredToDriverId])
 }
 
 model Booking {
@@ -226,6 +386,67 @@ model Notification {
   @@index([createdAt])
 }
 
+model TripDriverVisibility {
+  id             String   @id @default(cuid())
+  tripId         String   @map("trip_id")
+  driverId       String   @map("driver_id")
+  shownAt        DateTime @default(now()) @map("shown_at")
+  viewedAt       DateTime? @map("viewed_at")
+  responseAction String?  @map("response_action") // 'accepted', 'declined', 'expired'
+  responseAt     DateTime? @map("response_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  trip           Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  driver         User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  @@unique([tripId, driverId])
+  @@index([driverId, shownAt])
+  @@index([tripId, responseAction])
+}
+
+model DriverLocation {
+  driverId    String   @id @map("driver_id")
+  latitude    Decimal  @db.Decimal(10, 8)
+  longitude   Decimal  @db.Decimal(11, 8)
+  heading     Decimal? @db.Decimal(5, 2) // Direction in degrees
+  speed       Decimal? @db.Decimal(5, 2) // Speed in km/h
+  accuracy    Decimal? @db.Decimal(8, 2) // GPS accuracy in meters
+  lastUpdated DateTime @default(now()) @map("last_updated")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  
+  // Relations
+  driver      User     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  @@index([latitude, longitude])
+  @@index([isActive, lastUpdated])
+}
+
+model TripAcceptanceLog {
+  id                     String   @id @default(cuid())
+  tripId                 String   @map("trip_id")
+  driverId               String   @map("driver_id")
+  action                 TripAcceptanceAction // 'offered', 'accepted', 'declined', 'timeout'
+  offeredAt              DateTime @default(now()) @map("offered_at")
+  respondedAt            DateTime? @map("responded_at")
+  responseTimeSeconds    Int?     @map("response_time_seconds")
+  ipAddress              String?  @map("ip_address")
+  userAgent              String?  @map("user_agent")
+  timeoutDuration        Int      @default(30) @map("timeout_duration") // seconds
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @default(now()) @updatedAt @map("updated_at")
+  
+  // Relations
+  trip                   Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  driver                 User     @relation("DriverAcceptanceLog", fields: [driverId], references: [id], onDelete: Cascade)
+  
+  @@index([tripId, driverId])
+  @@index([action, offeredAt])
+  @@index([responseTimeSeconds])
+}
+
 enum UserRole {
   PASSENGER
   DRIVER
@@ -242,10 +463,18 @@ enum DriverStatus {
 enum TripStatus {
   DRAFT
   PUBLISHED
+  OFFERED
   FULL
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum TripAcceptanceAction {
+  OFFERED
+  ACCEPTED
+  DECLINED
+  TIMEOUT
 }
 
 enum BookingStatus {
@@ -271,4 +500,17 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
+}
+
+enum DeliveryChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+enum DeliveryStatus {
+  SENT
+  DELIVERED
+  FAILED
+  READ
 }

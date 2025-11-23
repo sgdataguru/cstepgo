@@ -1,0 +1,18 @@
+﻿Category,Vehicle Type,Example Models,Tour Type / Destinations,Base Price (KZT),Base Price (USD),Notes
+City Tour,4-Seater Sedan,JacG7+ Monza+ Mersedes+ Changan,1-Day City Tour,25000,,"Short city tour (Kok Tobe, Park, Museum, Bazaar)"
+City Tour,6-7-Seater Van / Luxury,"Toyota Alphard, Kia Carnival",1-Day City Tour,35000,,VIP / family city trips
+City Tour,9–14 Seater Minivan,"Toyota Hiace, Hyundai Starex",1-Day City Tour,40000,,Small group tours
+City Tour,14–18 Seater Minibus,"Mercedes Sprinter, ",1-Day City Tour,60000,,Large groups
+Near-Almaty 1-Day,4-Seater Sedan,JacG7+ Monza+ Mersedes,Issyk and Turgen,30000,,2–3 stops near Almaty
+Near-Almaty 1-Day,6-7-Seater Van / Luxury,"Toyota Alphard, Kia Carnival",Same as above,40000,,VIP comfort
+Near-Almaty 1,9–14 Seater Minivan,"Toyota Hiace, Hyundai Starex",Same as above,50000,,Mountain roads
+Near-Almaty 1-Day,14–18 Seater Minibus,"Mercedes Sprinter, ",Same as above,70000,,Group day trips
+Day Mountain/Canyon,4-Seater Sedan,Toyota Camry,"Charyn Canyon, Kolsai, Kaindy",65000,,Short overnight trips
+Day Mountain/Canyon,6-Seater Van / Luxury,"Toyota Alphard, Kia Carnival",Same,80000-110x2,,Family & VIP
+Day Mountain/Canyon,6-Seater Off-Road,"Toyota Land Cruiser Prado, Mitsubishi Pajero",Same,130000,,For rough terrain
+Day Mountain/Canyon,9–14 Seater Minivan,"Toyota Hiace, Hyundai H1",Same,90000,,Group canyon trips
+Day Mountain/Canyon,14–17 Seater Minibus,"Mercedes Sprinter, Toyota Coaster",Same,"120,000",,"Tour groups, overnight"
+Airport Transfer,4-Seater Sedan,Toyota Camry,Almaty ,10000,,One-way transfer
+Airport Transfer,6-Seater Van / Luxury,"Toyota Alphard, Kia Carnival",Same,15000,,VIP transfer
+Airport Transfer,9–12 Seater Minivan,"Toyota Hiace, Hyundai H1",Same,20000,,Small group
+Airport Transfer,14–17 Seater Minibus,Mercedes Sprinter,Same,25000,,Group transfer
