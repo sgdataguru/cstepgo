@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(credentials.tempPassword);
     
     // Create user and driver profile in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Create user account
       const user = await tx.user.create({
         data: {

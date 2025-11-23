@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
     
     try {
       // Begin database transaction
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Get the trip and verify it's available
         const trip = await tx.trip.findUnique({
           where: { id: tripId },
@@ -264,7 +264,7 @@ async function handleTripOfferTimeout(tripId: string, driverId: string) {
     }
     
     // Begin database transaction for timeout handling
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       // Reset trip to published status
       await tx.trip.update({
         where: { id: tripId },
@@ -281,7 +281,7 @@ async function handleTripOfferTimeout(tripId: string, driverId: string) {
           tripId: tripId,
           driverId: driverId,
           action: 'TIMEOUT',
-          offeredAt: trip.acceptanceDeadline! - new Date(30 * 1000), // Approximate offer time
+          offeredAt: new Date(trip.acceptanceDeadline!.getTime() - 30 * 1000), // Approximate offer time
           respondedAt: new Date(),
           responseTimeSeconds: 30 // Timeout duration
         }
@@ -351,7 +351,7 @@ export async function GET(request: NextRequest) {
     const timeRemainingSeconds = Math.max(0, Math.floor((deadline.getTime() - now.getTime()) / 1000));
     
     // Calculate trip details
-    const bookedSeats = activeOffer.bookings.reduce((sum, booking) => sum + booking.seatsBooked, 0);
+    const bookedSeats = activeOffer.bookings.reduce((sum: any, booking: any) => sum + booking.seatsBooked, 0);
     const availableSeats = activeOffer.totalSeats - bookedSeats;
     const estimatedEarnings = Math.round((Number(activeOffer.basePrice) + Number(activeOffer.platformFee)) * 0.85);
     

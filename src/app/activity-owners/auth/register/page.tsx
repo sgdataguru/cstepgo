@@ -40,7 +40,7 @@ export default function ActivityOwnerRegistrationPage() {
 
         try {
             await registerOwner(formData);
-            router.push('/activity-owners/auth/verify' as string);
+            router.push('/activity-owners/auth/verify');
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');
         } finally {

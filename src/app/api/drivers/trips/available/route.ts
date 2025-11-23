@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     
     // Filter trips by distance and calculate additional data
     const tripsWithDistance = allTrips
-      .map(trip => {
+      .map((trip: any) => {
         const distance = calculateDistance(
           driverLat,
           driverLng,
@@ -181,20 +181,20 @@ export async function GET(request: NextRequest) {
           urgency: 'normal' // Default urgency
         };
       })
-      .filter(trip => trip.distance <= filters.radius) // Only trips within radius
-      .filter(trip => trip.availableSeats > 0); // Only trips with available seats
+      .filter((trip: any) => trip.distance <= filters.radius) // Only trips within radius
+      .filter((trip: any) => trip.availableSeats > 0); // Only trips with available seats
     
     // Sort trips based on sortBy parameter
     let sortedTrips = [...tripsWithDistance];
     switch (filters.sortBy) {
       case 'distance':
-        sortedTrips.sort((a, b) => a.distance - b.distance);
+        sortedTrips.sort((a: any, b: any) => a.distance - b.distance);
         break;
       case 'fare':
-        sortedTrips.sort((a, b) => b.estimatedEarnings - a.estimatedEarnings);
+        sortedTrips.sort((a: any, b: any) => b.estimatedEarnings - a.estimatedEarnings);
         break;
       case 'time':
-        sortedTrips.sort((a, b) => 
+        sortedTrips.sort((a: any, b: any) => 
           new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime()
         );
         break;
