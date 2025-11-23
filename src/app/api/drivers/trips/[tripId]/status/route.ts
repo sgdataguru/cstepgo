@@ -4,6 +4,7 @@ import {
   notifyPassengersOfStatusChange, 
   shouldNotifyPassengers 
 } from '@/lib/notifications/trip-status-notifications';
+import { rateLimit, RATE_LIMIT_CONFIGS, getClientIp } from '@/lib/utils/rate-limit';
 
 const prisma = new PrismaClient();
 
@@ -39,17 +40,42 @@ export async function PUT(
     const body = await request.json();
     const { status, notes, location } = body;
     
+    // Get authenticated driver first for rate limiting
+    const driver = await getDriverFromRequest(request);
+    
+    // Apply rate limiting per driver
+    const rateLimitResult = rateLimit(
+      `status-update:${driver.id}`,
+      RATE_LIMIT_CONFIGS.STATUS_UPDATE
+    );
+
+    // Add rate limit headers to response
+    const responseHeaders = new Headers(rateLimitResult.headers);
+
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          error: rateLimitResult.error?.message,
+          code: rateLimitResult.error?.code 
+        },
+        { 
+          status: 429, // Too Many Requests
+          headers: responseHeaders
+        }
+      );
+    }
+    
     if (!tripId) {
       return NextResponse.json(
         { error: 'Trip ID is required' },
-        { status: 400 }
+        { status: 400, headers: responseHeaders }
       );
     }
     
     if (!status) {
       return NextResponse.json(
         { error: 'Status is required' },
-        { status: 400 }
+        { status: 400, headers: responseHeaders }
       );
     }
     
@@ -69,12 +95,12 @@ export async function PUT(
     if (!validStatuses.includes(status as TripStatus)) {
       return NextResponse.json(
         { error: `Invalid status. Valid statuses: ${validStatuses.join(', ')}` },
-        { status: 400 }
+        { status: 400, headers: responseHeaders }
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Get authenticated driver (already done above for rate limiting)
+    // const driver = await getDriverFromRequest(request);
     
     // Use database transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -423,6 +449,8 @@ export async function PUT(
         nextActions: getNextActions(status),
         location: location || null
       }
+    }, {
+      headers: responseHeaders
     });
     
   } catch (error) {
