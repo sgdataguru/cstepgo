@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 /**
  * Get authenticated user from request
@@ -80,16 +78,21 @@ export async function POST(request: NextRequest) {
     });
 
     // Create notification for admins
-    await prisma.notification.create({
-      data: {
-        type: 'MESSAGE_REPORT',
-        channel: 'EMAIL',
-        recipient: process.env.ADMIN_EMAIL || 'admin@steppergo.com',
-        subject: 'Message Reported for Abuse',
-        body: `Message ${messageId} was reported by user ${user.id} for: ${reason}`,
-        status: 'PENDING',
-      },
-    });
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (!adminEmail) {
+      console.warn('ADMIN_EMAIL environment variable not set, skipping notification');
+    } else {
+      await prisma.notification.create({
+        data: {
+          type: 'MESSAGE_REPORT',
+          channel: 'EMAIL',
+          recipient: adminEmail,
+          subject: 'Message Reported for Abuse',
+          body: `Message ${messageId} was reported by user ${user.id} for: ${reason}`,
+          status: 'PENDING',
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

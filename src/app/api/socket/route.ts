@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as NetServer } from 'http';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // Store the Socket.IO server instance
 let io: SocketIOServer | null = null;

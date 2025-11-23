@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, KeyboardEvent } from 'react';
+import { MESSAGE_MAX_LENGTH, MESSAGE_WARNING_LENGTH, TYPING_STOP_DEBOUNCE } from '@/lib/constants/chat';
 
 interface MessageInputProps {
   onSend: (content: string) => void;
@@ -33,12 +34,12 @@ export function MessageInput({
         clearTimeout(typingTimeoutRef.current);
       }
 
-      // Stop typing after 1 second of inactivity
+      // Stop typing after inactivity
       typingTimeoutRef.current = setTimeout(() => {
         if (onStopTyping) {
           onStopTyping();
         }
-      }, 1000);
+      }, TYPING_STOP_DEBOUNCE);
     }
 
     // Auto-resize textarea
@@ -95,9 +96,9 @@ export function MessageInput({
           {/* Character count (optional) */}
           {message.length > 0 && (
             <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-              {message.length > 500 && (
-                <span className={message.length > 1000 ? 'text-red-500' : 'text-orange-500'}>
-                  {message.length}/1000
+              {message.length > MESSAGE_WARNING_LENGTH && (
+                <span className={message.length > MESSAGE_MAX_LENGTH ? 'text-red-500' : 'text-orange-500'}>
+                  {message.length}/{MESSAGE_MAX_LENGTH}
                 </span>
               )}
             </div>

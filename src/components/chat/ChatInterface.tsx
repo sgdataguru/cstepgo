@@ -38,6 +38,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [historicalMessages, setHistoricalMessages] = useState<Message[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [currentUserName, setCurrentUserName] = useState('You');
 
   const {
     isConnected,
@@ -52,6 +53,8 @@ export function ChatInterface({
     tripId,
     token,
     enabled: true,
+    currentUserId,
+    currentUserName,
   });
 
   // Load message history via REST API

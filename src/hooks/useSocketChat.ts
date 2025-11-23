@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { SOCKET_IO_PATH, TYPING_INDICATOR_TIMEOUT } from '@/lib/constants/chat';
 
 interface Message {
   id: string;
@@ -28,6 +29,8 @@ interface UseSocketChatOptions {
   tripId: string;
   token: string;
   enabled?: boolean;
+  currentUserId?: string; // Optional: for optimistic UI updates
+  currentUserName?: string; // Optional: for optimistic UI updates
 }
 
 interface UseSocketChatReturn {
@@ -50,6 +53,8 @@ export function useSocketChat({
   tripId,
   token,
   enabled = true,
+  currentUserId,
+  currentUserName,
 }: UseSocketChatOptions): UseSocketChatReturn {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -67,7 +72,7 @@ export function useSocketChat({
     }
 
     const socketInstance = io(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000', {
-      path: '/api/socket',
+      path: SOCKET_IO_PATH,
       auth: { token },
       transports: ['websocket', 'polling'],
     });
@@ -154,26 +159,29 @@ export function useSocketChat({
         metadata: { ...metadata, tempId },
       });
 
-      // Optimistically add message to UI
-      const optimisticMessage: Message = {
-        id: tempId,
-        conversationId,
-        senderId: 'current-user', // Will be replaced by real ID from server
-        content: content.trim(),
-        type,
-        status: 'SENT',
-        sentAt: new Date().toISOString(),
-        sender: {
-          id: 'current-user',
-          name: 'You',
-          avatar: null,
-          role: 'PASSENGER',
-        },
-      };
+      // Optimistically add message to UI (will be replaced by server response)
+      // Note: Using temporary IDs until server confirms with real message
+      if (currentUserId && currentUserName) {
+        const optimisticMessage: Message = {
+          id: tempId,
+          conversationId,
+          senderId: currentUserId,
+          content: content.trim(),
+          type,
+          status: 'SENT',
+          sentAt: new Date().toISOString(),
+          sender: {
+            id: currentUserId,
+            name: currentUserName,
+            avatar: null,
+            role: 'PASSENGER',
+          },
+        };
 
-      setMessages((prev) => [...prev, optimisticMessage]);
+        setMessages((prev) => [...prev, optimisticMessage]);
+      }
     },
-    [socket, conversationId]
+    [socket, conversationId, currentUserId, currentUserName]
   );
 
   // Stop typing indicator
@@ -203,10 +211,10 @@ export function useSocketChat({
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Auto-stop typing after 3 seconds
+    // Auto-stop typing after timeout
     typingTimeoutRef.current = setTimeout(() => {
       stopTyping();
-    }, 3000);
+    }, TYPING_INDICATOR_TIMEOUT);
   }, [socket, conversationId, stopTyping]);
 
   // Mark messages as read
