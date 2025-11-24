@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TripType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -9,6 +9,7 @@ const tripDiscoveryFiltersSchema = z.object({
   radius: z.number().min(1).max(50).default(10), // kilometers
   minFare: z.number().min(0).optional(),
   maxFare: z.number().min(0).optional(),
+  tripTypes: z.array(z.enum(['PRIVATE', 'SHARED'])).optional(), // Filter by trip type
   sortBy: z.enum(['distance', 'fare', 'time']).default('distance'),
   limit: z.number().min(1).max(50).default(20),
   offset: z.number().min(0).default(0)
@@ -69,6 +70,7 @@ export async function GET(request: NextRequest) {
       radius: searchParams.get('radius') ? Number(searchParams.get('radius')) : 10,
       minFare: searchParams.get('minFare') ? Number(searchParams.get('minFare')) : undefined,
       maxFare: searchParams.get('maxFare') ? Number(searchParams.get('maxFare')) : undefined,
+      tripTypes: searchParams.get('tripTypes') ? searchParams.get('tripTypes')!.split(',') as ('PRIVATE' | 'SHARED')[] : undefined,
       sortBy: searchParams.get('sortBy') || 'distance',
       limit: searchParams.get('limit') ? Number(searchParams.get('limit')) : 20,
       offset: searchParams.get('offset') ? Number(searchParams.get('offset')) : 0
@@ -76,6 +78,49 @@ export async function GET(request: NextRequest) {
     
     // Get authenticated driver
     const driver = await getDriverFromRequest(request);
+    
+    // Check driver preferences for trip types
+    const driverAcceptsPrivate = driver.acceptsPrivateTrips;
+    const driverAcceptsShared = driver.acceptsSharedTrips;
+    
+    // Filter trip types based on driver preferences and request filters
+    let allowedTripTypes: TripType[] = [];
+    if (filters.tripTypes && filters.tripTypes.length > 0) {
+      // Use requested trip types, but respect driver preferences
+      if (filters.tripTypes.includes('PRIVATE') && driverAcceptsPrivate) {
+        allowedTripTypes.push(TripType.PRIVATE);
+      }
+      if (filters.tripTypes.includes('SHARED') && driverAcceptsShared) {
+        allowedTripTypes.push(TripType.SHARED);
+      }
+    } else {
+      // No filter specified, use driver preferences
+      if (driverAcceptsPrivate) allowedTripTypes.push(TripType.PRIVATE);
+      if (driverAcceptsShared) allowedTripTypes.push(TripType.SHARED);
+    }
+    
+    // If driver doesn't accept any trip types, return empty result
+    if (allowedTripTypes.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          trips: [],
+          pagination: {
+            total: 0,
+            limit: filters.limit,
+            offset: filters.offset,
+            hasMore: false
+          },
+          driverLocation: {
+            latitude: 43.2381,
+            longitude: 76.9452,
+            isDefault: true
+          },
+          filters: filters,
+          message: 'No trip types match driver preferences'
+        }
+      });
+    }
     
     // For now, use a default driver location (Almaty center)
     // TODO: Implement real-time driver location tracking
@@ -86,6 +131,9 @@ export async function GET(request: NextRequest) {
     const whereConditions: any = {
       status: 'PUBLISHED',
       driverId: null, // Only trips without assigned driver
+      tripType: {
+        in: allowedTripTypes // Filter by allowed trip types
+      },
       departureTime: {
         gte: new Date(), // Only future trips
       },
@@ -156,6 +204,11 @@ export async function GET(request: NextRequest) {
         
         const actualAvailableSeats = trip.totalSeats - totalBookedSeats;
         
+        // Calculate per-seat price for shared rides
+        const pricePerSeat = trip.tripType === 'SHARED' && trip.pricePerSeat 
+          ? Number(trip.pricePerSeat)
+          : Number(trip.basePrice) / trip.totalSeats;
+        
         // Calculate estimated duration (roughly 40 km/h average in city)
         const estimatedDuration = Math.round(distance * 1.5); // minutes
         
@@ -163,6 +216,7 @@ export async function GET(request: NextRequest) {
           id: trip.id,
           title: trip.title,
           description: trip.description,
+          tripType: trip.tripType, // Include trip type
           departureTime: trip.departureTime,
           returnTime: trip.returnTime,
           originName: trip.originName,
@@ -170,15 +224,18 @@ export async function GET(request: NextRequest) {
           destName: trip.destName,
           destAddress: trip.destAddress,
           basePrice: trip.basePrice,
+          pricePerSeat: pricePerSeat, // Add per-seat price
           platformFee: trip.platformFee,
           totalSeats: trip.totalSeats,
           availableSeats: actualAvailableSeats,
+          bookedSeats: totalBookedSeats, // Add booked seats count
           organizer: trip.organizer,
           distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
           estimatedEarnings: Math.round(estimatedEarnings),
           estimatedDuration,
           passengers: trip.bookings.length,
-          urgency: 'normal' // Default urgency
+          urgency: 'normal', // Default urgency
+          tenantId: trip.tenantId, // Include tenant context
         };
       })
       .filter((trip: any) => trip.distance <= filters.radius) // Only trips within radius

@@ -18,6 +18,7 @@ export interface BaseEvent {
 export interface TripOfferEvent extends BaseEvent {
   type: 'trip.offer.created';
   tripId: string;
+  tripType: 'PRIVATE' | 'SHARED'; // Trip type for filtering
   title: string;
   departureTime: string;
   returnTime: string;
@@ -31,13 +32,16 @@ export interface TripOfferEvent extends BaseEvent {
   destLng: number;
   totalSeats: number;
   availableSeats: number;
+  bookedSeats: number; // For shared rides
   basePrice: number;
+  pricePerSeat?: number; // For shared rides
   platformFee: number;
   estimatedEarnings: number;
   distance: number; // Distance from driver's current location in km
   acceptanceDeadline?: string;
   urgency: 'low' | 'normal' | 'high' | 'urgent';
   difficulty: 'easy' | 'normal' | 'challenging' | 'difficult';
+  tenantId?: string; // Multi-tenant context
 }
 
 /**
@@ -130,11 +134,14 @@ export interface TripRequestEvent extends BaseEvent {
 export interface BookingConfirmedEvent extends BaseEvent {
   type: 'booking.confirmed';
   tripId: string;
+  tripType: 'PRIVATE' | 'SHARED'; // Trip type
   bookingId: string;
   passengerId: string;
   passengerName: string;
   seatsBooked: number;
   availableSeats: number;
+  totalSeats: number; // Total seats on trip
+  tenantId?: string; // Multi-tenant context
 }
 
 /**
@@ -143,12 +150,15 @@ export interface BookingConfirmedEvent extends BaseEvent {
 export interface BookingCancelledEvent extends BaseEvent {
   type: 'booking.cancelled';
   tripId: string;
+  tripType: 'PRIVATE' | 'SHARED'; // Trip type
   bookingId: string;
   passengerId: string;
   passengerName: string;
   seatsFreed: number;
   availableSeats: number;
+  totalSeats: number; // Total seats on trip
   reason?: string;
+  tenantId?: string; // Multi-tenant context
 }
 
 /**

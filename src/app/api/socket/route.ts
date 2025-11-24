@@ -66,7 +66,9 @@ function initSocketIO(server: NetServer) {
     socket.join(`user:${userId}`);
 
     // Setup real-time event handlers (trip offers, location updates, etc.)
-    setupRealtimeHandlers(socket, io);
+    if (io) {
+      setupRealtimeHandlers(socket, io);
+    }
 
     // Handle joining a conversation room
     socket.on('join:conversation', async (data: { tripId: string }) => {
