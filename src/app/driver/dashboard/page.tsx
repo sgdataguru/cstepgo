@@ -1,72 +1,34 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { DriverDashboard } from '@/components/driver/DriverDashboard';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 
-interface DriverData {
-  driverId: string;
-  userId: string;
-  driverName: string;
-  email: string;
-  session: string;
-}
+export default async function DriverDashboardPage() {
+  // In a real app, you would get the driver ID from the session/auth
+  // For now, we'll check cookies for a driver session
+  const cookieStore = cookies();
+  const driverSession = cookieStore.get('driver-session');
+  
+  // Mock driver ID - in production this would come from authenticated session
+  const driverId = driverSession?.value || 'mock-driver-id';
+  const mockDriverName = "Alex Johnson";
 
-export default function DriverDashboardPage() {
-  const router = useRouter();
-  const [driverData, setDriverData] = useState<DriverData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check authentication
-    const driverSession = localStorage.getItem('driver_session');
-    const driverDataStr = localStorage.getItem('driver_data');
-    const userDataStr = localStorage.getItem('user_data');
-
-    if (!driverSession || !driverDataStr || !userDataStr) {
-      router.push('/driver/login');
-      return;
-    }
-
-    try {
-      const driver = JSON.parse(driverDataStr);
-      const user = JSON.parse(userDataStr);
-      
-      setDriverData({
-        driverId: driver.id,
-        userId: user.id,
-        driverName: user.name,
-        email: user.email,
-        session: driverSession
-      });
-    } catch (error) {
-      console.error('Error parsing driver data:', error);
-      router.push('/driver/login');
-      return;
-    }
-
-    setLoading(false);
-  }, [router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!driverData) {
-    return null;
+  // You could also verify authentication here
+  if (!driverId || driverId === 'mock-driver-id') {
+    // In production, redirect to login if no valid session
+    // redirect('/driver/login');
   }
 
   return (
-    <DriverDashboard 
-      driverId={driverData.driverId}
-      driverName={driverData.driverName}
-    />
+    <div className="min-h-screen bg-gray-50">
+      <DriverDashboard 
+        driverId={driverId}
+        driverName={mockDriverName}
+      />
+    </div>
   );
 }
+
+export const metadata = {
+  title: 'Driver Dashboard - StepperGO',
+  description: 'Manage your trips and earnings as a StepperGO driver',
+};

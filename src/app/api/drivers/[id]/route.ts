@@ -59,7 +59,7 @@ export async function GET(
       5: 0,
     };
 
-    reviewDistribution.forEach((item) => {
+    reviewDistribution.forEach((item: any) => {
       distribution[item.rating] = item._count.rating;
     });
 
@@ -105,7 +105,7 @@ export async function GET(
           status: driver.availability,
           currentLocation: driver.currentLocation,
         },
-        vehicles: driver.vehicles.map((vehicle) => ({
+        vehicles: driver.vehicles.map((vehicle: any) => ({
           id: vehicle.id,
           make: vehicle.make,
           model: vehicle.model,
@@ -118,7 +118,7 @@ export async function GET(
           amenities: vehicle.amenities as string[],
           photos: vehicle.photos as string[],
         })),
-        recentReviews: driver.reviews.map((review) => ({
+        recentReviews: driver.reviews.map((review: any) => ({
           id: review.id,
           rating: review.rating,
           comment: review.comment,

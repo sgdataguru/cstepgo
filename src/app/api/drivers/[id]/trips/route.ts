@@ -69,7 +69,7 @@ export async function GET(
 
     // Format response
     const response = {
-      trips: trips.map((trip) => ({
+      trips: trips.map((trip: any) => ({
         id: trip.id,
         title: trip.title,
         description: trip.description,
