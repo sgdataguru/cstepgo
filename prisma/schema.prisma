@@ -27,12 +27,10 @@ model User {
   bookings          Booking[]
   driverProfile     Driver?
   sessions          Session[]
-  trips             Trip[]                    @relation("TripOrganizer")
+  trips             Trip[]                 @relation("TripOrganizer")
   tripVisibility    TripDriverVisibility[]
-  tripAcceptanceLog TripAcceptanceLog[]       @relation("DriverAcceptanceLog")
+  tripAcceptanceLog TripAcceptanceLog[]    @relation("DriverAcceptanceLog")
   driverLocation    DriverLocation?
-  sentMessages      Message[]                 @relation("MessageSender")
-  conversations     ConversationParticipant[]
 
   @@index([email])
   @@index([phone])
@@ -95,6 +93,13 @@ model Driver {
   availability    String  @default("OFFLINE") // AVAILABLE, BUSY, OFFLINE
   currentLocation String? // e.g., "Currently in Almaty"
 
+  // Enhanced Availability Management
+  acceptsPrivateTrips Boolean   @default(true) @map("accepts_private_trips")
+  acceptsSharedTrips  Boolean   @default(true) @map("accepts_shared_trips")
+  acceptsLongDistance Boolean   @default(true) @map("accepts_long_distance")
+  lastActivityAt      DateTime? @map("last_activity_at")
+  autoOfflineMinutes  Int       @default(30) @map("auto_offline_minutes")
+
   // Application Status
   appliedAt       DateTime  @default(now())
   approvedAt      DateTime?
@@ -116,19 +121,21 @@ model Driver {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user                    User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payouts                 Payout[]
-  trips                   Trip[]
-  vehicles                Vehicle[]
-  reviews                 Review[]
-  credentialDeliveries    DriverCredentialDelivery[]
-  statusUpdates           TripStatusUpdate[]
+  user                  User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payouts               Payout[]
+  trips                 Trip[]
+  vehicles              Vehicle[]
+  reviews               Review[]
+  credentialDeliveries  DriverCredentialDelivery[]
+  availabilitySchedules DriverAvailabilitySchedule[]
+  availabilityHistory   DriverAvailabilityHistory[]
 
   @@index([userId])
   @@index([status])
   @@index([availability])
   @@index([rating])
   @@index([driverId])
+  @@index([lastActivityAt])
 }
 
 model Vehicle {
@@ -260,10 +267,9 @@ model Trip {
   // Relations
   bookings         Booking[]
   driverVisibility TripDriverVisibility[]
-  acceptanceLog  TripAcceptanceLog[]
-  statusUpdates  TripStatusUpdate[]
-  driver         Driver?    @relation(fields: [driverId], references: [id])
-  organizer      User       @relation("TripOrganizer", fields: [organizerId], references: [id])
+  acceptanceLog    TripAcceptanceLog[]
+  driver           Driver?                @relation(fields: [driverId], references: [id])
+  organizer        User                   @relation("TripOrganizer", fields: [organizerId], references: [id])
 
   @@index([organizerId])
   @@index([driverId])
@@ -451,28 +457,57 @@ model TripAcceptanceLog {
   @@index([responseTimeSeconds])
 }
 
-model TripStatusUpdate {
-  id                String     @id @default(cuid())
-  tripId            String     @map("trip_id")
-  driverId          String     @map("driver_id")
-  previousStatus    TripStatus @map("previous_status")
-  newStatus         TripStatus @map("new_status")
-  notes             String?
-  location          Json?      // {latitude, longitude, accuracy, speed, heading}
-  notificationsSent Int        @default(0) @map("notifications_sent")
-  metadata          Json?      // Additional contextual data
-  ipAddress         String?    @map("ip_address")
-  userAgent         String?    @map("user_agent")
-  createdAt         DateTime   @default(now()) @map("created_at")
-  
+model DriverAvailabilitySchedule {
+  id       String @id @default(cuid())
+  driverId String @map("driver_id")
+
+  // Schedule Details
+  startTime        DateTime @map("start_time")
+  endTime          DateTime @map("end_time")
+  scheduleType     String   @default("break") // 'break', 'unavailable', 'custom'
+  reason           String?
+  isRecurring      Boolean  @default(false) @map("is_recurring")
+  recurringPattern Json?    @map("recurring_pattern") // {dayOfWeek, frequency, etc}
+
+  // Status
+  isActive Boolean @default(true) @map("is_active")
+
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   // Relations
-  trip              Trip       @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  driver            Driver     @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  
-  @@index([tripId, createdAt])
-  @@index([driverId, createdAt])
-  @@index([newStatus, createdAt])
-  @@map("trip_status_updates")
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId, startTime, endTime])
+  @@index([isActive, startTime])
+  @@map("driver_availability_schedules")
+}
+
+model DriverAvailabilityHistory {
+  id       String @id @default(cuid())
+  driverId String @map("driver_id")
+
+  // Status Changes
+  previousStatus String  @map("previous_status")
+  newStatus      String  @map("new_status")
+  changeReason   String? @map("change_reason")
+
+  // Context
+  triggeredBy String  @default("driver") @map("triggered_by") // 'driver', 'system', 'admin'
+  ipAddress   String? @map("ip_address")
+  userAgent   String? @map("user_agent")
+  metadata    Json? // Additional context
+
+  // Timestamp
+  changedAt DateTime @default(now()) @map("changed_at")
+
+  // Relations
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId, changedAt])
+  @@index([triggeredBy, changedAt])
+  @@map("driver_availability_history")
 }
 
 enum UserRole {
