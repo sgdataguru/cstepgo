@@ -3,17 +3,17 @@ import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
 
 // JWT Configuration - MUST be set in environment
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+const JWT_SECRET = (process.env.JWT_SECRET || '') as string;
+const JWT_REFRESH_SECRET = (process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '') as string;
 const JWT_ISSUER = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const JWT_AUDIENCE = 'steppergo-api';
 
 // Token expiration times
-const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'; // 15 minutes
-const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
+const ACCESS_TOKEN_EXPIRES_IN: string | number = process.env.JWT_EXPIRES_IN || '15m'; // 15 minutes
+const REFRESH_TOKEN_EXPIRES_IN: string | number = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
 
 // Encryption key for sensitive payload data - MUST be separate from JWT secrets
-const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY;
+const ENCRYPTION_KEY = (process.env.JWT_ENCRYPTION_KEY || '') as string;
 
 // Validate required environment variables
 if (!JWT_SECRET) {
@@ -100,8 +100,8 @@ export function signAccessToken(
   };
 
   // Sign the token
-  return jwt.sign(tokenPayload, JWT_SECRET!, {
-    expiresIn: options.expiresIn || ACCESS_TOKEN_EXPIRES_IN,
+  return jwt.sign(tokenPayload, JWT_SECRET, {
+    expiresIn: (options.expiresIn || ACCESS_TOKEN_EXPIRES_IN) as string | number,
     audience: options.audience || JWT_AUDIENCE,
     issuer: options.issuer || JWT_ISSUER,
     subject: options.subject || payload.userId,
@@ -129,8 +129,8 @@ export function signRefreshToken(
     iat: Math.floor(Date.now() / 1000),
   };
 
-  return jwt.sign(tokenPayload, JWT_REFRESH_SECRET!, {
-    expiresIn: options.expiresIn || REFRESH_TOKEN_EXPIRES_IN,
+  return jwt.sign(tokenPayload, JWT_REFRESH_SECRET, {
+    expiresIn: (options.expiresIn || REFRESH_TOKEN_EXPIRES_IN) as string | number,
     audience: options.audience || JWT_AUDIENCE,
     issuer: options.issuer || JWT_ISSUER,
     subject: options.subject || payload.userId,
@@ -147,7 +147,7 @@ export function verifyAccessToken(
 ): TokenPayload {
   // Environment validation is done at module load time
   try {
-    const decoded = jwt.verify(token, JWT_SECRET!, {
+    const decoded = jwt.verify(token, JWT_SECRET, {
       audience: options.audience || JWT_AUDIENCE,
       issuer: options.issuer || JWT_ISSUER,
       algorithms: ['HS256'],
@@ -175,7 +175,7 @@ export function verifyRefreshToken(
 ): TokenPayload {
   // Environment validation is done at module load time
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET!, {
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET, {
       audience: options.audience || JWT_AUDIENCE,
       issuer: options.issuer || JWT_ISSUER,
       algorithms: ['HS256'],
