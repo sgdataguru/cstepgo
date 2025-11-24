@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
-import { bookingService } from '@/lib/services/bookingService';
 
 const prisma = new PrismaClient();
 

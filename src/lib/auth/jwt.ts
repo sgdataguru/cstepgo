@@ -3,8 +3,9 @@ import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
 
 // JWT Configuration - MUST be set in environment
-const JWT_SECRET = (process.env.JWT_SECRET || '') as string;
-const JWT_REFRESH_SECRET = (process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || '') as string;
+// Use non-null assertions because we validate below
+const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET = (process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET)!;
 const JWT_ISSUER = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const JWT_AUDIENCE = 'steppergo-api';
 
@@ -13,7 +14,7 @@ const ACCESS_TOKEN_EXPIRES_IN: string | number = process.env.JWT_EXPIRES_IN || '
 const REFRESH_TOKEN_EXPIRES_IN: string | number = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
 
 // Encryption key for sensitive payload data - MUST be separate from JWT secrets
-const ENCRYPTION_KEY = (process.env.JWT_ENCRYPTION_KEY || '') as string;
+const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY!;
 
 // Validate required environment variables
 if (!JWT_SECRET) {
@@ -101,12 +102,12 @@ export function signAccessToken(
 
   // Sign the token
   return jwt.sign(tokenPayload, JWT_SECRET, {
-    expiresIn: (options.expiresIn || ACCESS_TOKEN_EXPIRES_IN) as string | number,
+    expiresIn: options.expiresIn || ACCESS_TOKEN_EXPIRES_IN,
     audience: options.audience || JWT_AUDIENCE,
     issuer: options.issuer || JWT_ISSUER,
     subject: options.subject || payload.userId,
     algorithm: 'HS256',
-  });
+  } as jwt.SignOptions);
 }
 
 /**
@@ -130,12 +131,12 @@ export function signRefreshToken(
   };
 
   return jwt.sign(tokenPayload, JWT_REFRESH_SECRET, {
-    expiresIn: (options.expiresIn || REFRESH_TOKEN_EXPIRES_IN) as string | number,
+    expiresIn: options.expiresIn || REFRESH_TOKEN_EXPIRES_IN,
     audience: options.audience || JWT_AUDIENCE,
     issuer: options.issuer || JWT_ISSUER,
     subject: options.subject || payload.userId,
     algorithm: 'HS256',
-  });
+  } as jwt.SignOptions);
 }
 
 /**
@@ -231,7 +232,11 @@ export function createTokenPair(payload: TokenPayload): {
 /**
  * Parse expiration string to seconds
  */
-function parseExpiration(expiresIn: string): number {
+function parseExpiration(expiresIn: string | number): number {
+  if (typeof expiresIn === 'number') {
+    return expiresIn;
+  }
+  
   const units: { [key: string]: number } = {
     s: 1,
     m: 60,

@@ -207,13 +207,7 @@ export async function createPrivateTripBooking(
 
     // Broadcast trip to nearby drivers using existing infrastructure
     try {
-      await realtimeBroadcastService.broadcastTripOffer({
-        tripId: result.trip.id,
-        originLat: params.origin.lat,
-        originLng: params.origin.lng,
-        radius: 25, // 25km radius
-        estimatedEarnings: Math.round(totalAmount * 0.85)
-      });
+      await realtimeBroadcastService.broadcastTripOffer(result.trip.id);
     } catch (broadcastError) {
       console.error('Failed to broadcast trip to drivers:', broadcastError);
       // Don't fail the booking if broadcast fails
