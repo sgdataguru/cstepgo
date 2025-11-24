@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { driverId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { driverId } = params;
+    const { id: driverId } = params;
     
     // Verify driver exists and get basic info
     const driver = await prisma.user.findUnique({
@@ -119,10 +119,10 @@ export async function GET(
 // Update driver availability status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { driverId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { driverId } = params;
+    const { id: driverId } = params;
     const body = await request.json();
     const { isAvailable, location } = body;
 

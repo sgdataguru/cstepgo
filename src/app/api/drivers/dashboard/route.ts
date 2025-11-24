@@ -156,7 +156,7 @@ export async function GET(request: NextRequest) {
     
     // Calculate total earnings (driver gets 85% after 15% platform fee)
     const calculateEarnings = (trips: { basePrice: any; platformFee: any }[]) => {
-      return trips.reduce((total, trip) => {
+      return trips.reduce((total: any, trip: any) => {
         const tripTotal = Number(trip.basePrice) + Number(trip.platformFee);
         return total + (tripTotal * 0.85);
       }, 0);
@@ -258,11 +258,11 @@ export async function GET(request: NextRequest) {
           totalTrips: tripStats._count.id || 0
         },
         activeTrip: activeTripDetails,
-        upcomingTrips: upcomingTrips.map(trip => ({
+        upcomingTrips: upcomingTrips.map((trip: any) => ({
           ...trip,
           estimatedEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * 0.85)
         })),
-        recentTrips: recentTrips.map(trip => ({
+        recentTrips: recentTrips.map((trip: any) => ({
           ...trip,
           actualEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * 0.85)
         })),

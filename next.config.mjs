@@ -20,7 +20,8 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   experimental: {
-    typedRoutes: true,
+    // Disable typed routes temporarily to fix build issues
+    // typedRoutes: true,
   },
 };
 

@@ -104,7 +104,7 @@ export async function PUT(
     // const driver = await getDriverFromRequest(request);
     
     // Use database transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Get the trip and verify driver ownership
       const trip = await tx.trip.findUnique({
         where: { id: tripId },

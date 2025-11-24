@@ -59,7 +59,7 @@ export async function POST(
     }
     
     // Use database transaction to ensure atomic operation
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Get the trip and check if it's still available
       const trip = await tx.trip.findUnique({
         where: { id: tripId },
@@ -264,7 +264,7 @@ export async function DELETE(
     const driver = await getDriverFromRequest(request);
     
     // Use database transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Get the trip and verify driver ownership
       const trip = await tx.trip.findUnique({
         where: { id: tripId }
