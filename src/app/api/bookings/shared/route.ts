@@ -101,6 +101,11 @@ export async function POST(request: NextRequest) {
       }
 
       // 7. Calculate pricing
+      // Guard against division by zero
+      if (trip.totalSeats === 0) {
+        throw new Error('Invalid trip configuration: totalSeats cannot be zero');
+      }
+      
       const pricePerSeat = trip.pricePerSeat ? Number(trip.pricePerSeat) : Number(trip.basePrice) / trip.totalSeats;
       const totalAmount = calculateSharedRidePrice(
         pricePerSeat,

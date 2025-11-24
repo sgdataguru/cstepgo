@@ -214,7 +214,11 @@ class RealtimeBroadcastService {
         availableSeats: trip.availableSeats,
         bookedSeats: trip.totalSeats - trip.availableSeats, // Calculate booked seats
         basePrice: Number(trip.basePrice),
-        pricePerSeat: trip.pricePerSeat ? Number(trip.pricePerSeat) : Number(trip.basePrice) / trip.totalSeats, // Add per-seat price
+        pricePerSeat: trip.pricePerSeat 
+          ? Number(trip.pricePerSeat) 
+          : trip.totalSeats > 0 
+            ? Number(trip.basePrice) / trip.totalSeats 
+            : Number(trip.basePrice), // Fallback if totalSeats is 0
         platformFee: Number(trip.platformFee),
         estimatedEarnings,
         distance: driverDistance,

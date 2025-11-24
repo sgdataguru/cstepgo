@@ -205,9 +205,12 @@ export async function GET(request: NextRequest) {
         const actualAvailableSeats = trip.totalSeats - totalBookedSeats;
         
         // Calculate per-seat price for shared rides
+        // Guard against division by zero
         const pricePerSeat = trip.tripType === 'SHARED' && trip.pricePerSeat 
           ? Number(trip.pricePerSeat)
-          : Number(trip.basePrice) / trip.totalSeats;
+          : trip.totalSeats > 0 
+            ? Number(trip.basePrice) / trip.totalSeats
+            : Number(trip.basePrice); // Fallback if totalSeats is 0
         
         // Calculate estimated duration (roughly 40 km/h average in city)
         const estimatedDuration = Math.round(distance * 1.5); // minutes

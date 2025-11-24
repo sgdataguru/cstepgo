@@ -100,6 +100,17 @@ export async function GET(
 
     if (trip.tripType === TripType.SHARED) {
       // For shared rides, use pricePerSeat if available, otherwise divide basePrice
+      // Guard against division by zero
+      if (trip.totalSeats === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid trip configuration: totalSeats cannot be zero',
+          },
+          { status: 500 }
+        );
+      }
+      
       pricePerSeat = trip.pricePerSeat 
         ? Number(trip.pricePerSeat)
         : Number(trip.basePrice) / trip.totalSeats;
