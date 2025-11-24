@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as NetServer } from 'http';
 import { prisma } from '@/lib/prisma';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
+import { setupRealtimeHandlers } from '@/lib/realtime/socketHandlers';
 
 // Store the Socket.IO server instance
 let io: SocketIOServer | null = null;
@@ -53,12 +55,18 @@ function initSocketIO(server: NetServer) {
     }
   });
 
+  // Initialize real-time broadcast service
+  realtimeBroadcastService.initialize(io);
+
   io.on('connection', (socket) => {
     const userId = socket.data.userId;
     console.log(`User connected: ${userId}`);
 
     // Join user's personal room
     socket.join(`user:${userId}`);
+
+    // Setup real-time event handlers (trip offers, location updates, etc.)
+    setupRealtimeHandlers(socket, io);
 
     // Handle joining a conversation room
     socket.on('join:conversation', async (data: { tripId: string }) => {
