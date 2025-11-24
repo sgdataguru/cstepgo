@@ -74,7 +74,7 @@ export async function GET(
       5: 0,
     };
 
-    ratingStats.forEach((stat) => {
+    ratingStats.forEach((stat: any) => {
       distribution[stat.rating] = stat._count.rating;
     });
 
@@ -83,7 +83,7 @@ export async function GET(
 
     // Format response
     const response = {
-      reviews: reviews.map((review) => ({
+      reviews: reviews.map((review: any) => ({
         id: review.id,
         rating: review.rating,
         comment: review.comment,

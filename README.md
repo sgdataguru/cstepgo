@@ -15,6 +15,7 @@ A modern ride-sharing and group trip organization platform built with Next.js 14
 8. **Apply as Driver** - Multi-step driver application with document upload
 9. **Pay for Trip Booking** - Integrated payment with Stripe and Kaspi Pay
 10. **Join WhatsApp Group** - Seamless integration with trip communication groups
+11. **GPS Navigation Integration** - Real-time turn-by-turn navigation with ETA updates
 
 ## 📁 Project Structure
 
@@ -60,11 +61,33 @@ StepperGO/
 - **File Storage**: AWS S3 / Supabase Storage
 
 ### External Integrations
-- **Maps**: Google Places API
+- **Maps**: Google Places API + Google Maps Directions API
+- **Navigation**: Real-time GPS tracking with turn-by-turn directions
 - **Payments**: Stripe + Kaspi Pay
 - **Communication**: WhatsApp API
 - **SMS/Email**: Twilio + Postmark
 - **Background Checks**: Checkr API
+
+## 📍 GPS Navigation Feature
+
+StepperGO includes comprehensive GPS navigation for drivers and passengers:
+
+- **Real-time Route Calculation** - Optimal routes using Google Maps Directions API
+- **Turn-by-Turn Directions** - Step-by-step navigation with distance and time
+- **Live ETA Updates** - Continuous arrival time estimates based on traffic
+- **Driver Location Tracking** - Real-time position updates during active trips
+- **Milestone Notifications** - Alerts when approaching pickup/destination
+- **Traffic Visualization** - Optional traffic layer on the map
+
+See [GPS_NAVIGATION.md](docs/GPS_NAVIGATION.md) for detailed documentation.
+
+### Quick Start - Navigation Demo
+
+```bash
+# Visit the navigation demo
+npm run dev
+# Navigate to http://localhost:3000/navigation/demo
+```
 
 ## 🚦 Getting Started
 

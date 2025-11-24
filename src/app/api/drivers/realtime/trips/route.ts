@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
             const driverLng = 76.9452;
             
             const tripsWithDistance = availableTrips
-              .map(trip => {
+              .map((trip: any) => {
                 const R = 6371; // Earth's radius in kilometers
                 const dLat = (trip.originLat - driverLat) * Math.PI / 180;
                 const dLng = (trip.originLng - driverLng) * Math.PI / 180;
@@ -104,8 +104,8 @@ export async function GET(request: NextRequest) {
                   estimatedEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * 0.85)
                 };
               })
-              .filter(trip => trip.distance <= 50) // Within 50km radius
-              .sort((a, b) => a.distance - b.distance);
+              .filter((trip: any) => trip.distance <= 50) // Within 50km radius
+              .sort((a: any, b: any) => a.distance - b.distance);
             
             // Check for driver's active trip status changes
             const activeTrip = await prisma.trip.findFirst({
