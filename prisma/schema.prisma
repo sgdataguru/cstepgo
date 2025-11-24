@@ -118,6 +118,13 @@ model Driver {
   registeredBy    String? // Admin user ID
   lastLoginAt     DateTime?
 
+  // Admin Approval Workflow
+  approvalStatus       String    @default("PENDING_REVIEW") @map("approval_status") // PENDING_REVIEW, APPROVED, REJECTED
+  approvedByAdmin      String?   @map("approved_by")
+  approvedAtAdmin      DateTime? @map("approved_at_admin")
+  rejectionReasonAdmin String?   @map("rejection_reason_admin")
+  adminNotes           String?   @map("admin_notes")
+
   // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -138,6 +145,7 @@ model Driver {
   @@index([rating])
   @@index([driverId])
   @@index([lastActivityAt])
+  @@index([approvalStatus])
 }
 
 model Vehicle {
@@ -678,4 +686,99 @@ enum MessageStatus {
   DELIVERED
   READ
   FAILED
+}
+
+// OTP Model for SMS/WhatsApp verification
+model OTP {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at")
+  attempts   Int       @default(0)
+  verified   Boolean   @default(false)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  verifiedAt DateTime? @map("verified_at")
+
+  @@index([phone])
+  @@index([expiresAt])
+}
+
+// Document Verification Model
+model DocumentVerification {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  driverId       String?   @map("driver_id")
+  documentType   String    @map("document_type") // LICENSE, INSURANCE, REGISTRATION, ID_CARD, etc.
+  documentNumber String?   @map("document_number")
+  documentUrl    String    @map("document_url")
+  status         String    @default("PENDING") // PENDING, VERIFIED, REJECTED
+  uploadedAt     DateTime  @default(now()) @map("uploaded_at")
+  verifiedAt     DateTime? @map("verified_at")
+  verifiedBy     String?   @map("verified_by")
+  rejectionReason String?  @map("rejection_reason")
+  expiryDate     DateTime? @map("expiry_date")
+  metadata       Json?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([driverId])
+  @@index([status])
+  @@index([documentType])
+}
+
+// File Upload Model
+model FileUpload {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  originalName String    @map("original_name")
+  storedName   String    @map("stored_name")
+  mimeType     String    @map("mime_type")
+  sizeBytes    Int       @map("size_bytes")
+  s3Bucket     String?   @map("s3_bucket")
+  s3Key        String?   @map("s3_key")
+  url          String
+  purpose      String // PROFILE_IMAGE, DOCUMENT, VEHICLE_PHOTO, etc.
+  metadata     Json?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  @@index([userId])
+  @@index([purpose])
+  @@index([createdAt])
+}
+
+// Admin Action Audit Log
+model AdminAction {
+  id         String   @id @default(cuid())
+  adminId    String   @map("admin_id")
+  actionType String   @map("action_type") // APPROVE_DRIVER, REJECT_DRIVER, VERIFY_DOCUMENT, etc.
+  targetType String   @map("target_type") // DRIVER, DOCUMENT, USER, etc.
+  targetId   String   @map("target_id")
+  details    Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([adminId])
+  @@index([actionType])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// Refresh Token Model
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  sessionId String    @map("session_id")
+  expiresAt DateTime  @map("expires_at")
+  revoked   Boolean   @default(false)
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([sessionId])
+  @@index([expiresAt])
 }
