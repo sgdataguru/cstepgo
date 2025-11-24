@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
       OFFLINE: 0
     };
     
-    stats.forEach(stat => {
+    stats.forEach((stat: { availability: string; _count: { id: number } }) => {
       availabilityStats[stat.availability as keyof typeof availabilityStats] = stat._count.id;
     });
     
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        drivers: drivers.map(driver => ({
+        drivers: drivers.map((driver: typeof drivers[0]) => ({
           id: driver.id,
           driverId: driver.driverId,
           name: driver.fullName || driver.user.name,
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
           totalDrivers: totalCount,
           activeSchedules: activeSchedulesCount
         },
-        recentChanges: recentChanges.map(change => ({
+        recentChanges: recentChanges.map((change: typeof recentChanges[0]) => ({
           id: change.id,
           driverId: change.driver.driverId,
           driverName: change.driver.fullName || change.driver.user.name,

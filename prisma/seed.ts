@@ -63,6 +63,7 @@ async function main() {
     update: {},
     create: {
       userId: driverUser.id,
+      driverId: `DRV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-DEMO1`,
       status: 'APPROVED',
       vehicleType: 'sedan',
       vehicleModel: 'Toyota Camry',

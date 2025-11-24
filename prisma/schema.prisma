@@ -27,12 +27,12 @@ model User {
   bookings              Booking[]
   driverProfile         Driver?
   sessions              Session[]
-  trips                 Trip[]                       @relation("TripOrganizer")
+  trips                 Trip[]                      @relation("TripOrganizer")
   tripVisibility        TripDriverVisibility[]
-  tripAcceptanceLog     TripAcceptanceLog[]          @relation("DriverAcceptanceLog")
+  tripAcceptanceLog     TripAcceptanceLog[]         @relation("DriverAcceptanceLog")
   driverLocation        DriverLocation?
   conversationParticipants ConversationParticipant[]
-  messagesSent          Message[]                    @relation("MessageSender")
+  messagesSent          Message[]                   @relation("MessageSender")
 
   @@index([email])
   @@index([phone])

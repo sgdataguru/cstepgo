@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 const prisma = new PrismaClient();
 
@@ -164,6 +165,20 @@ export async function POST(
     
     // Calculate estimated earnings
     const estimatedEarnings = (Number(result.trip.basePrice) + Number(result.trip.platformFee)) * 0.85;
+    
+    // Broadcast trip status update to passengers
+    try {
+      await realtimeBroadcastService.broadcastTripStatusUpdate(
+        tripId,
+        'PUBLISHED',
+        'IN_PROGRESS',
+        driver.user.name,
+        'Driver has accepted your trip and will be contacting you shortly'
+      );
+    } catch (broadcastError) {
+      console.error('Failed to broadcast trip acceptance:', broadcastError);
+      // Don't fail the acceptance if broadcast fails
+    }
     
     // Prepare response data
     const responseData = {
