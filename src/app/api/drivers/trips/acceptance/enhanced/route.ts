@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Use database transaction to ensure atomic trip acceptance
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         // Get the trip with full details
         const trip = await tx.trip.findUnique({
           where: { id: tripId },
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
         
         // Check if trip has available capacity
         const totalBookedSeats = trip.bookings.reduce(
-          (sum, booking) => sum + booking.seatsBooked,
+          (sum: any, booking: any) => sum + booking.seatsBooked,
           0
         );
         
@@ -433,7 +433,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Calculate trip metrics
-    const bookedSeats = trip.bookings.reduce((sum, booking) => sum + booking.seatsBooked, 0);
+    const bookedSeats = trip.bookings.reduce((sum: any, booking: any) => sum + booking.seatsBooked, 0);
     const availableSeats = trip.totalSeats - bookedSeats;
     const estimatedEarnings = Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * 0.85);
     
@@ -475,7 +475,7 @@ export async function GET(request: NextRequest) {
           platformFee: trip.platformFee,
           estimatedEarnings: estimatedEarnings,
           organizer: trip.organizer,
-          passengers: trip.bookings.map(booking => ({
+          passengers: trip.bookings.map((booking: any) => ({
             seatsBooked: booking.seatsBooked,
             passengerInfo: booking.passengers,
             customerName: booking.user.name
