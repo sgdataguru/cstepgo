@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
 
-// JWT Configuration
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'your_refresh_secret_key';
+// JWT Configuration - MUST be set in environment
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
 const JWT_ISSUER = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const JWT_AUDIENCE = 'steppergo-api';
 
@@ -12,8 +12,21 @@ const JWT_AUDIENCE = 'steppergo-api';
 const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'; // 15 minutes
 const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
 
-// Encryption key for sensitive payload data
-const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY || process.env.JWT_SECRET || 'fallback_encryption_key';
+// Encryption key for sensitive payload data - MUST be separate from JWT secrets
+const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY;
+
+// Validate required environment variables
+if (!JWT_SECRET) {
+  throw new Error('CRITICAL: JWT_SECRET environment variable is not configured. Application cannot start without it.');
+}
+
+if (!JWT_REFRESH_SECRET) {
+  throw new Error('CRITICAL: JWT_REFRESH_SECRET environment variable is not configured. Application cannot start without it.');
+}
+
+if (!ENCRYPTION_KEY) {
+  throw new Error('CRITICAL: JWT_ENCRYPTION_KEY environment variable is not configured. Application cannot start without it.');
+}
 
 export interface TokenPayload {
   userId: string;
@@ -75,10 +88,7 @@ export function signAccessToken(
   payload: TokenPayload,
   options: TokenOptions = {}
 ): string {
-  if (!JWT_SECRET || JWT_SECRET === 'your_super_secret_jwt_key_here') {
-    throw new Error('JWT_SECRET must be configured in environment variables');
-  }
-
+  // Environment validation is done at module load time
   // Generate unique token ID (jti) for tracking
   const tokenId = crypto.randomBytes(16).toString('hex');
 
@@ -90,7 +100,7 @@ export function signAccessToken(
   };
 
   // Sign the token
-  return jwt.sign(tokenPayload, JWT_SECRET, {
+  return jwt.sign(tokenPayload, JWT_SECRET!, {
     expiresIn: options.expiresIn || ACCESS_TOKEN_EXPIRES_IN,
     audience: options.audience || JWT_AUDIENCE,
     issuer: options.issuer || JWT_ISSUER,
@@ -106,10 +116,7 @@ export function signRefreshToken(
   payload: TokenPayload,
   options: TokenOptions = {}
 ): string {
-  if (!JWT_REFRESH_SECRET || JWT_REFRESH_SECRET === 'your_refresh_secret_key') {
-    throw new Error('JWT_REFRESH_SECRET must be configured in environment variables');
-  }
-
+  // Environment validation is done at module load time
   // Generate unique token ID (jti) for tracking
   const tokenId = crypto.randomBytes(16).toString('hex');
 
@@ -122,7 +129,7 @@ export function signRefreshToken(
     iat: Math.floor(Date.now() / 1000),
   };
 
-  return jwt.sign(tokenPayload, JWT_REFRESH_SECRET, {
+  return jwt.sign(tokenPayload, JWT_REFRESH_SECRET!, {
     expiresIn: options.expiresIn || REFRESH_TOKEN_EXPIRES_IN,
     audience: options.audience || JWT_AUDIENCE,
     issuer: options.issuer || JWT_ISSUER,
@@ -138,12 +145,9 @@ export function verifyAccessToken(
   token: string,
   options: VerifyOptions = {}
 ): TokenPayload {
-  if (!JWT_SECRET || JWT_SECRET === 'your_super_secret_jwt_key_here') {
-    throw new Error('JWT_SECRET must be configured in environment variables');
-  }
-
+  // Environment validation is done at module load time
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, JWT_SECRET!, {
       audience: options.audience || JWT_AUDIENCE,
       issuer: options.issuer || JWT_ISSUER,
       algorithms: ['HS256'],
@@ -169,12 +173,9 @@ export function verifyRefreshToken(
   token: string,
   options: VerifyOptions = {}
 ): TokenPayload {
-  if (!JWT_REFRESH_SECRET || JWT_REFRESH_SECRET === 'your_refresh_secret_key') {
-    throw new Error('JWT_REFRESH_SECRET must be configured in environment variables');
-  }
-
+  // Environment validation is done at module load time
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET, {
+    const decoded = jwt.verify(token, JWT_REFRESH_SECRET!, {
       audience: options.audience || JWT_AUDIENCE,
       issuer: options.issuer || JWT_ISSUER,
       algorithms: ['HS256'],

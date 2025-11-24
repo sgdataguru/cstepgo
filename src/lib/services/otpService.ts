@@ -20,6 +20,7 @@ const OTP_EXPIRY_MINUTES = 10;
 const MAX_OTP_ATTEMPTS = 3;
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 3;
+const MIN_TIME_BETWEEN_OTP_SECONDS = 60; // 1 minute between OTP requests
 
 // Initialize Twilio client
 let twilioClient: ReturnType<typeof twilio> | null = null;
@@ -64,10 +65,16 @@ function checkRateLimit(phone: string): { allowed: boolean; resetAt?: number } {
 }
 
 /**
- * Generate a random OTP code
+ * Generate a random OTP code using cryptographically secure random bytes
  */
 function generateOTP(): string {
-  return crypto.randomInt(100000, 999999).toString();
+  // Use crypto.randomBytes for secure random number generation
+  // Generate a number between 0 and 999999
+  const bytes = crypto.randomBytes(4);
+  const num = bytes.readUInt32BE(0) % 1000000;
+  
+  // Pad with leading zeros to ensure 6 digits
+  return num.toString().padStart(OTP_LENGTH, '0');
 }
 
 /**
@@ -177,8 +184,8 @@ export async function sendOTP(
         (existingOTP.expiresAt.getTime() - Date.now()) / 1000
       );
       
-      if (secondsUntilExpiry > (OTP_EXPIRY_MINUTES * 60) - 60) {
-        // Less than 1 minute since last OTP
+      if (secondsUntilExpiry > (OTP_EXPIRY_MINUTES * 60) - MIN_TIME_BETWEEN_OTP_SECONDS) {
+        // Less than MIN_TIME_BETWEEN_OTP_SECONDS since last OTP
         return {
           success: false,
           message: 'An OTP was recently sent. Please wait before requesting a new one.',

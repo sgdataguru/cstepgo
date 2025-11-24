@@ -19,7 +19,8 @@ async function handlePost(req: NextRequest, user: TokenPayload) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const purpose = (formData.get('purpose') as string) || 'general';
+    const purposeValue = formData.get('purpose') as string;
+    const purpose = purposeValue || 'general';
 
     if (!file) {
       return NextResponse.json(
@@ -28,8 +29,19 @@ async function handlePost(req: NextRequest, user: TokenPayload) {
       );
     }
 
+    // Validate purpose is one of the allowed types
+    const allowedPurposes = ['profileImage', 'document', 'vehiclePhoto', 'general'];
+    if (!allowedPurposes.includes(purpose)) {
+      return NextResponse.json(
+        { error: `Invalid purpose. Must be one of: ${allowedPurposes.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     // Validate file
-    const validation = validateFile(file, { purpose: purpose as any });
+    const validation = validateFile(file, {
+      purpose: purpose as 'profileImage' | 'document' | 'vehiclePhoto' | 'default'
+    });
     if (!validation.valid) {
       return NextResponse.json(
         { error: validation.error },

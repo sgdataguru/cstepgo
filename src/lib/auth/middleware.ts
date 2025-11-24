@@ -33,7 +33,7 @@ export async function authenticateRequest(req: NextRequest): Promise<TokenPayloa
       const session = await prisma.session.findFirst({
         where: {
           userId: payload.userId,
-          token: { contains: payload.sessionId },
+          token: payload.sessionId, // Exact match on session ID
           expiresAt: { gt: new Date() },
         },
       });
