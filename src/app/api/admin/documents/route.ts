@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdmin, AuthenticatedRequest } from '@/lib/auth/middleware';
+import { withAdmin, TokenPayload } from '@/lib/auth/middleware';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -12,11 +12,11 @@ const verificationSchema = z.object({
 /**
  * POST /api/admin/documents - Verify or reject a document
  */
-async function handlePost(req: AuthenticatedRequest) {
+async function handlePost(req: NextRequest, user: TokenPayload) {
   try {
     const body = await req.json();
     const validated = verificationSchema.parse(body);
-    const adminId = req.user!.userId;
+    const adminId = user.userId;
 
     // Get document
     const document = await prisma.documentVerification.findUnique({
@@ -99,7 +99,7 @@ async function handlePost(req: AuthenticatedRequest) {
 /**
  * GET /api/admin/documents - Get all documents for review
  */
-async function handleGet(req: NextRequest) {
+async function handleGet(req: NextRequest, user: TokenPayload) {
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') || 'PENDING';

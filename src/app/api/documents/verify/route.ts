@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthenticatedRequest } from '@/lib/auth/middleware';
+import { withAuth, TokenPayload } from '@/lib/auth/middleware';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
@@ -15,7 +15,7 @@ const documentSchema = z.object({
 /**
  * POST /api/documents/verify - Submit document for verification
  */
-async function handlePost(req: AuthenticatedRequest) {
+async function handlePost(req: NextRequest, user: TokenPayload) {
   try {
     const body = await req.json();
     const validated = documentSchema.parse(body);
@@ -24,7 +24,7 @@ async function handlePost(req: AuthenticatedRequest) {
     const document = await prisma.documentVerification.create({
       data: {
         id: nanoid(),
-        userId: req.user!.userId,
+        userId: user.userId,
         driverId: validated.driverId || null,
         documentType: validated.documentType,
         documentNumber: validated.documentNumber || null,
@@ -63,13 +63,13 @@ async function handlePost(req: AuthenticatedRequest) {
 /**
  * GET /api/documents/verify - Get user's documents
  */
-async function handleGet(req: AuthenticatedRequest) {
+async function handleGet(req: NextRequest, user: TokenPayload) {
   try {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
 
     const where: any = {
-      userId: req.user!.userId,
+      userId: user.userId,
     };
 
     if (status) {

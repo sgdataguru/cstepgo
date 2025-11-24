@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdmin, AuthenticatedRequest } from '@/lib/auth/middleware';
+import { withAdmin, TokenPayload } from '@/lib/auth/middleware';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -12,7 +12,7 @@ const approvalSchema = z.object({
 /**
  * POST /api/admin/approvals/driver - Approve or reject a driver
  */
-async function handlePost(req: AuthenticatedRequest) {
+async function handlePost(req: NextRequest, user: TokenPayload) {
   try {
     const body = await req.json();
     const { driverId } = body;
@@ -25,7 +25,7 @@ async function handlePost(req: AuthenticatedRequest) {
     }
 
     const validated = approvalSchema.parse(body);
-    const adminId = req.user!.userId;
+    const adminId = user.userId;
 
     // Get driver
     const driver = await prisma.driver.findUnique({

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdmin } from '@/lib/auth/middleware';
+import { withAdmin, TokenPayload } from '@/lib/auth/middleware';
 import prisma from '@/lib/prisma';
 
 /**
  * GET /api/admin/approvals - Get list of items pending approval
  */
-async function handleGet(req: NextRequest) {
+async function handleGet(req: NextRequest, user: TokenPayload) {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type') || 'all'; // drivers, documents, all

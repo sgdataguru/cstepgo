@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, AuthenticatedRequest } from '@/lib/auth/middleware';
+import { withAuth, TokenPayload } from '@/lib/auth/middleware';
 import { validateFile, uploadToS3, isS3Configured } from '@/lib/services/fileUploadService';
 import prisma from '@/lib/prisma';
 import { nanoid } from 'nanoid';
@@ -7,7 +7,7 @@ import { nanoid } from 'nanoid';
 /**
  * POST /api/upload - Upload a file
  */
-async function handlePost(req: AuthenticatedRequest) {
+async function handlePost(req: NextRequest, user: TokenPayload) {
   try {
     // Check if S3 is configured
     if (!isS3Configured()) {
@@ -46,7 +46,7 @@ async function handlePost(req: AuthenticatedRequest) {
       buffer,
       file.name,
       file.type,
-      req.user!.userId,
+      user.userId,
       purpose
     );
 
@@ -54,7 +54,7 @@ async function handlePost(req: AuthenticatedRequest) {
     const fileRecord = await prisma.fileUpload.create({
       data: {
         id: nanoid(),
-        userId: req.user!.userId,
+        userId: user.userId,
         originalName: uploadResult.originalName,
         storedName: uploadResult.storedName,
         mimeType: uploadResult.mimeType,

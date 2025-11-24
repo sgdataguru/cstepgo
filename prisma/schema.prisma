@@ -23,14 +23,16 @@ model User {
   updatedAt     DateTime @updatedAt
 
   // Relations
-  analyticsEvents   AnalyticsEvent[]
-  bookings          Booking[]
-  driverProfile     Driver?
-  sessions          Session[]
-  trips             Trip[]                 @relation("TripOrganizer")
-  tripVisibility    TripDriverVisibility[]
-  tripAcceptanceLog TripAcceptanceLog[]    @relation("DriverAcceptanceLog")
-  driverLocation    DriverLocation?
+  analyticsEvents       AnalyticsEvent[]
+  bookings              Booking[]
+  driverProfile         Driver?
+  sessions              Session[]
+  trips                 Trip[]                       @relation("TripOrganizer")
+  tripVisibility        TripDriverVisibility[]
+  tripAcceptanceLog     TripAcceptanceLog[]          @relation("DriverAcceptanceLog")
+  driverLocation        DriverLocation?
+  conversationParticipants ConversationParticipant[]
+  messagesSent          Message[]                    @relation("MessageSender")
 
   @@index([email])
   @@index([phone])
@@ -278,6 +280,7 @@ model Trip {
   acceptanceLog    TripAcceptanceLog[]
   driver           Driver?                @relation(fields: [driverId], references: [id])
   organizer        User                   @relation("TripOrganizer", fields: [organizerId], references: [id])
+  conversation     Conversation?
 
   @@index([organizerId])
   @@index([driverId])
