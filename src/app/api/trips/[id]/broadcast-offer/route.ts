@@ -1,6 +1,6 @@
 /**
  * API endpoint to broadcast trip offers to eligible drivers
- * POST /api/trips/[tripId]/broadcast-offer
+ * POST /api/trips/[id]/broadcast-offer
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,10 +9,10 @@ import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastServic
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { tripId: string } }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { tripId } = params;
+    const { id: tripId } = params;
 
     if (!tripId) {
       return NextResponse.json(

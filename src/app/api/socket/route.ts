@@ -309,10 +309,3 @@ export async function GET(request: NextRequest) {
     path: '/api/socket',
   });
 }
-
-/**
- * Export Socket.IO instance getter
- */
-export function getSocketIO() {
-  return io;
-}

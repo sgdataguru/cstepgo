@@ -304,7 +304,11 @@ export async function PUT(
     });
     
     // Send notifications to passengers if this status change requires it
-    let notificationResult = { success: true, notificationsSent: 0, errors: [] };
+    let notificationResult: { success: boolean; notificationsSent: number; errors: string[] } = { 
+      success: true, 
+      notificationsSent: 0, 
+      errors: [] 
+    };
     
     if (shouldNotifyPassengers(status as TripStatus)) {
       notificationResult = await notifyPassengersOfStatusChange({
@@ -321,14 +325,11 @@ export async function PUT(
         destName: result.trip.destName,
       });
       
-      // Update the status log with notification count
+      // TODO: Update the status log with notification count
+      // tripStatusUpdate model needs to be added to schema
+      // For now, just log it
       if (notificationResult.notificationsSent > 0) {
-        await prisma.tripStatusUpdate.update({
-          where: { id: result.statusUpdateLogId },
-          data: {
-            notificationsSent: notificationResult.notificationsSent
-          }
-        });
+        console.log(`Notified ${notificationResult.notificationsSent} passengers of status change`);
       }
     }
     

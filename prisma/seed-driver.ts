@@ -38,9 +38,14 @@ async function seedDriverData() {
 
     if (!driver) {
       console.log('Creating driver profile...');
+      
+      // Generate driver ID
+      const driverId = `DRV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      
       driver = await prisma.driver.create({
         data: {
           userId: testUser.id,
+          driverId,
           status: 'APPROVED',
           
           // Vehicle info (legacy fields - still required)
