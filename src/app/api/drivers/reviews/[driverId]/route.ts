@@ -9,16 +9,17 @@ const prisma = new PrismaClient();
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { driverId: string } }
 ) {
   try {
-    const { id } = params;
+    const { driverId } = params;
     const { searchParams } = new URL(request.url);
     
     // Parse query parameters
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const sort = searchParams.get('sort') || 'recent'; // 'recent' or 'rating'
+    const sortParam = searchParams.get('sort');
+    const sort = ['recent', 'rating'].includes(sortParam || '') ? sortParam : 'recent'; // Validate sort param
 
     // Validate pagination params
     const validPage = Math.max(1, page);
@@ -32,13 +33,13 @@ export async function GET(
     // Fetch reviews with pagination
     const [reviews, totalReviews] = await Promise.all([
       prisma.review.findMany({
-        where: { driverId: id },
+        where: { driverId: driverId },
         orderBy,
         skip: (validPage - 1) * validLimit,
         take: validLimit,
       }),
       prisma.review.count({
-        where: { driverId: id },
+        where: { driverId: driverId },
       }),
     ]);
 
@@ -46,11 +47,11 @@ export async function GET(
     const [ratingStats, driver] = await Promise.all([
       prisma.review.groupBy({
         by: ['rating'],
-        where: { driverId: id },
+        where: { driverId: driverId },
         _count: { rating: true },
       }),
       prisma.driver.findUnique({
-        where: { id },
+        where: { id: driverId },
         select: {
           rating: true,
           reviewCount: true,
