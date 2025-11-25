@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -153,6 +153,10 @@ export default function MyTripsPage() {
         {isCash ? '💵 Cash' : '💳 Online'}
       </span>
     );
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return `${currency} ${Number(amount).toLocaleString()}`;
   };
 
   if (loading && bookings.length === 0) {
@@ -356,14 +360,14 @@ export default function MyTripsPage() {
                     </div>
                     <div className="ml-6 text-right">
                       <div className="text-2xl font-bold text-gray-900">
-                        {booking.currency} {Number(booking.totalAmount).toLocaleString()}
+                        {formatCurrency(booking.totalAmount, booking.currency)}
                       </div>
                       <div className="text-sm text-gray-500">
                         {booking.seatsBooked} {booking.seatsBooked === 1 ? 'seat' : 'seats'}
                       </div>
                       {booking.trip.tripType === 'SHARED' && booking.trip.pricePerSeat && (
                         <div className="text-xs text-gray-400 mt-1">
-                          {booking.currency} {Number(booking.trip.pricePerSeat).toLocaleString()} per seat
+                          {formatCurrency(booking.trip.pricePerSeat, booking.currency)} per seat
                         </div>
                       )}
                     </div>

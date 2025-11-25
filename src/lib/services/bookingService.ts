@@ -348,7 +348,7 @@ export async function cancelBooking(
           tripId: result.trip.id,
           driverId: result.trip.driverId,
           userId,
-          seatsReleased: booking.seatsBooked,
+          seatsReleased: result.seatsBooked, // Use result from transaction
           reason: reason || 'Cancelled by passenger',
         });
       } catch (error) {

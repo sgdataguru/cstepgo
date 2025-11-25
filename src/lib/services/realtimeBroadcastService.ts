@@ -485,9 +485,8 @@ class RealtimeBroadcastService {
         timestamp: new Date().toISOString(),
       });
 
-      // Also emit to the trip room for other listeners
-      this.io.to(`trip:${data.tripId}`).emit('booking.cancelled', {
-        bookingId: data.bookingId,
+      // Emit to trip room with only non-sensitive info (for availability updates)
+      this.io.to(`trip:${data.tripId}`).emit('trip.availability.updated', {
         tripId: data.tripId,
         seatsReleased: data.seatsReleased,
         timestamp: new Date().toISOString(),
