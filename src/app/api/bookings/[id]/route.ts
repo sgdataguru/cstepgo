@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
+import { Prisma } from '@prisma/client';
 
 /**
  * GET /api/bookings/[id]
@@ -140,7 +141,7 @@ export const PATCH = withAuth(async (
 
     // Handle cancel action
     if (body.action === 'cancel') {
-      const updatedBooking = await prisma.$transaction(async (tx) => {
+      const updatedBooking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Update booking status
         const updated = await tx.booking.update({
           where: { id },

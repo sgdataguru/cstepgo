@@ -143,7 +143,7 @@ export async function GET(
           Number(location.longitude),
           booking.trip.originLat,
           booking.trip.originLng,
-          location.speed || 0
+          location.speed ? Number(location.speed) : 0
         );
       }
     }

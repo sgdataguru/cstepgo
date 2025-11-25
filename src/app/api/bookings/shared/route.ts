@@ -128,7 +128,6 @@ export async function POST(request: NextRequest) {
           currency: trip.currency,
           passengers: validatedData.passengers,
           notes: validatedData.notes,
-          tenantId: validatedData.tenantId || trip.tenantId,
           status: BookingStatus.PENDING,
         },
         include: {
@@ -189,7 +188,6 @@ export async function POST(request: NextRequest) {
           to: result.booking.trip.destName,
         },
         passengers: result.booking.passengers,
-        tenantId: result.booking.tenantId,
         createdAt: result.booking.createdAt,
       }
     }, { status: 201 });
@@ -356,7 +354,6 @@ export async function GET(request: NextRequest) {
           status: booking.status,
           passengers: booking.passengers,
           notes: booking.notes,
-          tenantId: booking.tenantId,
           departureTime: booking.trip.departureTime,
           route: {
             from: booking.trip.originName,

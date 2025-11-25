@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
+import { Prisma } from '@prisma/client';
 
 /**
  * POST /api/bookings
@@ -145,7 +146,7 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
     const totalAmount = pricePerSeat * seatsBooked;
 
     // Create booking with transaction
-    const booking = await prisma.$transaction(async (tx) => {
+    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Create the booking
       const newBooking = await tx.booking.create({
         data: {
