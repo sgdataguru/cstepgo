@@ -458,6 +458,46 @@ class RealtimeBroadcastService {
     // This could be enhanced to remove subscriptions for offline users
     console.log('Subscription cleanup completed');
   }
+
+  /**
+   * Broadcast booking cancellation to driver
+   */
+  async broadcastBookingCancellation(data: {
+    bookingId: string;
+    tripId: string;
+    driverId: string;
+    userId: string;
+    seatsReleased: number;
+    reason: string;
+  }): Promise<void> {
+    if (!this.io) {
+      console.warn('Socket.IO not initialized, cannot broadcast booking cancellation');
+      return;
+    }
+
+    try {
+      // Notify the assigned driver
+      this.io.to(`driver:${data.driverId}`).emit('booking.cancelled', {
+        bookingId: data.bookingId,
+        tripId: data.tripId,
+        seatsReleased: data.seatsReleased,
+        reason: data.reason,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Emit to trip room with only non-sensitive info (for availability updates)
+      this.io.to(`trip:${data.tripId}`).emit('trip.availability.updated', {
+        tripId: data.tripId,
+        seatsReleased: data.seatsReleased,
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log(`Booking cancellation broadcasted for booking ${data.bookingId} to driver ${data.driverId}`);
+    } catch (error) {
+      console.error('Error broadcasting booking cancellation:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

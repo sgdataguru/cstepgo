@@ -17,6 +17,7 @@ interface BookingDetails {
   createdAt: string;
   confirmedAt: string | null;
   cancelledAt: string | null;
+  paymentMethodType: string;
   trip: {
     id: string;
     title: string;
@@ -34,6 +35,8 @@ interface BookingDetails {
     availableSeats: number;
     organizerId: string;
     driverId: string | null;
+    tripType: string;
+    pricePerSeat: number | null;
     driver?: {
       id: string;
       vehicleType: string;
@@ -267,6 +270,46 @@ export default function BookingDetailPage() {
                     <p className="mt-1 text-gray-900">{booking.seatsBooked}</p>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-500">Trip Type</label>
+                    <span className={`mt-1 inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                      booking.trip.tripType === 'SHARED' 
+                        ? 'bg-purple-100 text-purple-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {booking.trip.tripType === 'SHARED' ? '👥 Shared Ride' : '🚗 Private Cab'}
+                    </span>
+                  </div>
+                </div>
+
+                {booking.trip.tripType === 'SHARED' && booking.trip.pricePerSeat && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Price Per Seat</label>
+                      <p className="mt-1 text-gray-900">
+                        {booking.currency} {Number(booking.trip.pricePerSeat).toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-500">Available Seats</label>
+                      <p className="mt-1 text-gray-900">
+                        {booking.trip.availableSeats} of {booking.trip.totalSeats}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Payment Method</label>
+                    <span className={`mt-1 inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                      booking.paymentMethodType === 'CASH_TO_DRIVER' 
+                        ? 'bg-amber-100 text-amber-800' 
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}>
+                      {booking.paymentMethodType === 'CASH_TO_DRIVER' ? '💵 Cash to Driver' : '💳 Online Payment'}
+                    </span>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-500">Trip Status</label>
                     <span className={`mt-1 inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(booking.trip.status)}`}>
                       {booking.trip.status}
@@ -409,6 +452,22 @@ export default function BookingDetailPage() {
                   <p className="mt-1 text-3xl font-bold text-gray-900">
                     {booking.currency} {Number(booking.totalAmount).toLocaleString()}
                   </p>
+                  {booking.trip.tripType === 'SHARED' && booking.trip.pricePerSeat && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {booking.seatsBooked} seat{booking.seatsBooked > 1 ? 's' : ''} × {booking.currency} {Number(booking.trip.pricePerSeat).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-500">Payment Method</label>
+                  <span className={`mt-1 inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                    booking.paymentMethodType === 'CASH_TO_DRIVER' 
+                      ? 'bg-amber-100 text-amber-800' 
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    {booking.paymentMethodType === 'CASH_TO_DRIVER' ? '💵 Cash to Driver' : '💳 Online Payment'}
+                  </span>
                 </div>
 
                 {booking.payment && (

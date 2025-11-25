@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -15,6 +15,7 @@ interface Booking {
   createdAt: string;
   confirmedAt: string | null;
   cancelledAt: string | null;
+  paymentMethodType: string;
   trip: {
     title: string;
     originName: string;
@@ -22,6 +23,8 @@ interface Booking {
     departureTime: string;
     status: string;
     driverId: string | null;
+    tripType: string;
+    pricePerSeat: number | null;
   };
   paymentStatus?: string;
 }
@@ -128,6 +131,32 @@ export default function MyTripsPage() {
         {status}
       </span>
     );
+  };
+
+  const getTripTypeBadge = (tripType: string) => {
+    const isShared = tripType === 'SHARED';
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        isShared ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+      }`}>
+        {isShared ? '👥 Shared' : '🚗 Private'}
+      </span>
+    );
+  };
+
+  const getPaymentMethodBadge = (method: string) => {
+    const isCash = method === 'CASH_TO_DRIVER';
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+        isCash ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+      }`}>
+        {isCash ? '💵 Cash' : '💳 Online'}
+      </span>
+    );
+  };
+
+  const formatCurrency = (amount: number, currency: string) => {
+    return `${currency} ${Number(amount).toLocaleString()}`;
   };
 
   if (loading && bookings.length === 0) {
@@ -308,7 +337,7 @@ export default function MyTripsPage() {
                           {format(new Date(booking.trip.departureTime), 'PPP p')}
                         </span>
                       </div>
-                      <div className="mt-3 flex items-center gap-3">
+                      <div className="mt-3 flex items-center gap-2 flex-wrap">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
                             booking.status
@@ -316,19 +345,31 @@ export default function MyTripsPage() {
                         >
                           {booking.status}
                         </span>
+                        {getTripTypeBadge(booking.trip.tripType)}
+                        {getPaymentMethodBadge(booking.paymentMethodType)}
                         {getPaymentStatusBadge(booking.paymentStatus)}
                         {booking.trip.driverId && (
-                          <span className="text-xs text-gray-500">Driver Assigned</span>
+                          <span className="text-xs text-gray-500 flex items-center">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                            Driver Assigned
+                          </span>
                         )}
                       </div>
                     </div>
                     <div className="ml-6 text-right">
                       <div className="text-2xl font-bold text-gray-900">
-                        {booking.currency} {Number(booking.totalAmount).toLocaleString()}
+                        {formatCurrency(booking.totalAmount, booking.currency)}
                       </div>
                       <div className="text-sm text-gray-500">
                         {booking.seatsBooked} {booking.seatsBooked === 1 ? 'seat' : 'seats'}
                       </div>
+                      {booking.trip.tripType === 'SHARED' && booking.trip.pricePerSeat && (
+                        <div className="text-xs text-gray-400 mt-1">
+                          {formatCurrency(booking.trip.pricePerSeat, booking.currency)} per seat
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
