@@ -58,7 +58,7 @@ export const ActivityScheduleSchema = z.object({
   startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format'),
   endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format'),
   isRecurring: z.boolean().default(true),
-  specificDate: z.string().datetime().optional(),
+  specificDate: z.string().datetime().transform(str => new Date(str)).optional(),
 });
 
 // Cancellation Policy Schema

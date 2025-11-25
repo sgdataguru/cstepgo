@@ -373,23 +373,36 @@ export async function updateActivity(
     
     // Update photos if provided
     if (photoIds && photoIds.length > 0) {
-      // Unlink old photos (don't delete, they might be reused)
+      // Reset cover status for all current photos
       await tx.activityPhoto.updateMany({
         where: { activityId },
-        data: { activityId: null as any }, // This might need adjustment based on schema
+        data: { isCover: false },
       });
       
-      // Link new photos
-      await tx.activityPhoto.updateMany({
-        where: { id: { in: photoIds } },
-        data: { activityId },
-      });
+      // Delete photos not in the new list
+      const existingPhotoIds = (await tx.activityPhoto.findMany({
+        where: { activityId },
+        select: { id: true },
+      })).map(p => p.id);
       
-      // Set first photo as cover
-      await tx.activityPhoto.update({
-        where: { id: photoIds[0] },
-        data: { isCover: true },
-      });
+      const photosToRemove = existingPhotoIds.filter(id => !photoIds.includes(id));
+      if (photosToRemove.length > 0) {
+        await tx.activityPhoto.deleteMany({
+          where: { id: { in: photosToRemove } },
+        });
+      }
+      
+      // Update photo order and set cover
+      for (let i = 0; i < photoIds.length; i++) {
+        await tx.activityPhoto.update({
+          where: { id: photoIds[i] },
+          data: {
+            activityId,
+            order: i,
+            isCover: i === 0, // First photo is cover
+          },
+        });
+      }
     }
     
     // Update owner stats if status changed
@@ -527,11 +540,18 @@ export async function getActivityBookings(
   
   const { status, startDate, endDate, page, limit } = query;
   
+  // Status mapping from query to database values
+  const STATUS_MAP: Record<string, string> = {
+    'UPCOMING': 'CONFIRMED',
+    'COMPLETED': 'COMPLETED',
+    'CANCELLED': 'CANCELLED',
+  };
+  
   // Build where clause
   const where: any = { activityId };
   
   if (status) {
-    where.status = status === 'UPCOMING' ? 'CONFIRMED' : status.toUpperCase();
+    where.status = STATUS_MAP[status] || status.toUpperCase();
   }
   
   if (startDate || endDate) {
