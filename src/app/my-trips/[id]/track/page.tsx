@@ -6,6 +6,23 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { usePassengerWebSocket } from '@/hooks/usePassengerWebSocket';
 import { DriverLocationUpdateEvent } from '@/types/realtime-events';
+import dynamic from 'next/dynamic';
+
+// Dynamically import map component to avoid SSR issues
+const LiveTrackingMap = dynamic(
+  () => import('@/components/tracking/LiveTrackingMap'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading map...</p>
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface TrackingData {
   canTrack: boolean;
@@ -284,27 +301,35 @@ export default function TrackDriverPage() {
           {/* Map Section - Takes 2 columns on large screens */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="h-[500px] bg-gray-200 relative">
-                {/* Placeholder for map - will be enhanced with Google Maps */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">🗺️</div>
-                    <p className="text-gray-600 font-medium">Live Map</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Driver location updates in real-time
-                    </p>
-                    {currentLocation && (
-                      <div className="mt-4 text-xs text-gray-500">
-                        <p>Lat: {currentLocation.latitude.toFixed(6)}</p>
-                        <p>Lng: {currentLocation.longitude.toFixed(6)}</p>
-                        <p className="mt-1">
-                          Last updated: {format(new Date(currentLocation.lastUpdated), 'HH:mm:ss')}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+              <div className="h-[500px] relative">
+                <LiveTrackingMap
+                  driverLocation={currentLocation ? {
+                    latitude: currentLocation.latitude,
+                    longitude: currentLocation.longitude,
+                    heading: currentLocation.heading,
+                    speed: currentLocation.speed,
+                  } : null}
+                  pickupLocation={{
+                    latitude: trackingData.trip.origin.latitude,
+                    longitude: trackingData.trip.origin.longitude,
+                    name: trackingData.trip.origin.name,
+                  }}
+                  destinationLocation={{
+                    latitude: trackingData.trip.destination.latitude,
+                    longitude: trackingData.trip.destination.longitude,
+                    name: trackingData.trip.destination.name,
+                  }}
+                  showDestination={true}
+                />
               </div>
+              {currentLocation && (
+                <div className="p-3 bg-gray-50 border-t text-xs text-gray-500">
+                  Last updated: {format(new Date(currentLocation.lastUpdated), 'HH:mm:ss')}
+                  {currentLocation.accuracy && (
+                    <span className="ml-3">Accuracy: ±{currentLocation.accuracy.toFixed(0)}m</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
