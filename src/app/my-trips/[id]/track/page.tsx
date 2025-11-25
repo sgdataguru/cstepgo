@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { usePassengerWebSocket } from '@/hooks/usePassengerWebSocket';
 import { DriverLocationUpdateEvent } from '@/types/realtime-events';
+import { calculateETA } from '@/lib/utils/location';
 import dynamic from 'next/dynamic';
 
 // Dynamically import map component to avoid SSR issues
@@ -168,35 +169,6 @@ export default function TrackDriverPage() {
     enabled: !!trackingData?.canTrack && tripIds.length > 0,
     onDriverLocation: handleDriverLocation,
   });
-
-  // Calculate ETA helper
-  function calculateETA(
-    fromLat: number,
-    fromLng: number,
-    toLat: number,
-    toLng: number,
-    currentSpeed: number
-  ): { pickupMinutes: number; distance: number; isNearby: boolean } {
-    const R = 6371;
-    const dLat = toRad(toLat - fromLat);
-    const dLon = toRad(toLng - fromLng);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-
-    const speed = currentSpeed > 0 ? currentSpeed : 40;
-    const pickupMinutes = Math.round((distance / speed) * 60 * 1.2);
-    const isNearby = distance < 1.0;
-
-    return { pickupMinutes, distance: Number(distance.toFixed(2)), isNearby };
-  }
-
-  function toRad(degrees: number): number {
-    return degrees * (Math.PI / 180);
-  }
 
   // Render loading state
   if (loading) {

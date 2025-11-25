@@ -53,7 +53,7 @@ export default function LiveTrackingMap({
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         
         if (!apiKey) {
-          setMapError('Google Maps API key not configured');
+          setMapError('Google Maps API key not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.');
           return;
         }
 

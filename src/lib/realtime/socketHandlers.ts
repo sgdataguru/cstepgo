@@ -13,6 +13,7 @@ import {
   PassengerSubscription,
 } from '@/types/realtime-events';
 import { WEBSOCKET_HEARTBEAT_INTERVAL } from '@/lib/constants/realtime';
+import { calculateETA } from '@/lib/utils/location';
 
 /**
  * Setup real-time event handlers for a socket connection
@@ -363,34 +364,6 @@ export function setupRealtimeHandlers(socket: Socket, io: SocketIOServer): void 
       socket.emit('error', { message: 'Failed to update location' });
     }
   });
-
-  // Helper function to calculate ETA
-  function calculateETA(
-    fromLat: number,
-    fromLng: number,
-    toLat: number,
-    toLng: number,
-    currentSpeed: number
-  ): { minutes: number; distance: number } {
-    const R = 6371; // Earth's radius in km
-    const dLat = toRad(toLat - fromLat);
-    const dLon = toRad(toLng - fromLng);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-
-    const speed = currentSpeed > 0 ? currentSpeed : 40; // Default 40 km/h
-    const minutes = Math.round((distance / speed) * 60 * 1.2); // Add 20% buffer
-
-    return { minutes, distance };
-  }
-
-  function toRad(degrees: number): number {
-    return degrees * (Math.PI / 180);
-  }
 
   // Send heartbeat periodically
   const heartbeatInterval = setInterval(() => {

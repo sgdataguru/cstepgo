@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAuth } from '@/lib/auth';
+import { calculateETA } from '@/lib/utils/location';
 
 /**
  * GET /api/passengers/bookings/:bookingId/track
@@ -190,49 +191,4 @@ export async function GET(
       { status: 500 }
     );
   }
-}
-
-/**
- * Calculate ETA to destination using Haversine distance and average speed
- */
-function calculateETA(
-  fromLat: number,
-  fromLng: number,
-  toLat: number,
-  toLng: number,
-  currentSpeed: number
-): {
-  pickupMinutes: number;
-  distance: number;
-  isNearby: boolean;
-} {
-  // Calculate distance using Haversine formula
-  const R = 6371; // Earth's radius in km
-  const dLat = toRad(toLat - fromLat);
-  const dLon = toRad(toLng - fromLng);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c; // Distance in km
-
-  // Use current speed or assume average city speed of 40 km/h
-  const speed = currentSpeed > 0 ? currentSpeed : 40;
-  
-  // Calculate ETA in minutes, add 20% buffer for traffic
-  const pickupMinutes = Math.round((distance / speed) * 60 * 1.2);
-
-  // Driver is nearby if within 1 km
-  const isNearby = distance < 1.0;
-
-  return {
-    pickupMinutes,
-    distance: Number(distance.toFixed(2)),
-    isNearby,
-  };
-}
-
-function toRad(degrees: number): number {
-  return degrees * (Math.PI / 180);
 }
