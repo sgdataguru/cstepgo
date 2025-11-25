@@ -300,37 +300,34 @@ model Trip {
 }
 
 model Booking {
-  id          String        @id @default(cuid())
-  tripId      String
-  userId      String
-  status      BookingStatus @default(PENDING)
-  seatsBooked Int           @default(1)
-  totalAmount Decimal
-  currency    String        @default("KZT")
-  passengers  Json
-  notes       String?
-  
-  // Multi-Tenant Fields
-  tenantId    String?       @map("tenant_id")
-  
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  confirmedAt DateTime?
-  cancelledAt DateTime?
-  trip        Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id])
-  payment     Payment?
+  id                String            @id @default(cuid())
+  tripId            String
+  userId            String
+  status            BookingStatus     @default(PENDING)
+  seatsBooked       Int               @default(1)
+  totalAmount       Decimal
+  currency          String            @default("KZT")
+  passengers        Json
+  notes             String?
+  paymentMethodType PaymentMethodType @default(ONLINE) @map("payment_method_type")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  confirmedAt       DateTime?
+  cancelledAt       DateTime?
+  trip              Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id])
+  payment           Payment?
 
   @@index([tripId])
   @@index([userId])
   @@index([status])
-  @@index([tenantId])
+  @@index([paymentMethodType])
 }
 
 model Payment {
   id                 String        @id @default(cuid())
   bookingId          String        @unique
-  stripeIntentId     String        @unique
+  stripeIntentId     String?       @unique
   stripeClientSecret String?
   amount             Decimal
   currency           String        @default("KZT")
@@ -598,6 +595,11 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
+}
+
+enum PaymentMethodType {
+  ONLINE
+  CASH_TO_DRIVER
 }
 
 enum DeliveryChannel {

@@ -1,182 +1,300 @@
-/**
- * Bookings API Routes
- * POST /api/bookings - Create new private trip booking
- * GET /api/bookings - Get user's bookings (requires auth)
- */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { bookingService } from '@/lib/services/bookingService';
-
-// Validation schema for booking creation
-const createBookingSchema = z.object({
-  userId: z.string().min(1, 'User ID is required'),
-  tripType: z.enum(['private', 'shared']),
-  origin: z.object({
-    name: z.string().min(1),
-    address: z.string().min(1),
-    lat: z.number(),
-    lng: z.number()
-  }),
-  destination: z.object({
-    name: z.string().min(1),
-    address: z.string().min(1),
-    lat: z.number(),
-    lng: z.number()
-  }),
-  departureTime: z.string().datetime(),
-  returnTime: z.string().datetime().optional(),
-  passengers: z.array(z.object({
-    name: z.string().min(1),
-    phone: z.string().optional(),
-    email: z.string().email().optional()
-  })).min(1),
-  seatsBooked: z.number().int().min(1).max(8),
-  notes: z.string().optional(),
-  vehicleType: z.string().optional()
-});
+import { prisma } from '@/lib/prisma';
+import { withAuth } from '@/lib/auth/middleware';
 
 /**
  * POST /api/bookings
- * Create a new private trip booking
+ * 
+ * Create a new booking for a trip
+ * Supports both private and shared ride bookings
+ * Handles payment method selection (ONLINE or CASH_TO_DRIVER)
+ * 
+ * Request body:
+ * {
+ *   tripId: string,
+ *   seatsBooked: number,
+ *   passengers: Array<{name: string, age?: number, phone?: string}>,
+ *   paymentMethodType: 'ONLINE' | 'CASH_TO_DRIVER',
+ *   notes?: string
+ * }
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, context: any) => {
   try {
+    const { user } = context;
     const body = await request.json();
+    
+    const {
+      tripId,
+      seatsBooked = 1,
+      passengers,
+      paymentMethodType = 'ONLINE',
+      notes,
+    } = body;
 
-    // Validate request body
-    const validatedData = createBookingSchema.parse(body);
+    // Validate required fields
+    if (!tripId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Missing required field: tripId',
+        },
+        { status: 400 }
+      );
+    }
 
-    // Convert string dates to Date objects
-    const bookingParams = {
-      ...validatedData,
-      departureTime: new Date(validatedData.departureTime),
-      returnTime: validatedData.returnTime ? new Date(validatedData.returnTime) : undefined
-    };
+    if (!passengers || !Array.isArray(passengers) || passengers.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'At least one passenger is required',
+        },
+        { status: 400 }
+      );
+    }
 
-    // Create booking
-    const result = await bookingService.createPrivateTripBooking(bookingParams);
+    if (passengers.length !== seatsBooked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Number of passengers (${passengers.length}) must match seats booked (${seatsBooked})`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate payment method type
+    if (!['ONLINE', 'CASH_TO_DRIVER'].includes(paymentMethodType)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Invalid payment method type. Must be ONLINE or CASH_TO_DRIVER',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Fetch trip details
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      include: {
+        bookings: {
+          where: {
+            status: {
+              in: ['PENDING', 'CONFIRMED'],
+            },
+          },
+        },
+      },
+    });
+
+    if (!trip) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Trip not found',
+        },
+        { status: 404 }
+      );
+    }
+
+    // Check if trip is published and available
+    if (trip.status !== 'PUBLISHED') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Trip is not available for booking',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if enough seats are available
+    if (trip.availableSeats < seatsBooked) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Not enough seats available. Only ${trip.availableSeats} seats remaining.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already has a booking for this trip
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        tripId,
+        userId: user.id,
+        status: {
+          in: ['PENDING', 'CONFIRMED'],
+        },
+      },
+    });
+
+    if (existingBooking) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'You already have an active booking for this trip',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Calculate total amount
+    const pricePerSeat = Number(trip.basePrice);
+    const totalAmount = pricePerSeat * seatsBooked;
+
+    // Create booking with transaction
+    const booking = await prisma.$transaction(async (tx) => {
+      // Create the booking
+      const newBooking = await tx.booking.create({
+        data: {
+          tripId,
+          userId: user.id,
+          seatsBooked,
+          totalAmount,
+          currency: trip.currency,
+          passengers,
+          notes,
+          paymentMethodType,
+          status: paymentMethodType === 'CASH_TO_DRIVER' ? 'CONFIRMED' : 'PENDING',
+          confirmedAt: paymentMethodType === 'CASH_TO_DRIVER' ? new Date() : null,
+        },
+      });
+
+      // Update trip available seats
+      await tx.trip.update({
+        where: { id: tripId },
+        data: {
+          availableSeats: {
+            decrement: seatsBooked,
+          },
+        },
+      });
+
+      // If cash payment, create a payment record with pending cash status
+      if (paymentMethodType === 'CASH_TO_DRIVER') {
+        await tx.payment.create({
+          data: {
+            bookingId: newBooking.id,
+            amount: totalAmount,
+            currency: trip.currency,
+            status: 'PENDING',
+            paymentMethod: 'cash',
+            metadata: {
+              paymentType: 'cash_to_driver',
+              description: 'Payment to be collected by driver',
+            },
+          },
+        });
+      }
+
+      return newBooking;
+    });
+
+    // Fetch the complete booking with relations
+    const completeBooking = await prisma.booking.findUnique({
+      where: { id: booking.id },
+      include: {
+        trip: {
+          select: {
+            id: true,
+            title: true,
+            departureTime: true,
+            originName: true,
+            destName: true,
+          },
+        },
+        payment: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
 
     return NextResponse.json({
       success: true,
       data: {
-        bookingId: result.booking.id,
-        tripId: result.trip.id,
-        status: result.booking.status,
-        totalAmount: result.booking.totalAmount,
-        currency: result.booking.currency,
-        message: result.message
-      }
-    }, { status: 201 });
-
+        booking: completeBooking,
+        message:
+          paymentMethodType === 'CASH_TO_DRIVER'
+            ? 'Booking confirmed. Payment will be collected by driver.'
+            : 'Booking created. Please proceed with payment.',
+        requiresPayment: paymentMethodType === 'ONLINE',
+      },
+    });
   } catch (error) {
     console.error('Error creating booking:', error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({
+    return NextResponse.json(
+      {
         success: false,
-        error: 'Validation error',
-        details: error.errors
-      }, { status: 400 });
-    }
-
-    if (error instanceof Error) {
-      return NextResponse.json({
-        success: false,
-        error: error.message
-      }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to create booking'
-    }, { status: 500 });
+        error: 'Failed to create booking',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
-}
+});
 
 /**
  * GET /api/bookings
- * Get user's bookings with optional status filter
- * Query params: userId (required), status (optional: all, pending, confirmed, cancelled, completed)
+ * 
+ * Get all bookings for the authenticated user
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, context: any) => {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-    const status = searchParams.get('status') || 'all';
+    const { user } = context;
+    const searchParams = request.nextUrl.searchParams;
+    const status = searchParams.get('status');
 
-    if (!userId) {
-      return NextResponse.json({
-        success: false,
-        error: 'userId query parameter is required'
-      }, { status: 400 });
+    const where: any = {
+      userId: user.id,
+    };
+
+    if (status && status !== 'all') {
+      where.status = status.toUpperCase();
     }
 
-    // Get user's bookings
-    const bookings = await bookingService.getUserBookings(userId, status);
-
-    // Transform bookings for response
-    const transformedBookings = bookings.map((booking: any) => ({
-      id: booking.id,
-      tripId: booking.tripId,
-      status: booking.status.toLowerCase(),
-      seatsBooked: booking.seatsBooked,
-      totalAmount: Number(booking.totalAmount),
-      currency: booking.currency,
-      passengers: booking.passengers,
-      notes: booking.notes,
-      createdAt: booking.createdAt,
-      confirmedAt: booking.confirmedAt,
-      cancelledAt: booking.cancelledAt,
-      trip: {
-        id: booking.trip.id,
-        title: booking.trip.title,
-        description: booking.trip.description,
-        departureTime: booking.trip.departureTime,
-        returnTime: booking.trip.returnTime,
-        status: booking.trip.status.toLowerCase(),
-        origin: {
-          name: booking.trip.originName,
-          address: booking.trip.originAddress,
-          coordinates: {
-            lat: booking.trip.originLat,
-            lng: booking.trip.originLng
-          }
+    const bookings = await prisma.booking.findMany({
+      where,
+      include: {
+        trip: {
+          select: {
+            id: true,
+            title: true,
+            departureTime: true,
+            returnTime: true,
+            originName: true,
+            destName: true,
+            status: true,
+          },
         },
-        destination: {
-          name: booking.trip.destName,
-          address: booking.trip.destAddress,
-          coordinates: {
-            lat: booking.trip.destLat,
-            lng: booking.trip.destLng
-          }
-        },
-        driver: booking.trip.driver ? {
-          id: booking.trip.driver.id,
-          name: booking.trip.driver.user.name,
-          avatar: booking.trip.driver.user.avatar,
-          rating: booking.trip.driver.rating,
-          vehicleModel: booking.trip.driver.vehicleModel,
-          vehicleMake: booking.trip.driver.vehicleMake,
-          licensePlate: booking.trip.driver.licensePlate
-        } : null
-      }
-    }));
+        payment: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      data: {
-        bookings: transformedBookings,
-        count: transformedBookings.length
-      }
+      data: bookings,
+      count: bookings.length,
     });
-
   } catch (error) {
     console.error('Error fetching bookings:', error);
-
-    return NextResponse.json({
-      success: false,
-      error: 'Failed to fetch bookings'
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Failed to fetch bookings',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
+    );
   }
-}
+});
