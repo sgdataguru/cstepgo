@@ -4,6 +4,7 @@
  */
 
 import { PrismaClient, Booking, BookingStatus, TripStatus, Prisma } from '@prisma/client';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,8 @@ export interface BookingWithDetails extends Booking {
     availableSeats: number;
     organizerId: string;
     driverId: string | null;
+    tripType: string;
+    pricePerSeat: Prisma.Decimal | null;
     driver?: {
       id: string;
       userId: string;
@@ -64,6 +67,7 @@ export interface BookingSummary {
   createdAt: Date;
   confirmedAt: Date | null;
   cancelledAt: Date | null;
+  paymentMethodType: string;
   trip: {
     title: string;
     originName: string;
@@ -71,6 +75,8 @@ export interface BookingSummary {
     departureTime: Date;
     status: TripStatus;
     driverId: string | null;
+    tripType: string;
+    pricePerSeat: Prisma.Decimal | null;
   };
   paymentStatus?: string;
 }
@@ -119,6 +125,8 @@ export async function getUserBookings(
           departureTime: true,
           status: true,
           driverId: true,
+          tripType: true,
+          pricePerSeat: true,
         },
       },
       payment: {
@@ -142,7 +150,12 @@ export async function getUserBookings(
     createdAt: booking.createdAt,
     confirmedAt: booking.confirmedAt,
     cancelledAt: booking.cancelledAt,
-    trip: booking.trip,
+    paymentMethodType: booking.paymentMethodType,
+    trip: {
+      ...booking.trip,
+      tripType: booking.trip.tripType,
+      pricePerSeat: booking.trip.pricePerSeat,
+    },
     paymentStatus: booking.payment?.status,
   }));
 }
@@ -326,6 +339,23 @@ export async function cancelBooking(
 
       return updatedBooking;
     });
+
+    // Broadcast cancellation to driver (if assigned) and update trip discovery
+    if (result.trip.driverId) {
+      try {
+        await realtimeBroadcastService.broadcastBookingCancellation({
+          bookingId: result.id,
+          tripId: result.trip.id,
+          driverId: result.trip.driverId,
+          userId,
+          seatsReleased: booking.seatsBooked,
+          reason: reason || 'Cancelled by passenger',
+        });
+      } catch (error) {
+        console.error('Error broadcasting cancellation:', error);
+        // Don't fail the cancellation if broadcast fails
+      }
+    }
 
     return {
       success: true,
