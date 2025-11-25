@@ -198,6 +198,7 @@ class RealtimeBroadcastService {
       const offerEvent: TripOfferEvent = {
         type: 'trip.offer.created',
         tripId: trip.id,
+        tripType: trip.tripType || 'PRIVATE', // Include trip type
         title: trip.title,
         departureTime: trip.departureTime.toISOString(),
         returnTime: trip.returnTime.toISOString(),
@@ -211,13 +212,20 @@ class RealtimeBroadcastService {
         destLng: trip.destLng,
         totalSeats: trip.totalSeats,
         availableSeats: trip.availableSeats,
+        bookedSeats: trip.totalSeats - trip.availableSeats, // Calculate booked seats
         basePrice: Number(trip.basePrice),
+        pricePerSeat: trip.pricePerSeat 
+          ? Number(trip.pricePerSeat) 
+          : trip.totalSeats > 0 
+            ? Number(trip.basePrice) / trip.totalSeats 
+            : Number(trip.basePrice), // Fallback if totalSeats is 0
         platformFee: Number(trip.platformFee),
         estimatedEarnings,
         distance: driverDistance,
         acceptanceDeadline: acceptanceDeadline.toISOString(),
         urgency,
         difficulty,
+        tenantId: trip.tenantId || undefined, // Include tenant context
         timestamp: new Date().toISOString(),
       };
 

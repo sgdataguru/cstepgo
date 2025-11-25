@@ -22,10 +22,17 @@ const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const MAX_REQUESTS_PER_WINDOW = 3;
 const MIN_TIME_BETWEEN_OTP_SECONDS = 60; // 1 minute between OTP requests
 
-// Initialize Twilio client
+// Initialize Twilio client (only if credentials are provided)
 let twilioClient: ReturnType<typeof twilio> | null = null;
-if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN) {
-  twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+try {
+  if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && 
+      TWILIO_ACCOUNT_SID !== 'dev' && TWILIO_AUTH_TOKEN !== 'dev') {
+    twilioClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN);
+  } else {
+    console.warn('Twilio credentials not configured. OTP service will run in mock mode.');
+  }
+} catch (error) {
+  console.warn('Failed to initialize Twilio client:', error);
 }
 
 export interface OTPResult {
