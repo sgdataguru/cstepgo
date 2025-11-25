@@ -1,5 +1,14 @@
 # 42 - Admin Monitor Bookings and Revenue - Implementation Planning
 
+## Document Status
+
+**Plan Status**: ✅ READY FOR DEVELOPMENT  
+**Implementation Status**: ⬜ NOT STARTED  
+**Created**: January 25, 2025  
+**Last Updated**: November 25, 2025
+
+> **Note**: This implementation plan is comprehensive and ready for development. It covers monitoring for both trip bookings (Private/Shared) and activity bookings. Activity features (Stories 40-41) are referenced in this plan but are not yet implemented in the codebase. The admin dashboard can initially launch with trip monitoring only, with activity support added when Stories 40-41 are completed.
+
 ## Project Context
 **Technical Stack**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui  
 **Backend**: Next.js API Routes, PostgreSQL, Prisma ORM, Redis (caching)  
@@ -14,7 +23,8 @@
 ## Pre-conditions
 
 - User must have ADMIN role
-- Stories 33-41 completed (all booking types available)
+- Stories 33-39 completed (trip booking types available: Private, Shared, Online payments, Driver payouts)
+- **Optional**: Stories 40-41 completed (activity bookings - can be added later)
 - Database populated with booking and payment data
 - Analytics queries optimized with indexes
 - Real-time update mechanism configured
@@ -46,6 +56,28 @@
 - **Export**: CSV/Excel export functionality
 - **Notifications**: Alert system for critical issues
 - **Caching**: Redis for dashboard metrics
+
+### Current Data Model (Prisma Schema)
+
+The admin dashboard will primarily work with these **existing models**:
+
+**Core Models (Available Now)**:
+- `User` - Passengers, drivers, admins
+- `Booking` - Trip bookings (Private/Shared with `tripType` field)
+- `Trip` - Trip details, pricing, schedules
+- `Payment` - Payment transactions and status
+- `Payout` - Driver payout records
+- `Driver` - Driver profiles and stats
+- `AnalyticsEvent` - Platform activity tracking
+- `AdminAction` - Admin action audit log
+
+**Future Models (Stories 40-41)**:
+- `ActivityOwner` - Activity provider profiles
+- `Activity` - Activity listings
+- `ActivityBooking` - Activity reservations
+- `ActivitySchedule` - Time slot management
+
+> **Implementation Note**: The dashboard can launch with trip monitoring only (using existing models). Activity-related features can be implemented as a Phase 2 enhancement once Stories 40-41 are completed and the Activity models are added to the schema.
 
 ### Security Requirements
 - RBAC: Only ADMIN role can access dashboard
@@ -1329,7 +1361,46 @@ src/app/api/admin/
 
 **OVERALL STATUS: ⬜ NOT STARTED**
 
-### Phase 1: Dashboard Foundation (Week 1) ⬜
+### Phased Approach
+
+The admin dashboard can be built in phases to deliver value incrementally:
+
+**Phase 1: Trip Monitoring MVP (Week 1) ⬜** - *Delivers immediate operational value*
+- [ ] Dashboard layout and navigation
+- [ ] Metrics cards for trip bookings
+- [ ] Active trips monitoring
+- [ ] Basic trip bookings list
+- [ ] API endpoints for trip data only
+- [ ] Authentication and authorization
+
+**Phase 2: Analytics & Revenue (Week 2) ⬜** - *Adds business intelligence*
+- [ ] Revenue metrics and trends
+- [ ] Booking analytics charts
+- [ ] Top performers (drivers)
+- [ ] Payment status tracking
+- [ ] Export functionality (CSV)
+- [ ] Caching layer with Redis
+
+**Phase 3: Advanced Features (Week 2-3) ⬜** - *Enhances admin capabilities*
+- [ ] Detailed booking view modal
+- [ ] Advanced filters and search
+- [ ] User management integration
+- [ ] Booking timeline/history
+- [ ] Real-time WebSocket updates
+- [ ] Auto-refresh functionality
+
+**Phase 4: Activity Support (Week 3+) ⬜** - *Adds activity marketplace monitoring*
+- [ ] Activity booking integration (requires Stories 40-41)
+- [ ] Activity owner performance metrics
+- [ ] Unified booking type filters
+- [ ] Activity-specific analytics
+- [ ] Cross-product revenue reports
+
+> **MVP Recommendation**: Implement Phases 1-3 first (trip monitoring only) to provide immediate operational value. Phase 4 can be added once Activity features are completed.
+
+### Original Implementation Plan (If All Features Available)
+
+#### Phase 1: Dashboard Foundation (Week 1) ⬜
 - [ ] Dashboard layout
 - [ ] Metrics cards
 - [ ] API endpoints
@@ -1355,10 +1426,23 @@ src/app/api/admin/
 
 ## Dependencies
 
-- **All Stories 33-41**: Data sources
-- **WebSocket**: Real-time updates
-- **Chart.js/Recharts**: Visualizations
-- **Redis**: Caching
+### Required (MVP)
+- **Stories 33-39**: Core trip booking data sources
+  - 33: Private trip bookings
+  - 34: Shared ride bookings
+  - 35: Online payment integration
+  - 36: Booking management
+  - 37: Driver tracking
+  - 38: Trip history/receipts
+  - 39: Driver payouts
+- **WebSocket**: Real-time updates for active trips
+- **Chart.js/Recharts**: Data visualizations
+- **Redis**: Caching for dashboard performance
+
+### Optional (Phase 2)
+- **Stories 40-41**: Activity booking data sources (can be added later)
+  - 40: Activity owner management
+  - 41: Activity marketplace
 
 ## Risk Assessment
 
@@ -1394,7 +1478,14 @@ describe('Admin Dashboard', () => {
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** January 25, 2025  
+**Document Version:** 2.0  
+**Last Updated:** November 25, 2025  
 **Status:** Ready for Development  
-**Estimated Effort:** 3 weeks (1 developer)
+
+**Estimated Effort:**
+- **MVP (Phases 1-3)**: 2-3 weeks (1 developer) - Trip monitoring only
+- **Full Feature (All Phases)**: 3-4 weeks (1 developer) - Includes activity support
+
+**Changelog:**
+- v2.0 (Nov 25, 2025): Added phased approach, clarified Activity model dependencies, updated data model section
+- v1.0 (Jan 25, 2025): Initial comprehensive plan
