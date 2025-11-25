@@ -311,13 +311,48 @@ export function setupRealtimeHandlers(socket: Socket, io: SocketIOServer): void 
         },
       });
 
-      // If associated with an active trip, broadcast to passengers
+      // If associated with an active trip, broadcast to passengers with ETA
       if (tripId) {
-        await realtimeBroadcastService.broadcastDriverLocation(
-          tripId,
-          driver.id,
-          { latitude, longitude, heading, speed, accuracy }
-        );
+        // Get trip details to calculate ETA
+        const trip = await prisma.trip.findUnique({
+          where: { id: tripId },
+          select: {
+            originLat: true,
+            originLng: true,
+            destLat: true,
+            destLng: true,
+            status: true,
+          },
+        });
+
+        if (trip) {
+          // Calculate ETA to pickup and destination
+          const etaToPickup = calculateETA(
+            latitude,
+            longitude,
+            trip.originLat,
+            trip.originLng,
+            speed || 0
+          );
+
+          const etaToDestination = calculateETA(
+            latitude,
+            longitude,
+            trip.destLat,
+            trip.destLng,
+            speed || 0
+          );
+
+          await realtimeBroadcastService.broadcastDriverLocation(
+            tripId,
+            driver.id,
+            { latitude, longitude, heading, speed, accuracy },
+            {
+              pickupMinutes: etaToPickup.minutes,
+              destinationMinutes: etaToDestination.minutes,
+            }
+          );
+        }
       }
 
       socket.emit('driver:location:updated', {
@@ -328,6 +363,34 @@ export function setupRealtimeHandlers(socket: Socket, io: SocketIOServer): void 
       socket.emit('error', { message: 'Failed to update location' });
     }
   });
+
+  // Helper function to calculate ETA
+  function calculateETA(
+    fromLat: number,
+    fromLng: number,
+    toLat: number,
+    toLng: number,
+    currentSpeed: number
+  ): { minutes: number; distance: number } {
+    const R = 6371; // Earth's radius in km
+    const dLat = toRad(toLat - fromLat);
+    const dLon = toRad(toLng - fromLng);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(fromLat)) * Math.cos(toRad(toLat)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    const speed = currentSpeed > 0 ? currentSpeed : 40; // Default 40 km/h
+    const minutes = Math.round((distance / speed) * 60 * 1.2); // Add 20% buffer
+
+    return { minutes, distance };
+  }
+
+  function toRad(degrees: number): number {
+    return degrees * (Math.PI / 180);
+  }
 
   // Send heartbeat periodically
   const heartbeatInterval = setInterval(() => {
