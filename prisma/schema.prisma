@@ -33,6 +33,9 @@ model User {
   driverLocation        DriverLocation?
   conversationParticipants ConversationParticipant[]
   messagesSent          Message[]                   @relation("MessageSender")
+  activityOwnerProfile  ActivityOwner?
+  activityBookings      ActivityBooking[]
+  activityReviews       ActivityReview[]
 
   @@index([email])
   @@index([phone])
@@ -534,6 +537,7 @@ enum UserRole {
   PASSENGER
   DRIVER
   ADMIN
+  ACTIVITY_OWNER
 }
 
 enum DriverStatus {
@@ -800,4 +804,249 @@ model RefreshToken {
   @@index([tokenHash])
   @@index([sessionId])
   @@index([expiresAt])
+}
+
+// ============================================
+// ACTIVITY OWNER & ACTIVITIES MODELS
+// ============================================
+
+model ActivityOwner {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+  
+  // Business Information
+  businessName        String  @map("business_name")
+  businessType        String  @map("business_type") // INDIVIDUAL, COMPANY, NGO
+  taxId               String? @map("tax_id")
+  registrationNumber  String? @map("registration_number")
+  
+  // Contact & Location
+  businessAddress     String  @map("business_address")
+  city                String
+  country             String  @default("Kazakhstan")
+  phone               String
+  website             String?
+  
+  // Verification
+  verificationStatus  String  @default("PENDING") @map("verification_status") // PENDING, VERIFIED, REJECTED
+  verifiedAt          DateTime? @map("verified_at")
+  verifiedBy          String?   @map("verified_by")
+  verificationNotes   String?   @map("verification_notes")
+  
+  // Categories
+  categories          String[] // Array of activity categories
+  
+  // Documents
+  documentsUrl        Json?    @map("documents_url")
+  
+  // Stats
+  totalActivities     Int      @default(0) @map("total_activities")
+  activeActivities    Int      @default(0) @map("active_activities")
+  totalBookings       Int      @default(0) @map("total_bookings")
+  totalRevenue        Decimal  @default(0) @map("total_revenue")
+  averageRating       Float?   @map("average_rating")
+  
+  // Timestamps
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities Activity[]
+  
+  @@index([userId])
+  @@index([verificationStatus])
+  @@index([city])
+  @@map("activity_owners")
+}
+
+model Activity {
+  id       String @id @default(cuid())
+  ownerId  String @map("owner_id")
+  
+  // Basic Info
+  title       String
+  description String @db.Text
+  category    String // TOUR, EXCURSION, ATTRACTION, ADVENTURE, CULTURAL, FOOD_DRINK, WELLNESS, WORKSHOP
+  status      String @default("DRAFT") // DRAFT, PENDING_APPROVAL, ACTIVE, INACTIVE, ARCHIVED
+  
+  // Location
+  address    String
+  city       String
+  country    String @default("Kazakhstan")
+  latitude   Float
+  longitude  Float
+  placeId    String? @map("place_id") // Google Places ID
+  
+  // Pricing
+  pricePerPerson Int     @map("price_per_person")
+  currency       String  @default("KZT")
+  groupPricing   Json?   @map("group_pricing") // GroupPricingTier[]
+  
+  // Capacity
+  minParticipants Int @default(1) @map("min_participants")
+  maxParticipants Int @map("max_participants")
+  
+  // Duration
+  durationMinutes Int @map("duration_minutes")
+  
+  // Schedule
+  scheduleType  String   @map("schedule_type") // FIXED, FLEXIBLE
+  availableDays String[] @map("available_days") // Array of day names
+  blackoutDates DateTime[] @map("blackout_dates") // Dates not available
+  
+  // Booking Settings
+  advanceBookingDays Int  @default(1) @map("advance_booking_days")
+  cancellationPolicy Json @map("cancellation_policy") // CancellationPolicy object
+  
+  // Details
+  inclusions   String[]
+  exclusions   String[]
+  requirements String[]
+  
+  // Stats (denormalized for performance)
+  totalBookings Int     @default(0) @map("total_bookings")
+  totalRevenue  Decimal @default(0) @map("total_revenue")
+  averageRating Float?  @map("average_rating")
+  reviewCount   Int     @default(0) @map("review_count")
+  
+  // Approval & Publishing
+  publishedAt     DateTime? @map("published_at")
+  approvedAt      DateTime? @map("approved_at")
+  approvedBy      String?   @map("approved_by")
+  rejectionReason String?   @map("rejection_reason")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  owner     ActivityOwner       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  photos    ActivityPhoto[]
+  schedules ActivitySchedule[]
+  bookings  ActivityBooking[]
+  reviews   ActivityReview[]
+  
+  @@index([ownerId, status])
+  @@index([city, category])
+  @@index([status, publishedAt])
+  @@index([category])
+  @@map("activities")
+}
+
+model ActivityPhoto {
+  id         String @id @default(cuid())
+  activityId String @map("activity_id")
+  
+  // Image URLs
+  url          String
+  thumbnailUrl String @map("thumbnail_url")
+  cloudinaryId String @unique @map("cloudinary_id")
+  
+  // Dimensions
+  width  Int
+  height Int
+  size   Int // Bytes
+  format String // jpg, png, webp
+  
+  // Metadata
+  caption String?
+  order   Int     @default(0)
+  isCover Boolean @default(false) @map("is_cover")
+  
+  // Timestamp
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  
+  @@index([activityId, order])
+  @@map("activity_photos")
+}
+
+model ActivitySchedule {
+  id         String @id @default(cuid())
+  activityId String @map("activity_id")
+  
+  // Schedule Details
+  dayOfWeek    String?   @map("day_of_week") // MONDAY, TUESDAY, etc. (null for flexible)
+  startTime    String    @map("start_time") // "10:00"
+  endTime      String    @map("end_time") // "12:00"
+  isRecurring  Boolean   @default(true) @map("is_recurring")
+  specificDate DateTime? @map("specific_date") // For one-time events
+  
+  // Relations
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  
+  @@index([activityId, dayOfWeek])
+  @@map("activity_schedules")
+}
+
+model ActivityBooking {
+  id            String @id @default(cuid())
+  bookingNumber String @unique @map("booking_number")
+  activityId    String @map("activity_id")
+  passengerId   String @map("passenger_id")
+  
+  // Scheduled Time
+  scheduledDate DateTime @map("scheduled_date")
+  scheduledTime String   @map("scheduled_time") // "10:00"
+  
+  // Participants
+  participants       Int  @map("participants")
+  participantDetails Json @map("participant_details") // Array of participant info
+  
+  // Pricing
+  pricePerPerson Int    @map("price_per_person")
+  totalAmount    Int    @map("total_amount")
+  currency       String @default("KZT")
+  
+  // Payment
+  paymentId     String? @map("payment_id")
+  paymentStatus String  @map("payment_status") // PENDING, PAID, REFUNDED
+  
+  // Status
+  status String @default("CONFIRMED") // CONFIRMED, COMPLETED, CANCELLED
+  
+  // Cancellation
+  cancelledAt        DateTime? @map("cancelled_at")
+  cancellationReason String?   @map("cancellation_reason")
+  refundAmount       Int?      @map("refund_amount")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  activity  Activity @relation(fields: [activityId], references: [id])
+  passenger User     @relation(fields: [passengerId], references: [id])
+  
+  @@index([activityId, scheduledDate])
+  @@index([passengerId])
+  @@index([bookingNumber])
+  @@map("activity_bookings")
+}
+
+model ActivityReview {
+  id          String @id @default(cuid())
+  activityId  String @map("activity_id")
+  bookingId   String @unique @map("booking_id")
+  passengerId String @map("passenger_id")
+  
+  // Review Content
+  rating  Int     // 1-5
+  comment String? @db.Text
+  photos  String[] // Review photo URLs
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  activity  Activity @relation(fields: [activityId], references: [id])
+  passenger User     @relation(fields: [passengerId], references: [id])
+  
+  @@index([activityId, rating])
+  @@index([passengerId])
+  @@map("activity_reviews")
 }
