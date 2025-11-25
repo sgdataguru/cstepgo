@@ -54,6 +54,9 @@ export default function ReceiptPage() {
   };
 
   const handleDownload = () => {
+    // Currently uses browser's print-to-PDF functionality
+    // For true PDF generation, integrate libraries like jsPDF or pdfmake
+    // in the future. For now, instruct user to use Print > Save as PDF
     window.print();
   };
 

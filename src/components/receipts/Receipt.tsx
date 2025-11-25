@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
+import { BUSINESS_CONFIG } from '@/config/business';
 
 export interface ReceiptData {
   bookingId: string;
@@ -73,7 +74,7 @@ export default function Receipt({ data }: ReceiptProps) {
       <div className="border-b-2 border-gray-300 pb-6 mb-6">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">StepperGO</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{BUSINESS_CONFIG.RECEIPT.COMPANY_NAME}</h1>
             <p className="text-sm text-gray-600 mt-1">Travel Receipt</p>
           </div>
           <div className="text-right">
@@ -203,7 +204,7 @@ export default function Receipt({ data }: ReceiptProps) {
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Platform Fee (15%)</span>
+            <span className="text-gray-600">Platform Fee ({BUSINESS_CONFIG.PLATFORM_FEE_RATE * 100}%)</span>
             <span className="text-gray-900">{formatCurrency(data.platformFee)}</span>
           </div>
           {data.taxAmount > 0 && (
@@ -274,8 +275,8 @@ export default function Receipt({ data }: ReceiptProps) {
       {/* Footer */}
       <div className="border-t-2 border-gray-300 pt-6 mt-6">
         <div className="text-center text-sm text-gray-600">
-          <p className="mb-2">Thank you for choosing StepperGO!</p>
-          <p className="mb-2">For support, contact us at support@steppergo.com</p>
+          <p className="mb-2">Thank you for choosing {BUSINESS_CONFIG.RECEIPT.COMPANY_NAME}!</p>
+          <p className="mb-2">For support, contact us at {BUSINESS_CONFIG.RECEIPT.SUPPORT_EMAIL}</p>
           <p className="text-xs text-gray-500">
             This is a computer-generated receipt. No signature required.
           </p>

@@ -4,6 +4,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
+import { BUSINESS_CONFIG } from '@/config/business';
 
 const prisma = new PrismaClient();
 
@@ -103,24 +104,23 @@ export async function getReceiptData(
     return null;
   }
 
-  // Calculate pricing breakdown
+  // Calculate pricing breakdown using centralized business config
   const totalAmount = Number(booking.totalAmount);
-  // Assuming 15% platform fee as per pricing model
-  const platformFeeRate = 0.15;
+  const platformFeeRate = BUSINESS_CONFIG.PLATFORM_FEE_RATE;
   const subtotal = totalAmount / (1 + platformFeeRate);
   const platformFee = subtotal * platformFeeRate;
-  // For simplicity, no separate tax in current model (included in total)
+  // Tax is currently included in total (no separate tax line)
   const taxAmount = 0;
   
   const pricePerSeat = booking.trip.pricePerSeat 
     ? Number(booking.trip.pricePerSeat)
     : subtotal / booking.seatsBooked;
 
-  // Generate receipt number (format: RCP-YYYYMMDD-XXXXX)
+  // Generate receipt number using configured prefix
   const date = new Date();
   const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
   const shortId = bookingId.substring(0, 8).toUpperCase();
-  const receiptNumber = `RCP-${dateStr}-${shortId}`;
+  const receiptNumber = `${BUSINESS_CONFIG.RECEIPT.PREFIX}-${dateStr}-${shortId}`;
 
   // Mask payment method (last 4 digits only)
   const maskedPaymentMethod = booking.payment?.last4 
