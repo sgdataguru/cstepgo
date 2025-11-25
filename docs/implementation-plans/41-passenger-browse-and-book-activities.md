@@ -11,13 +11,76 @@
 **I want** to browse and book activities and events (like tours and experiences),  
 **so that** I can plan my trips and make the most of my time in a destination.
 
-## Pre-conditions
+## Pre-conditions & Dependencies
 
-- User must be registered and logged in
-- Story 40 (Activity Owner Management) completed with activities available
-- Story 35 (Payment system) completed for booking payments
-- Activity availability system configured
-- Email notification service set up
+### Required Dependencies
+- **Story #40 (Activity Owner Manage Activities)**: ⚠️ **STATUS: NOT YET IMPLEMENTED**
+  - Required Prisma models: ActivityOwner, Activity, ActivityAvailability, ActivityBooking, ActivitySchedule, ActivityPhoto
+  - Required APIs: `/api/activity-owners/me`, `/api/activities` (CRUD), `/api/activities/[id]/availability`
+  - **Note**: Story #40 models and APIs must be completed before passenger-facing features can be built
+  - Schema design documented in `docs/implementation-plans/40-activity-owner-manage-activities.md`
+  
+  **Critical Dependencies from Story #40:**
+  ```typescript
+  // Must be implemented first:
+  
+  // 1. Activity Model with required fields
+  model Activity {
+    id              String   @id @default(cuid())
+    ownerId         String
+    title           String
+    description     String   @db.Text
+    category        String   // TOUR, EXCURSION, ATTRACTION, etc.
+    status          String   // DRAFT, PENDING_APPROVAL, ACTIVE, INACTIVE
+    pricePerPerson  Int
+    maxParticipants Int
+    durationMinutes Int
+    // ... other fields
+  }
+  
+  // 2. Activity CRUD APIs
+  POST   /api/activities              # Create activity (owner only)
+  GET    /api/activities/owner        # List owner's activities
+  GET    /api/activities/:id          # Get activity detail
+  PUT    /api/activities/:id          # Update activity (owner only)
+  DELETE /api/activities/:id          # Delete activity (owner only)
+  
+  // 3. Availability System
+  GET    /api/activities/:id/availability  # Get available time slots
+  POST   /api/activities/:id/availability  # Create/update slots (owner only)
+  
+  // 4. Photo Upload
+  POST   /api/activities/photos/upload    # Upload activity photos
+  ```
+  
+  **Can Be Implemented in Parallel with Story #41:**
+  - Activity owner dashboard UI (not needed for passenger browsing)
+  - Activity creation form (not needed for passenger browsing)
+  - Owner analytics (not needed for passenger browsing)
+
+- **Story #33 (Passenger Book Private Trip)**: ✅ **IMPLEMENTED**
+  - Private trip booking flow and UI patterns available for reference
+  - Booking service layer and validation patterns established
+
+- **Story #34 (Passenger Book Shared Ride Seat)**: ✅ **IMPLEMENTED**
+  - Shared ride seat selection and availability checking patterns available
+  - Concurrent booking prevention mechanisms in place
+
+- **Story #35 (Passenger Pay for Booking Online)**: ✅ **IMPLEMENTED**
+  - Payment integration infrastructure ready (Stripe mock API for POC)
+  - Payment flow at `/api/payments/mock-success` can be extended for activities
+  - Payment method selection UI components available
+
+- **Story #36 (Passenger Manage Upcoming Bookings)**: ✅ **IMPLEMENTED**
+  - Dashboard at `/app/my-trips/page.tsx` exists for displaying bookings
+  - Booking management UI patterns established
+  - **Integration Required**: Need to extend to show activity bookings alongside trip bookings
+
+### Additional Pre-conditions
+- User must be registered and logged in as PASSENGER
+- Activity availability system configured (Redis or PostgreSQL-based)
+- Email notification service set up for booking confirmations
+- Multi-tenant isolation configured in Prisma schema
 
 ## Business Requirements
 
@@ -37,6 +100,204 @@
   - Success Metric: >15% booking conversion rate
   - Performance: Checkout completion <30 seconds
 
+- **BR-5**: Seamlessly integrate activity bookings with existing trip bookings dashboard
+  - Success Metric: >80% of users can navigate between trip and activity bookings
+  - Performance: Unified bookings view loads <2 seconds
+  - UX: Consistent booking management experience across product types
+
+## Integration with Story #36: Passenger Manage Upcoming Bookings
+
+### Dashboard Integration Strategy
+
+Story #36 implemented passenger booking management at `/app/my-trips/page.tsx`. Activity bookings must integrate seamlessly into this existing dashboard while maintaining a clear distinction between trips and activities.
+
+#### **Option A: Unified List with Type Badges (Recommended)**
+
+**Layout:**
+```
+My Bookings
+├── Filters: [All] [Trips] [Activities] [Upcoming] [Past]
+└── Unified Booking List
+    ├── [Trip Card] 🚗 Private Trip to Almaty
+    ├── [Activity Card] 🎯 Charyn Canyon Tour
+    ├── [Trip Card] 👥 Shared Ride to Shymkent
+    └── [Activity Card] 🎯 Silk Road Museum Visit
+```
+
+**Pros:**
+- Single, simple interface
+- Easy chronological sorting
+- Natural booking history flow
+- Less navigation complexity
+
+**Cons:**
+- May feel cluttered with many bookings
+- Different card designs for trips vs activities
+
+#### **Option B: Separate Tabs**
+
+**Layout:**
+```
+My Bookings
+├── Tab: Trips (12) | Activities (3)
+│
+└── Tab Content
+    ├── [Trips Tab]
+    │   └── Trip booking cards
+    └── [Activities Tab]
+        └── Activity booking cards
+```
+
+**Pros:**
+- Clear separation of product types
+- Focused experience per tab
+- Easier to add product-specific filters
+
+**Cons:**
+- Requires tab switching
+- Harder to see chronological history
+- More complex state management
+
+#### **Option C: Section-Based Layout**
+
+**Layout:**
+```
+My Bookings
+├── Upcoming Trips (2)
+│   └── Trip cards
+├── Upcoming Activities (1)
+│   └── Activity cards
+├── Past Trips (10)
+│   └── Trip cards
+└── Past Activities (2)
+    └── Activity cards
+```
+
+**Pros:**
+- Grouped by type and time
+- Scannable sections
+- Flexible expansion
+
+**Cons:**
+- Longer page scroll
+- Harder to implement mixed sorting
+
+#### **Recommended Approach: Option A (Unified List with Type Badges)**
+
+**Rationale:**
+1. **User Mental Model**: Users think in terms of "my bookings" not "trips vs activities"
+2. **Existing Pattern**: Story #36 already uses a unified list; extending it is least disruptive
+3. **Simplicity**: Single list is easier to implement and maintain
+4. **Flexibility**: Filters allow users to focus on specific types when needed
+
+**Implementation Details:**
+
+**Unified Booking Type:**
+```typescript
+type BookingType = 'TRIP' | 'ACTIVITY';
+
+interface UnifiedBooking {
+  id: string;
+  type: BookingType;
+  bookingNumber: string;
+  title: string;
+  date: Date;
+  time?: string; // Activities have specific times
+  status: BookingStatus;
+  amount: number;
+  thumbnail?: string;
+  
+  // Trip-specific (null for activities)
+  tripType?: 'PRIVATE' | 'SHARED';
+  route?: { from: string; to: string };
+  seatsBooked?: number;
+  
+  // Activity-specific (null for trips)
+  participants?: number;
+  location?: string;
+  duration?: string;
+}
+```
+
+**Service Layer:**
+```typescript
+// src/lib/services/unifiedBookingService.ts
+export async function getPassengerBookings(
+  userId: string,
+  filters: {
+    type?: BookingType;
+    status?: BookingStatus;
+    dateRange?: { start: Date; end: Date };
+  } = {}
+): Promise<UnifiedBooking[]> {
+  const [tripBookings, activityBookings] = await Promise.all([
+    filters.type === 'ACTIVITY' ? [] : fetchTripBookings(userId, filters),
+    filters.type === 'TRIP' ? [] : fetchActivityBookings(userId, filters),
+  ]);
+  
+  return mergeAndSortBookings(tripBookings, activityBookings);
+}
+```
+
+**API Endpoint:**
+```typescript
+// GET /api/passengers/bookings?type=all|trip|activity&status=upcoming|past
+export async function GET(request: NextRequest) {
+  const userId = await getCurrentUserId();
+  const { searchParams } = new URL(request.url);
+  
+  const type = searchParams.get('type') as BookingType | 'all' | null;
+  const status = searchParams.get('status') as 'upcoming' | 'past' | null;
+  
+  const bookings = await getPassengerBookings(userId, {
+    type: type === 'all' ? undefined : type,
+    status: status === 'upcoming' ? 'CONFIRMED' : undefined,
+  });
+  
+  return Response.json({ bookings });
+}
+```
+
+**UI Component Modifications:**
+```typescript
+// src/app/my-trips/page.tsx (extend existing)
+export default function MyBookingsPage() {
+  const [typeFilter, setTypeFilter] = useState<'all' | 'trip' | 'activity'>('all');
+  const [statusFilter, setStatusFilter] = useState<'upcoming' | 'past'>('upcoming');
+  
+  return (
+    <div>
+      {/* Filter Bar */}
+      <div className="flex gap-2 mb-6">
+        <FilterButton active={typeFilter === 'all'} onClick={() => setTypeFilter('all')}>
+          All
+        </FilterButton>
+        <FilterButton active={typeFilter === 'trip'} onClick={() => setTypeFilter('trip')}>
+          🚗 Trips
+        </FilterButton>
+        <FilterButton active={typeFilter === 'activity'} onClick={() => setTypeFilter('activity')}>
+          🎯 Activities
+        </FilterButton>
+      </div>
+      
+      {/* Unified Booking List */}
+      <div className="space-y-4">
+        {bookings.map(booking => (
+          booking.type === 'TRIP' 
+            ? <TripBookingCard key={booking.id} booking={booking} />
+            : <ActivityBookingCard key={booking.id} booking={booking} />
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**Visual Distinction:**
+- **Trip Cards**: Blue accent, 🚗 icon, route display
+- **Activity Cards**: Purple accent, 🎯 icon, location + duration display
+- **Consistent Actions**: Both support "View Details", "Cancel", "Contact Provider"
+
 ## Technical Specifications
 
 ### Integration Points
@@ -47,12 +308,164 @@
 - **Analytics**: Track booking funnel metrics
 - **Reviews**: Display ratings and reviews
 
-### Security Requirements
-- Validate user authentication for booking
-- Prevent race conditions with optimistic locking
-- Sanitize user inputs (participant details)
-- Rate limiting on booking endpoints (10 req/min per user)
-- Idempotency keys for payment processing
+### Security Requirements & Multi-Tenant Considerations
+
+#### Authentication & Authorization
+- **Passenger Authentication**: All booking endpoints require valid session token
+- **Role-Based Access Control (RBAC)**: 
+  - Only users with PASSENGER or ADMIN role can book activities
+  - ACTIVITY_OWNER role cannot book their own activities (conflict of interest)
+- **Session Validation**: Verify session hasn't expired before allowing booking
+
+#### Multi-Tenant Data Isolation
+
+**Activity Visibility Rules:**
+1. **Public Endpoints** (`/api/activities`, `/api/activities/:id`):
+   - ✅ Show only activities with `status = 'ACTIVE'` or `status = 'PUBLISHED'`
+   - ❌ Hide activities with `status = 'DRAFT'`, `'PENDING_APPROVAL'`, `'INACTIVE'`, `'REJECTED'`
+   - ✅ Include activities from all tenants (cross-tenant discovery)
+   - ❌ Never expose `ownerId`, owner email, or owner phone in public responses
+
+2. **Tenant Context**:
+   - Activities should include `tenantId` field to support multi-tenant deployments
+   - Bookings inherit `tenantId` from the activity
+   - Revenue and analytics aggregated per tenant
+
+3. **Data Minimization**:
+   - **Passenger → Owner**: Owners see booking participant names, count, and contact info only
+   - **Owner → Passenger**: Passengers see owner business name and public profile only
+   - **PII Protection**: Never expose full passenger lists to other passengers
+
+**Schema Additions for Multi-Tenancy:**
+```prisma
+model Activity {
+  // ... existing fields
+  tenantId      String?  // Optional tenant isolation
+  status        String   // DRAFT, PENDING_APPROVAL, ACTIVE, INACTIVE, REJECTED
+  isPublished   Boolean  @default(false)
+  publishedAt   DateTime?
+  approvedBy    String?  // Admin user ID who approved
+  
+  @@index([tenantId, status, isPublished])
+}
+
+model ActivityBooking {
+  // ... existing fields
+  tenantId      String?  // Inherited from activity
+  
+  @@index([tenantId, passengerId])
+}
+```
+
+**Enforcement in API:**
+```typescript
+// GET /api/activities - Public listing
+export async function GET(request: NextRequest) {
+  const activities = await prisma.activity.findMany({
+    where: {
+      status: 'ACTIVE',
+      isPublished: true,
+      // Optional: filter by tenant if multi-tenant deployment
+      // tenantId: getTenantFromRequest(request)
+    },
+    select: {
+      // Public fields only
+      id: true,
+      title: true,
+      category: true,
+      thumbnailUrl: true,
+      // Exclude: ownerId, owner email, draft fields, etc.
+    }
+  });
+  
+  return Response.json({ activities });
+}
+
+// GET /api/activities/:id - Public detail
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const activity = await prisma.activity.findFirst({
+    where: {
+      id: params.id,
+      status: 'ACTIVE',
+      isPublished: true,
+    },
+    include: {
+      owner: {
+        select: {
+          // Only public owner info
+          name: true,
+          avatar: true,
+          // Exclude: email, phone, address, etc.
+        }
+      }
+    }
+  });
+  
+  if (!activity) {
+    return Response.json({ error: 'Activity not found' }, { status: 404 });
+  }
+  
+  return Response.json({ activity });
+}
+
+// POST /api/activities/:id/book - Booking creation
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const userId = await getCurrentUserId();
+  const user = await getUserWithRole(userId);
+  
+  // Verify user can book
+  if (!['PASSENGER', 'ADMIN'].includes(user.role)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+  
+  const activity = await prisma.activity.findFirst({
+    where: {
+      id: params.id,
+      status: 'ACTIVE',
+      isPublished: true,
+    }
+  });
+  
+  if (!activity) {
+    return Response.json({ error: 'Activity not available' }, { status: 404 });
+  }
+  
+  // Prevent owners from booking their own activities
+  if (activity.ownerId === userId) {
+    return Response.json({ error: 'Cannot book your own activity' }, { status: 403 });
+  }
+  
+  // Create booking with tenant context
+  const booking = await prisma.activityBooking.create({
+    data: {
+      // ... booking data
+      tenantId: activity.tenantId,
+    }
+  });
+  
+  return Response.json({ booking });
+}
+```
+
+#### Additional Security Measures
+- **Input Validation**: Sanitize all user inputs (participant names, special requests) using Zod schemas
+- **Rate Limiting**: 
+  - Browse endpoints: 100 requests/min per IP
+  - Booking endpoints: 10 requests/min per authenticated user
+  - Availability checks: 30 requests/min per user
+- **Idempotency**: Booking creation accepts idempotency key to prevent duplicate bookings
+- **Optimistic Locking**: Use Redis locks or database transactions for availability checks
+- **XSS Protection**: Sanitize activity descriptions (already HTML from owner, but re-sanitize on display)
+- **SQL Injection**: Use Prisma's parameterized queries (automatic protection)
+- **CSRF Protection**: Next.js API routes include CSRF tokens
+
+#### Privacy Compliance
+- **GDPR/Data Protection**: 
+  - Passenger can request deletion of booking history
+  - Owner cannot access passenger data after booking is completed/cancelled (except for tax records)
+  - Anonymize passenger data after 7 years
+- **Consent**: Passengers agree to share contact info with activity owner when booking
+- **Data Retention**: Activity bookings retained for accounting purposes per legal requirements
 
 ### API Endpoints
 
@@ -934,6 +1347,80 @@ interface ActivityFiltersState {
 }
 ```
 
+### Database Schema Strategy: Booking Model vs ActivityBooking Model
+
+#### Decision Analysis
+
+**Option 1: Reuse Existing Booking Model**
+**Pros:**
+- ✅ Single unified booking table for all booking types (trips + activities)
+- ✅ Simplified queries for passenger's "My Bookings" dashboard
+- ✅ Consistent booking number generation across platform
+- ✅ Unified payment tracking and reconciliation
+- ✅ Single source of truth for booking status and cancellations
+- ✅ Easier cross-platform analytics (e.g., "total bookings across trips and activities")
+- ✅ Reduced code duplication for common booking operations
+
+**Cons:**
+- ❌ Requires nullable fields for trip-specific vs activity-specific data
+- ❌ More complex validation logic (must check booking type)
+- ❌ Risk of data model bloat as new booking types are added
+- ❌ Harder to enforce type-specific constraints at database level
+- ❌ May require discriminator pattern or type field to distinguish booking types
+
+**Option 2: Separate ActivityBooking Model**
+**Pros:**
+- ✅ Clean separation of concerns (trips vs activities)
+- ✅ Type-specific fields with no nullable compromises
+- ✅ Easier to add activity-specific features (e.g., participant details, time slots)
+- ✅ Independent schema evolution for each booking type
+- ✅ Simpler validation (no type checking needed)
+- ✅ Better matches domain model (activities ≠ trips)
+- ✅ Clearer relationships in Prisma schema
+
+**Cons:**
+- ❌ Duplicate logic for common booking operations (status, payment, cancellation)
+- ❌ More complex queries for unified "My Bookings" view
+- ❌ Separate booking number sequences (may confuse users)
+- ❌ Harder to maintain consistency across booking types
+- ❌ More API endpoints and service methods
+
+#### **Recommended Approach: Separate ActivityBooking Model**
+
+**Justification:**
+1. **Domain Clarity**: Activities and trips are fundamentally different products with distinct characteristics (time slots vs routes, participant lists vs seat selection, etc.)
+2. **Future Scalability**: As the platform grows, activities may need features like recurring bookings, group discounts, equipment rental add-ons, etc., which don't apply to trips
+3. **Type Safety**: Separate models provide better type safety and validation without complex conditional logic
+4. **Existing Pattern**: Story #40 already defines ActivityBooking in the schema, maintaining consistency
+5. **Integration Strategy**: Use a unified booking service layer that abstracts over both types for the passenger dashboard
+
+**Integration Pattern for "My Bookings" Dashboard:**
+```typescript
+// Unified booking service
+interface UnifiedBooking {
+  id: string;
+  bookingNumber: string;
+  type: 'TRIP' | 'ACTIVITY';
+  title: string;
+  date: Date;
+  status: BookingStatus;
+  amount: number;
+  // ... common fields
+}
+
+async function getPassengerBookings(userId: string): Promise<UnifiedBooking[]> {
+  const [tripBookings, activityBookings] = await Promise.all([
+    prisma.booking.findMany({ where: { userId } }),
+    prisma.activityBooking.findMany({ where: { passengerId: userId } })
+  ]);
+  
+  return [
+    ...tripBookings.map(b => ({ ...b, type: 'TRIP' as const })),
+    ...activityBookings.map(b => ({ ...b, type: 'ACTIVITY' as const }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+}
+```
+
 ### Database Schema Updates
 
 ```prisma
@@ -1356,7 +1843,80 @@ describe('Activity Booking', () => {
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** January 24, 2025  
-**Status:** Ready for Development  
-**Estimated Effort:** 3 weeks (1 developer)
+## Document Summary & Key Decisions
+
+### Implementation Approach Summary
+
+1. **Database Strategy**: Use separate `ActivityBooking` model (not reuse `Booking`)
+   - Rationale: Better domain separation, type safety, and future scalability
+   - Trade-off: More complex unified booking queries, but cleaner schema
+
+2. **Dashboard Integration**: Unified list with type badges (Option A)
+   - Extend `/app/my-trips/page.tsx` to show both trips and activities
+   - Implement filter buttons: All | 🚗 Trips | 🎯 Activities
+   - Use visual badges and icons to distinguish booking types
+
+3. **Multi-Tenant Security**: Strict visibility rules for activities
+   - Only `status='ACTIVE'` and `isPublished=true` activities visible to passengers
+   - No exposure of draft/pending/rejected activities
+   - Minimal owner PII in public responses (business name only)
+
+4. **Story #40 Dependencies**: Critical blockers identified
+   - Must implement Activity model, ActivitySchedule, ActivityPhoto models first
+   - Must implement activity CRUD APIs and availability endpoints
+   - Can implement in parallel: Owner dashboard UI (not needed for passenger browsing)
+
+5. **Payment Integration**: Extend existing Story #35 infrastructure
+   - Use same mock payment API pattern for POC
+   - Same Stripe integration points for production
+   - Consistent payment flow UX
+
+### Development Phases
+
+**Phase 1** (Week 1): Complete Story #40 Dependencies
+- Implement Activity models and migrations
+- Build activity CRUD APIs
+- Create availability system
+
+**Phase 2** (Week 2): Activity Discovery & Browsing
+- Build `/activities` listing page
+- Implement filtering and search
+- Create activity detail page
+
+**Phase 3** (Week 2-3): Booking Flow
+- Build booking widget and modal
+- Implement availability checking
+- Integrate payment system
+
+**Phase 4** (Week 3): Dashboard Integration
+- Extend "My Bookings" dashboard
+- Add unified booking service
+- Implement activity booking cards
+
+### Critical Success Factors
+
+✅ **Must Have:**
+- Zero double-booking incidents (availability locking)
+- >95% payment success rate
+- Seamless integration with existing booking dashboard
+- Strict multi-tenant data isolation
+
+⚠️ **Important:**
+- >15% booking conversion rate
+- <2 second page load times
+- Mobile-responsive design
+- Email confirmations
+
+📊 **Nice to Have:**
+- Activity recommendations
+- Review system integration
+- Social sharing features
+
+---
+
+**Document Version:** 2.0  
+**Last Updated:** November 25, 2025  
+**Status:** Enhanced Implementation Plan Ready for Development  
+**Estimated Effort:** 3 weeks (1 developer, assumes Story #40 complete)  
+**Dependencies:** Story #40 must be implemented first (adds 1-2 weeks)  
+**Total Timeline:** 4-5 weeks including dependencies
