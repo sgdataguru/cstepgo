@@ -141,6 +141,27 @@ export async function POST(
         }
       });
       
+      // Confirm all pending bookings for this trip
+      const pendingBookings = await tx.booking.findMany({
+        where: {
+          tripId: tripId,
+          status: 'PENDING'
+        }
+      });
+      
+      if (pendingBookings.length > 0) {
+        await tx.booking.updateMany({
+          where: {
+            tripId: tripId,
+            status: 'PENDING'
+          },
+          data: {
+            status: 'CONFIRMED',
+            confirmedAt: new Date()
+          }
+        });
+      }
+      
       // Record the acceptance in trip visibility (for analytics)
       // Note: Using raw query since TripDriverVisibility might not be available in Prisma yet
       try {
