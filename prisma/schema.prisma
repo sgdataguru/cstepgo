@@ -313,6 +313,12 @@ model Booking {
   passengers        Json
   notes             String?
   paymentMethodType PaymentMethodType @default(ONLINE) @map("payment_method_type")
+  
+  // Payout tracking
+  payoutId          String?           @map("payout_id")
+  payoutSettled     Boolean           @default(false) @map("payout_settled")
+  settledAt         DateTime?         @map("settled_at")
+  
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   confirmedAt       DateTime?
@@ -325,6 +331,8 @@ model Booking {
   @@index([userId])
   @@index([status])
   @@index([paymentMethodType])
+  @@index([payoutSettled])
+  @@index([payoutId])
 }
 
 model Payment {
@@ -355,18 +363,39 @@ model Payout {
   amount           Decimal
   currency         String       @default("KZT")
   status           PayoutStatus @default(PENDING)
-  stripeTransferId String?      @unique
-  periodStart      DateTime
-  periodEnd        DateTime
-  tripsCount       Int          @default(0)
-  metadata         Json?
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  processedAt      DateTime?
+  
+  // Payment provider details
+  payoutMethod     String       @default("MOCK") @map("payout_method") // MOCK, STRIPE_CONNECT, BANK_TRANSFER
+  payoutProvider   String       @default("MOCK") @map("payout_provider")
+  stripeTransferId String?      @unique @map("stripe_transfer_id")
+  providerMetadata Json?        @map("provider_metadata")
+  
+  // Period and trip details
+  periodStart      DateTime     @map("period_start")
+  periodEnd        DateTime     @map("period_end")
+  tripsCount       Int          @default(0) @map("trips_count")
+  bookingsCount    Int          @default(0) @map("bookings_count")
+  
+  // Multi-tenant support
+  tenantId         String?      @map("tenant_id")
+  
+  // Calculation details stored as metadata
+  metadata         Json?        // Contains: bookingIds[], grossAmount, platformFee, netAmount, etc.
+  
+  // Timestamps
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+  processedAt      DateTime?    @map("processed_at")
+  failedAt         DateTime?    @map("failed_at")
+  errorMessage     String?      @map("error_message")
+  
+  // Relations
   driver           Driver       @relation(fields: [driverId], references: [id])
 
   @@index([driverId])
   @@index([status])
+  @@index([tenantId])
+  @@index([periodStart, periodEnd])
 }
 
 model AnalyticsEvent {

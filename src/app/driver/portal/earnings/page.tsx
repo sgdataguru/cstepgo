@@ -37,6 +37,8 @@ interface Payout {
   periodStart: string;
   periodEnd: string;
   tripsCount: number;
+  bookingsCount?: number;
+  payoutMethod?: string;
   processedAt?: string;
   createdAt: string;
 }
@@ -75,19 +77,42 @@ export default function EarningsPage() {
       const driverData = JSON.parse(driverId);
       
       // Load earnings data
-      const response = await fetch(`/api/drivers/${driverData.id}/earnings`, {
+      const earningsResponse = await fetch(`/api/drivers/${driverData.id}/earnings`, {
         headers: {
           'x-driver-id': driverData.id,
           'Authorization': `Bearer ${session}`
         }
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      // Load payouts data
+      const payoutsResponse = await fetch(`/api/drivers/payouts`, {
+        headers: {
+          'x-driver-id': driverData.id,
+          'Authorization': `Bearer ${session}`
+        }
+      });
+
+      if (earningsResponse.ok) {
+        const result = await earningsResponse.json();
         setTrips(result.data.trips || []);
-        setPayouts(result.data.payouts || []);
-        setEarningsSummary(result.data.summary || earningsSummary);
         setChartData(result.data.chartData || []);
+        
+        // Update earnings summary with trip-based data
+        setEarningsSummary(prev => ({
+          ...prev,
+          ...result.data.summary,
+        }));
+      }
+
+      if (payoutsResponse.ok) {
+        const payoutResult = await payoutsResponse.json();
+        setPayouts(payoutResult.data.payouts || []);
+        
+        // Update earnings summary with payout data
+        setEarningsSummary(prev => ({
+          ...prev,
+          pendingPayout: payoutResult.data.summary.pendingPayout || 0,
+        }));
       }
     } catch (err) {
       console.error('Load earnings error:', err);
@@ -143,7 +168,7 @@ export default function EarningsPage() {
       </div>
 
       {/* Earnings Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Today</span>
@@ -175,6 +200,17 @@ export default function EarningsPage() {
             ₸{earningsSummary.thisMonth.toLocaleString()}
           </p>
           <p className="text-xs text-gray-500 mt-1">Monthly earnings</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-600">Pending Payout</span>
+            <Clock className="w-5 h-5 text-yellow-500" />
+          </div>
+          <p className="text-2xl font-bold text-yellow-600">
+            ₸{earningsSummary.pendingPayout.toLocaleString()}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Awaiting settlement</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -223,15 +259,26 @@ export default function EarningsPage() {
 
       {/* Payment History */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment History</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Payout History</h2>
+          <div className="text-sm text-gray-600">
+            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full mr-2">
+              💳 Online-Paid = Auto Payout
+            </span>
+            <span className="inline-block px-3 py-1 bg-gray-100 text-gray-800 rounded-full">
+              💵 Cash = Direct Collection
+            </span>
+          </div>
+        </div>
         {payouts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Period</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Trips</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Bookings</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
+                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Method</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Processed</th>
                 </tr>
@@ -242,9 +289,14 @@ export default function EarningsPage() {
                     <td className="py-3 px-4 text-sm text-gray-900">
                       {new Date(payout.periodStart).toLocaleDateString()} - {new Date(payout.periodEnd).toLocaleDateString()}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-900">{payout.tripsCount}</td>
+                    <td className="py-3 px-4 text-sm text-gray-900">{payout.bookingsCount || payout.tripsCount}</td>
                     <td className="py-3 px-4 text-sm font-medium text-gray-900">
                       ₸{Number(payout.amount).toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-600">
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                        {payout.payoutMethod || 'MOCK'}
+                      </span>
                     </td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -268,7 +320,8 @@ export default function EarningsPage() {
           <div className="text-center py-8 text-gray-500">
             <DollarSign className="w-12 h-12 mx-auto mb-4 text-gray-400" />
             <p className="text-lg font-medium mb-2">No payment history yet</p>
-            <p>Your payment history will appear here once you complete trips</p>
+            <p>Your payment history will appear here once payouts are processed</p>
+            <p className="text-sm mt-2">Online-paid bookings are automatically included in weekly payouts</p>
           </div>
         )}
       </div>

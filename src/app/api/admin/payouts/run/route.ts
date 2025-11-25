@@ -1,0 +1,217 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { PayoutStatus } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import {
+  runBatchPayout,
+  runDriverPayout,
+  MockPayoutAdapter,
+} from '@/lib/services/driverPayoutService';
+
+/**
+ * POST /api/admin/payouts/run
+ * 
+ * Trigger payout processing for eligible drivers
+ * Supports single driver or batch processing
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // TODO: Add admin authentication middleware
+    // For now, check for admin token in header
+    const adminToken = request.headers.get('x-admin-token');
+    if (!adminToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Admin authentication required',
+        },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      driverId,
+      periodStart,
+      periodEnd,
+      tenantId,
+    } = body;
+
+    // Parse dates if provided
+    const parsedPeriodStart = periodStart ? new Date(periodStart) : undefined;
+    const parsedPeriodEnd = periodEnd ? new Date(periodEnd) : undefined;
+
+    // Use mock adapter for now (can be replaced with Stripe Connect later)
+    const adapter = new MockPayoutAdapter();
+
+    if (driverId) {
+      // Process single driver payout
+      const result = await runDriverPayout({
+        driverId,
+        periodStart: parsedPeriodStart,
+        periodEnd: parsedPeriodEnd,
+        tenantId,
+        adapter,
+      });
+
+      return NextResponse.json({
+        success: result.success,
+        data: {
+          driverId,
+          payoutId: result.payoutId,
+          amount: result.amount,
+          bookingsCount: result.bookingsCount,
+        },
+        error: result.error,
+      });
+    } else {
+      // Process batch payout for all eligible drivers
+      const result = await runBatchPayout({
+        periodStart: parsedPeriodStart,
+        periodEnd: parsedPeriodEnd,
+        tenantId,
+        adapter,
+      });
+
+      return NextResponse.json({
+        success: result.success,
+        data: {
+          processedDrivers: result.processedDrivers,
+          successfulPayouts: result.successfulPayouts,
+          failedPayouts: result.failedPayouts,
+          totalAmount: result.totalAmount,
+          results: result.results,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Payout processing error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to process payout',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * GET /api/admin/payouts/run
+ * 
+ * Get payout processing status and history
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // TODO: Add admin authentication middleware
+    const adminToken = request.headers.get('x-admin-token');
+    if (!adminToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Admin authentication required',
+        },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const driverId = searchParams.get('driverId');
+    const status = searchParams.get('status') as PayoutStatus | null;
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    // Build where clause
+    const where: any = {};
+    if (driverId) {
+      where.driverId = driverId;
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    // Fetch payouts
+    const [payouts, total] = await Promise.all([
+      prisma.payout.findMany({
+        where,
+        include: {
+          driver: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  phone: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.payout.count({ where }),
+    ]);
+
+    // Calculate summary statistics
+    const summary = await prisma.payout.groupBy({
+      by: ['status'],
+      _sum: {
+        amount: true,
+      },
+      _count: {
+        id: true,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        payouts: payouts.map(p => ({
+          id: p.id,
+          driver: {
+            id: p.driver.id,
+            name: p.driver.user.name,
+            email: p.driver.user.email,
+            phone: p.driver.user.phone,
+          },
+          amount: Number(p.amount),
+          currency: p.currency,
+          status: p.status,
+          payoutMethod: p.payoutMethod,
+          periodStart: p.periodStart,
+          periodEnd: p.periodEnd,
+          tripsCount: p.tripsCount,
+          bookingsCount: p.bookingsCount,
+          tenantId: p.tenantId,
+          createdAt: p.createdAt,
+          processedAt: p.processedAt,
+          failedAt: p.failedAt,
+          errorMessage: p.errorMessage,
+        })),
+        total,
+        limit,
+        offset,
+        summary: summary.reduce((acc, s) => {
+          acc[s.status] = {
+            count: s._count.id,
+            total: Number(s._sum.amount || 0),
+          };
+          return acc;
+        }, {} as Record<string, { count: number; total: number }>),
+      },
+    });
+  } catch (error) {
+    console.error('Get payouts error:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to retrieve payouts',
+      },
+      { status: 500 }
+    );
+  }
+}
