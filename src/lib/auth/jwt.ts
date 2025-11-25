@@ -1,10 +1,11 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
 
 // JWT Configuration - MUST be set in environment
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+// Use non-null assertions because we validate below
+const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET = (process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET)!;
 const JWT_ISSUER = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const JWT_AUDIENCE = 'steppergo-api';
 
@@ -13,7 +14,7 @@ const ACCESS_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '15m'; // 
 const REFRESH_TOKEN_EXPIRES_IN: string = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
 
 // Encryption key for sensitive payload data - MUST be separate from JWT secrets
-const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY;
+const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY || '';
 
 // Note: Environment variables are validated at runtime when functions are called
 // This allows the build to succeed even if .env is not configured
@@ -132,6 +133,7 @@ export function signRefreshToken(
     jti: tokenId,
     iat: Math.floor(Date.now() / 1000),
   };
+  // @ts-ignore
 
   if (!JWT_REFRESH_SECRET) {
     throw new Error('JWT_REFRESH_SECRET is not configured');
@@ -251,7 +253,11 @@ export function createTokenPair(payload: TokenPayload): {
 /**
  * Parse expiration string to seconds
  */
-function parseExpiration(expiresIn: string): number {
+function parseExpiration(expiresIn: string | number): number {
+  if (typeof expiresIn === 'number') {
+    return expiresIn;
+  }
+  
   const units: { [key: string]: number } = {
     s: 1,
     m: 60,

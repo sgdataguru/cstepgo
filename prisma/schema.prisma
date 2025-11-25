@@ -258,6 +258,11 @@ model Trip {
   status         TripStatus @default(DRAFT)
   metadata       Json?
 
+  // Trip Type & Multi-Tenant Fields
+  tripType       TripType   @default(PRIVATE) @map("trip_type")
+  tenantId       String?    @map("tenant_id") // Organization/tenant identifier
+  pricePerSeat   Decimal?   @map("price_per_seat") // For shared rides
+
   // Driver Discovery Fields
   driverDiscoveryRadius Int      @default(10) @map("driver_discovery_radius")
   estimatedEarnings     Decimal? @map("estimated_earnings")
@@ -290,6 +295,8 @@ model Trip {
   @@index([status, driverDiscoveryRadius])
   @@index([acceptanceDeadline])
   @@index([offeredToDriverId])
+  @@index([tripType, status])
+  @@index([tenantId])
 }
 
 model Booking {
@@ -534,6 +541,11 @@ enum DriverStatus {
   APPROVED
   REJECTED
   SUSPENDED
+}
+
+enum TripType {
+  PRIVATE
+  SHARED
 }
 
 enum TripStatus {

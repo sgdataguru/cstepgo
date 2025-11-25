@@ -1,71 +1,122 @@
-# 37 - Passenger Track Driver in Real Time - Implementation Planning
+# 37 - Passenger Track Driver in Real Time – Implementation Plan (2GIS Map Integration)
 
 ## Project Context
-**Technical Stack**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui  
-**Backend**: Next.js API Routes, PostgreSQL, Prisma ORM, WebSocket/Socket.IO  
-**Infrastructure**: Vercel (hosting), Google Maps JavaScript API, WebSocket server (Pusher/Ably or self-hosted)
+
+**Technical Stack**
+
+- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, TailwindCSS, shadcn/ui  
+- **Backend**: Next.js API Routes, PostgreSQL, Prisma ORM, WebSocket/Socket.IO (or equivalent)  
+- **Maps / Routing**: **2GIS MapGL JavaScript API**  
+- **Infrastructure**: Vercel (hosting), dedicated WebSocket server (Pusher/Ably/self-hosted)
+
+> 2GIS API key: `dbd7eb45-5a3c-49de-a539-af4213db3a92`  
+> Recommended: expose as `NEXT_PUBLIC_2GIS_API_KEY` instead of hard-coding in code.
+
+---
 
 ## User Story
 
 **As a** passenger,  
-**I want** to track my driver's live location and ETA on a map,  
+**I want** to track my driver’s live location and ETA on a map,  
 **so that** I know when to be ready and feel confident about my ride.
 
-## Pre-conditions
+---
 
-- User must have an active booking (status: CONFIRMED)
-- Booking must have an assigned driver
-- Driver must be actively sharing location (driver app running)
-- Story 33/34/35/36 (Booking & payment system) completed
-- Google Maps API key configured
-- WebSocket infrastructure set up
+## Preconditions
+
+- Passenger has a **CONFIRMED** booking.
+- Booking has an assigned driver (driver assignment already done by earlier stories).
+- Driver app/portal is sending regular location updates.
+- Booking/payment/management flows for:
+  - `33 – Passenger Book Private Trip`
+  - `34 – Passenger Book Shared Ride Seat`
+  - `35 – Passenger Pay for Booking Online`
+  - `36 – Passenger Manage Upcoming Bookings`
+  are implemented and stable.
+- **2GIS MapGL** is configured in the frontend with a valid API key.
+- WebSocket/SSE infrastructure is available for streaming live location.
+
+---
 
 ## Business Requirements
 
-- **BR-1**: Provide real-time visibility to reduce passenger anxiety and improve experience
-  - Success Metric: >80% of passengers access tracking feature
-  - Performance: Location updates within 5-10 seconds
+- **BR-1 – Real-time Visibility**  
+  Passengers can see driver location in near real-time.
+  - Location updates within **5–10 seconds**.
+  - At least **80%** of passengers use tracking on active trips.
 
-- **BR-2**: Accurate ETA predictions to help passengers plan readiness
-  - Success Metric: ETA accuracy within ±5 minutes for 90% of rides
-  - Performance: ETA recalculated every location update
+- **BR-2 – ETA Accuracy**  
+  ETA shown on screen must be useful and updated frequently.
+  - ETA recalculated on each meaningful location update.
+  - ETA mostly within **±5 minutes** for 90% of rides.
 
-- **BR-3**: Proactive notifications when driver is nearby
-  - Success Metric: >95% of "driver nearby" notifications delivered
-  - Performance: Notification triggered within 500ms of proximity detection
+- **BR-3 – Proximity Alerts**  
+  Surface a “driver is nearby / driver has arrived” signal.
+  - Proximity trigger when driver enters a configurable radius (e.g. 300–500m).
+  - Alerts surfacing within ~500ms of detection.
 
-- **BR-4**: Graceful fallback when location data is unavailable
-  - Success Metric: <5% of tracking sessions show errors
-  - Performance: Fallback state displayed within 3 seconds
+- **BR-4 – Graceful Degradation**  
+  Tracking must fail safely, not confusingly.
+  - Clear fallback messages when location not available.
+  - “Waiting for driver location…” state within 3s when data is missing.
+
+---
 
 ## Technical Specifications
 
 ### Integration Points
-- **Google Maps**: JavaScript API for map rendering, Directions API for ETA
-- **WebSocket/SSE**: Real-time location streaming (Socket.IO, Pusher, or Ably)
-- **Geolocation**: Driver app location tracking
-- **Notifications**: In-app notifications for proximity alerts
-- **Database**: Location history storage (optional for analytics)
+
+- **2GIS MapGL JavaScript API**  
+  - Rendering the map.
+  - Displaying driver, pickup, and destination markers.
+  - Optional: integration with 2GIS routing/directions APIs for ETA and route polyline.
+
+- **WebSocket / SSE**  
+  - Real-time channel for driver location & trip status.
+  - Authenticated with JWT and booking context.
+
+- **Driver Geolocation (Backend Feed)**  
+  - Driver app / portal sends `lat/lng` + optional heading/speed to backend.
+  - Backend validates and broadcasts updates to subscribed passenger(s).
+
+- **Notifications (In-app)**  
+  - UI banners or toast messages for:
+    - Driver nearby.
+    - Driver arrived.
+    - Connection lost / reconnecting.
+
+- **Database (Optional Analytics)**  
+  - Persist location history per trip for analytics/debugging (optional, configurable for privacy).
 
 ### Security Requirements
-- Only booking owner can access driver location
-- Driver location only visible during active trips
-- WebSocket authentication with JWT tokens
-- Rate limiting: 1 location update per 5 seconds per driver
-- Location data encrypted in transit (WSS/HTTPS)
-- No location data stored beyond trip completion (privacy)
 
-### API Endpoints
+- Only **the booking owner** (and authorized internal roles) can see driver location for that booking.
+- Live tracking available only while trip is **active** (ASSIGNED → EN_ROUTE → AT_PICKUP → IN_PROGRESS).
+- WebSocket connections must:
+  - Be authenticated with a **JWT**.
+  - Verify `bookingId` and user/driver pairing.
+- Location updates:
+  - Rate-limited (e.g. 1 update per 5 seconds per driver).
+  - Transmitted over WSS/HTTPS.
+- Location history, if stored, is:
+  - Retained only for a defined window (or not at all in strict privacy mode).
+  - Never exposed to other passengers or drivers unrelated to the trip.
 
-#### GET /api/bookings/:bookingId/tracking
-Retrieves initial tracking information for active booking.
+---
 
-**Response:**
-```typescript
+## API Endpoints
+
+### 1. `GET /api/bookings/:bookingId/tracking`
+
+Fetch initial tracking snapshot and connection details.
+
+**Response (example TypeScript type):**
+
+```ts
 interface TrackingInfoResponse {
   bookingId: string;
-  canTrack: boolean;  // true if driver assigned and trip active
-  
+  canTrack: boolean; // true if driver assigned & trip in a trackable status
+
   driver: {
     id: string;
     name: string;
@@ -73,10 +124,10 @@ interface TrackingInfoResponse {
     currentLocation?: {
       lat: number;
       lng: number;
-      heading?: number;  // Direction in degrees
-      speed?: number;    // Speed in km/h
-      accuracy?: number; // Accuracy in meters
-      timestamp: Date;
+      heading?: number;
+      speed?: number;
+      accuracy?: number;
+      timestamp: string;
     };
     vehicle: {
       make: string;
@@ -85,43 +136,50 @@ interface TrackingInfoResponse {
       licensePlate: string;
     };
   };
-  
+
   pickup: {
     lat: number;
     lng: number;
     address: string;
   };
-  
+
   destination: {
     lat: number;
     lng: number;
     address: string;
   };
-  
-  eta: {
+
+  eta?: {
     seconds: number;
-    text: string;  // "15 minutes"
-    lastUpdated: Date;
+    text: string;       // e.g. "15 minutes"
+    lastUpdated: string;
   };
-  
-  tripStatus: 'ASSIGNED' | 'EN_ROUTE_TO_PICKUP' | 'AT_PICKUP' | 'IN_PROGRESS' | 'COMPLETED';
-  
+
+  tripStatus:
+    | 'ASSIGNED'
+    | 'EN_ROUTE_TO_PICKUP'
+    | 'AT_PICKUP'
+    | 'IN_PROGRESS'
+    | 'COMPLETED';
+
   wsConfig: {
-    url: string;  // WebSocket endpoint
-    channel: string;  // Private channel name
-    authToken: string;  // JWT for authentication
+    url: string;        // WebSocket endpoint
+    channel: string;    // Channel/room for this booking
+    authToken: string;  // JWT for WS auth
   };
 }
-```
+2. WS /api/tracking/stream
+WebSocket endpoint for real-time updates.
 
-#### WS /api/tracking/stream
-WebSocket endpoint for real-time location updates.
+Client connection example:
 
-**Connection:**
-```typescript
-const socket = io('wss://api.steppergo.com', {
+ts
+Copy code
+import { io } from 'socket.io-client';
+
+const socket = io(process.env.NEXT_PUBLIC_WS_URL!, {
   auth: {
-    token: authToken,
+    token: wsAuthToken,
     bookingId: bookingId,
   },
 });
@@ -129,11 +187,10 @@ const socket = io('wss://api.steppergo.com', {
 socket.on('connect', () => {
   socket.emit('subscribe', { bookingId });
 });
-```
+Message Types:
 
-**Message Types:**
-```typescript
-// Location Update (from driver)
+ts
+Copy code
 interface LocationUpdate {
   type: 'location_update';
   data: {
@@ -141,51 +198,48 @@ interface LocationUpdate {
     location: {
       lat: number;
       lng: number;
-      heading: number;
-      speed: number;
-      accuracy: number;
-      timestamp: Date;
+      heading?: number;
+      speed?: number;
+      accuracy?: number;
+      timestamp: string;
     };
-    eta: {
+    eta?: {
       seconds: number;
       text: string;
     };
   };
 }
 
-// Driver Status Update
 interface StatusUpdate {
   type: 'status_update';
   data: {
-    tripStatus: TripStatus;
+    tripStatus: string;  // matches Booking/Trip status enum
     message: string;
   };
 }
 
-// Proximity Alert
 interface ProximityAlert {
   type: 'proximity_alert';
   data: {
-    distance: number;  // meters
-    message: 'Driver is nearby';
+    distance: number;     // meters
+    message: string;      // e.g. "Driver is nearby"
   };
 }
 
-// Connection Status
 interface ConnectionStatus {
   type: 'connection_status';
   data: {
     isOnline: boolean;
-    lastSeen?: Date;
+    lastSeen?: string;
   };
 }
-```
+3. POST /api/tracking/driver-location (Driver-facing)
+Used by driver app or driver portal to push location updates.
 
-#### POST /api/tracking/driver-location (Driver App)
-Endpoint for driver to update location.
+Request:
 
-**Request:**
-```typescript
+ts
+Copy code
 interface UpdateLocationRequest {
   bookingId: string;
   location: {
@@ -194,28 +248,26 @@ interface UpdateLocationRequest {
     heading?: number;
     speed?: number;
     accuracy: number;
-    timestamp: Date;
+    timestamp: string;
   };
 }
-```
+Response:
 
-**Response:**
-```typescript
+ts
+Copy code
 interface UpdateLocationResponse {
   success: boolean;
-  broadcast: boolean;  // Whether update was broadcast to passenger
+  broadcast: boolean;  // true if forwarded to passenger
   eta?: {
     seconds: number;
     text: string;
   };
 }
-```
+4. GET /api/tracking/:bookingId/eta
+Optional endpoint to (re)calculate ETA using a 2GIS routing API integration (or server-side logic if implemented).
 
-#### GET /api/tracking/:bookingId/eta
-Calculates ETA using Google Maps Directions API.
-
-**Response:**
-```typescript
+ts
+Copy code
 interface ETAResponse {
   eta: {
     seconds: number;
@@ -227,912 +279,384 @@ interface ETAResponse {
     text: string;  // "5.2 km"
   };
   route?: {
-    polyline: string;  // Encoded polyline for route display
-    bounds: {
-      northeast: { lat: number; lng: number };
-      southwest: { lat: number; lng: number };
+    polyline: string;  // Encoded polyline for route visualization
+  };
+  calculatedAt: string;
+}
+Design Specifications
+Tracking Page – UX Layout
+URL: /bookings/[bookingId]/track
+
+High-level layout (mobile-first):
+
+Full-screen 2GIS map as the background:
+
+Driver marker (car icon, rotated with heading).
+
+Pickup marker.
+
+Destination marker.
+
+Optional route polyline representing path.
+
+Top bar overlay:
+
+Back button.
+
+Trip status pill (e.g., “On the way”, “Arrived”, “In progress”).
+
+Bottom sheet / sidebar (depending on viewport):
+
+Collapsed: Driver photo, name, ETA, distance.
+
+Expanded: Full driver and trip details, contact options, trip timeline.
+
+Status banners (top overlay):
+
+“Driver is nearby”.
+
+“Driver has arrived”.
+
+“Waiting for driver location…”.
+
+“Connection lost. Reconnecting…”.
+
+Map visual styling remains aligned with existing StepperGO branding; only the provider changes (2GIS instead of Google).
+
+2GIS Integration Examples
+Basic 2GIS Map Initialization (Vanilla Example)
+Reference example (adapted from your snippet):
+
+html
+Copy code
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>2GIS Map API Example</title>
+    <script src="https://mapgl.2gis.com/api/js/v1"></script>
+  </head>
+  <body>
+    <div id="container" style="width: 100%; height: 100vh;"></div>
+
+    <script>
+      const map = new mapgl.Map('container', {
+        center: [55.187609, 25.141736],
+        zoom: 16,
+        pitch: 40,
+        rotation: -45,
+        key: 'dbd7eb45-5a3c-49de-a539-af4213db3a92', // Use env var in real app
+      });
+
+      // Example switching style
+      // map.setStyleById('e05ac437-fcc2-4845-ad74-b1de9ce07555'); // dark
+    </script>
+  </body>
+</html>
+2GIS Map Integration in Next.js (Conceptual)
+In the React/Next.js tracking page we’ll:
+
+Load the 2GIS MapGL script (via <Script> or dynamic loader).
+
+Initialize mapgl.Map in useEffect.
+
+Store map instance in component state or ref.
+
+Add markers for driver/pickup/destination.
+
+Conceptual TS code:
+
+ts
+Copy code
+// TrackingMap.tsx (simplified pseudo-code)
+import { useEffect, useRef } from 'react';
+
+declare const mapgl: any; // or create a proper type definition
+
+export function TrackingMap({ driverLocation, pickup, destination }: {
+  driverLocation?: { lat: number; lng: number };
+  pickup: { lat: number; lng: number };
+  destination: { lat: number; lng: number };
+}) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);
+  const driverMarkerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || typeof mapgl === 'undefined') return;
+
+    if (!mapRef.current) {
+      mapRef.current = new mapgl.Map(containerRef.current, {
+        center: [pickup.lng, pickup.lat],
+        zoom: 14,
+        key: process.env.NEXT_PUBLIC_2GIS_API_KEY!,
+      });
+
+      // TODO: add pickup & destination markers
+    }
+
+    return () => {
+      mapRef.current && mapRef.current.destroy && mapRef.current.destroy();
     };
-  };
-  traffic: 'light' | 'moderate' | 'heavy';
-  calculatedAt: Date;
+  }, [pickup.lat, pickup.lng]);
+
+  useEffect(() => {
+    if (!mapRef.current || !driverLocation) return;
+
+    const coords: [number, number] = [driverLocation.lng, driverLocation.lat];
+
+    if (!driverMarkerRef.current) {
+      driverMarkerRef.current = new mapgl.Marker(mapRef.current, {
+        coordinates: coords,
+      });
+    } else {
+      driverMarkerRef.current.setCoordinates(coords);
+    }
+
+    // Optionally adjust center/zoom here
+  }, [driverLocation?.lat, driverLocation?.lng]);
+
+  return <div ref={containerRef} className="h-full w-full" />;
 }
-```
+Exact 2GIS routing/ETA utilities can be implemented as a backend service or external call where available.
 
-## Design Specifications
-
-### Visual Layout & Components
-
-**Tracking Page Layout:**
-```
-[Full-Screen Map View]
-├── Map Container (Google Maps)
-│   ├── Driver Marker (car icon, rotated by heading)
-│   ├── Pickup Location Marker (pin icon)
-│   ├── Destination Marker (flag icon)
-│   ├── Route Polyline (if available)
-│   └── User Location Marker (optional)
-│
-├── [Top Bar - Overlay on Map]
-│   ├── Back Button (< Back)
-│   ├── Trip Status Badge
-│   └── Share Location Button
-│
-├── [Driver Info Card - Bottom Sheet]
-│   ├── [Collapsed State - Swipeable Handle]
-│   │   ├── Driver Photo + Name
-│   │   ├── ETA Display (Large, prominent)
-│   │   ├── Distance Remaining
-│   │   └── Swipe Up Indicator
-│   │
-│   └── [Expanded State]
-│       ├── Driver Details
-│       │   ├── Photo, Name, Rating
-│       │   ├── Phone Number with Call Button
-│       │   └── Vehicle Details (Make, Model, Color, Plate)
-│       ├── ETA Details
-│       │   ├── Estimated Arrival Time
-│       │   ├── Distance Remaining
-│       │   ├── Current Speed (optional)
-│       │   └── Last Updated Timestamp
-│       ├── Trip Progress Timeline
-│       │   ├── Booking Created ✓
-│       │   ├── Driver Assigned ✓
-│       │   ├── En Route to Pickup (active)
-│       │   ├── Pickup Complete
-│       │   └── Trip Complete
-│       ├── Trip Details
-│       │   ├── Pickup: Address
-│       │   ├── Destination: Address
-│       │   └── Booking Reference
-│       └── Action Buttons
-│           ├── Call Driver (primary)
-│           ├── Message Driver (secondary)
-│           └── Cancel Trip (destructive)
-│
-└── [Status Banners - Top Overlay]
-    ├── "Driver is nearby" (green banner)
-    ├── "Driver has arrived" (blue banner)
-    ├── "Waiting for driver location..." (amber banner)
-    └── "Connection lost. Reconnecting..." (red banner)
-```
-
-**Map Markers & Styles:**
-```
-Driver Marker:
-├── Custom Car Icon (SVG)
-├── Color: Blue (#3b82f6)
-├── Size: 48x48px
-├── Rotation: Based on heading
-├── Shadow: Drop shadow for elevation
-└── Animation: Smooth movement between updates
-
-Pickup Marker:
-├── Pin Icon with "P" label
-├── Color: Green (#10b981)
-├── Size: 40x40px
-├── Pulse Animation: Breathing effect
-└── Label: "Pickup Location"
-
-Destination Marker:
-├── Flag Icon with "D" label
-├── Color: Red (#ef4444)
-├── Size: 40x40px
-└── Label: "Destination"
-
-Route Polyline:
-├── Color: Blue (#3b82f6)
-├── Opacity: 0.6
-├── Width: 5px
-└── Dashed: false
-```
-
-**ETA Display States:**
-```
-Normal State:
-├── "15 minutes away"
-├── Font Size: 2xl (24px)
-├── Color: Gray-900
-└── Update Indicator: Subtle pulse
-
-Nearby State (<5 min):
-├── "3 minutes away"
-├── Font Size: 3xl (30px)
-├── Color: Emerald-600
-├── Icon: Location pin
-└── Animation: Pulsing
-
-Arrived State:
-├── "Driver has arrived"
-├── Font Size: 2xl (24px)
-├── Color: Blue-600
-├── Icon: Checkmark
-└── Background: Blue-50
-
-Unknown State:
-├── "Calculating..."
-├── Font Size: xl (20px)
-├── Color: Gray-500
-└── Spinner: Loading animation
-```
-
-### Design System Compliance
-
-**Color Palette:**
-```css
-/* Tracking Status Colors */
---status-en-route: #3b82f6;      /* bg-blue-500 */
---status-nearby: #10b981;        /* bg-emerald-500 */
---status-arrived: #6366f1;       /* bg-indigo-500 */
---status-delayed: #f59e0b;       /* bg-amber-500 */
-
-/* Map Elements */
---driver-marker: #3b82f6;        /* bg-blue-500 */
---pickup-marker: #10b981;        /* bg-emerald-500 */
---destination-marker: #ef4444;   /* bg-red-500 */
---route-line: #3b82f6;           /* bg-blue-500 */
-
-/* Connection States */
---connection-good: #10b981;      /* bg-emerald-500 */
---connection-poor: #f59e0b;      /* bg-amber-500 */
---connection-lost: #ef4444;      /* bg-red-500 */
-```
-
-**Typography:**
-```css
-/* ETA Display */
-.eta-primary {
-  @apply text-3xl font-bold text-gray-900;
-}
-
-.eta-secondary {
-  @apply text-sm font-medium text-gray-600;
-}
-
-/* Driver Info */
-.driver-name {
-  @apply text-lg font-semibold text-gray-900;
-}
-
-.driver-details {
-  @apply text-sm text-gray-600;
-}
-
-/* Status Messages */
-.status-banner {
-  @apply text-base font-medium;
-}
-```
-
-### Responsive Behavior
-
-**Mobile Layout (<768px)**:
-```css
-.tracking-page-mobile {
-  @apply h-screen w-screen overflow-hidden;
-}
-
-.map-container-mobile {
-  @apply absolute inset-0;
-}
-
-.driver-card-mobile {
-  @apply fixed bottom-0 left-0 right-0;
-  @apply bg-white rounded-t-3xl shadow-2xl;
-  @apply z-50;
-  /* Swipeable bottom sheet */
-  max-height: 80vh;
-}
-
-.driver-card-collapsed {
-  @apply h-32;
-  /* Shows ETA and driver name only */
-}
-
-.driver-card-expanded {
-  @apply h-auto;
-  /* Shows full details */
-}
-
-.status-banner-mobile {
-  @apply fixed top-16 left-4 right-4;
-  @apply rounded-lg px-4 py-3 shadow-lg;
-  @apply z-40;
-}
-```
-
-**Desktop Layout (1024px+)**:
-```css
-.tracking-page-desktop {
-  @apply h-screen grid grid-cols-12 gap-0;
-}
-
-.map-container-desktop {
-  @apply col-span-8 h-full;
-}
-
-.driver-info-sidebar {
-  @apply col-span-4 h-full overflow-y-auto;
-  @apply bg-white border-l border-gray-200;
-  @apply p-6 space-y-6;
-}
-
-.status-banner-desktop {
-  @apply fixed top-20 left-8 right-auto;
-  @apply max-w-md rounded-lg px-6 py-4 shadow-xl;
-  @apply z-40;
-}
-```
-
-### Interaction Patterns
-
-**Map Interactions:**
-```typescript
-interface MapInteractionStates {
-  // Map Controls
-  zoomIn: 'Pinch out or + button';
-  zoomOut: 'Pinch in or - button';
-  pan: 'Drag to move map';
-  recenter: 'Tap "My Location" button';
-  
-  // Marker Interactions
-  driverMarkerTap: 'Show driver info popup';
-  pickupMarkerTap: 'Show pickup address';
-  destinationMarkerTap: 'Show destination address';
-}
-```
-
-**Bottom Sheet Swipe:**
-```typescript
-interface BottomSheetStates {
-  collapsed: {
-    height: '128px',
-    gesture: 'Swipe up to expand',
-  };
-  halfExpanded: {
-    height: '50vh',
-    gesture: 'Swipe up/down',
-  };
-  fullyExpanded: {
-    height: '80vh',
-    gesture: 'Swipe down to collapse',
-  };
-}
-```
-
-**Location Update Animation:**
-```typescript
-const driverMarkerAnimation = {
-  // Smooth marker movement
-  duration: 1000,  // 1 second
-  easing: 'ease-out',
-  
-  // Rotation animation
-  rotate: {
-    duration: 500,
-    easing: 'ease-in-out',
-  },
-};
-```
-
-## Technical Architecture
-
-### Component Structure
-
-```
+Technical Architecture
+Next.js Structure
+txt
+Copy code
 src/app/
 ├── bookings/
 │   └── [bookingId]/
 │       └── track/
-│           ├── page.tsx                      # Tracking page ⬜
-│           ├── loading.tsx                   # Map loading state ⬜
+│           ├── page.tsx                      # Tracking page
+│           ├── loading.tsx                   # Skeleton/loading
 │           └── components/
-│               ├── TrackingMap.tsx           # Main map component ⬜
-│               ├── DriverMarker.tsx          # Driver car marker ⬜
-│               ├── RoutePolyline.tsx         # Route visualization ⬜
-│               ├── MapControls.tsx           # Zoom, recenter controls ⬜
-│               ├── DriverInfoCard.tsx        # Bottom sheet/sidebar ⬜
-│               ├── ETADisplay.tsx            # ETA prominent display ⬜
-│               ├── TripTimeline.tsx          # Progress timeline ⬜
-│               ├── StatusBanner.tsx          # Proximity/status alerts ⬜
-│               ├── DriverContactActions.tsx  # Call/message buttons ⬜
-│               ├── ConnectionIndicator.tsx   # WS connection status ⬜
-│               └── LocationFallback.tsx      # No location state ⬜
+│               ├── TrackingMap.tsx           # 2GIS map wrapper
+│               ├── DriverInfoCard.tsx        # Bottom sheet/sidebar
+│               ├── ETADisplay.tsx            # ETA display
+│               ├── StatusBanner.tsx          # Status/proximity banners
+│               ├── ConnectionIndicator.tsx   # WS connection status
+│               └── LocationFallback.tsx      # No-location states
 └── api/
     └── tracking/
-        ├── [bookingId]/
-        │   ├── route.ts                      # GET tracking info ⬜
-        │   └── eta/
-        │       └── route.ts                  # GET ETA calculation ⬜
-        ├── stream/
-        │   └── route.ts                      # WebSocket handler ⬜
-        └── driver-location/
-            └── route.ts                      # POST driver location ⬜
-```
+        ├── [bookingId]/route.ts              # GET tracking info
+        ├── [bookingId]/eta/route.ts          # Optional ETA endpoint
+        ├── stream/route.ts                   # WS handler
+        └── driver-location/route.ts          # Driver location ingestion
+State Management (Concept)
+Global useTrackingStore (Zustand or similar):
 
-### State Management Architecture
-
-**Global State (Zustand):**
-```typescript
+ts
+Copy code
 interface TrackingStore {
-  // Current Tracking Session
   activeTracking: {
     bookingId: string | null;
-    isTracking: boolean;
-    
     driver: {
       id: string;
       name: string;
-      phone: string;
-      vehicle: VehicleInfo;
-      currentLocation: LocationData | null;
-      lastLocationUpdate: Date | null;
+      vehicle: any;
+      currentLocation: { lat: number; lng: number } | null;
+      lastLocationUpdate: string | null;
     } | null;
-    
-    locations: {
-      pickup: LatLng;
-      destination: LatLng;
-      userLocation?: LatLng;
-    } | null;
-    
-    eta: {
-      seconds: number;
-      text: string;
-      lastCalculated: Date;
-    } | null;
-    
-    tripStatus: TripStatus;
+    pickup: { lat: number; lng: number; address: string } | null;
+    destination: { lat: number; lng: number; address: string } | null;
+    eta: { seconds: number; text: string; lastCalculated: string } | null;
+    tripStatus: string;
   };
-  
-  // WebSocket State
+
   websocket: {
     isConnected: boolean;
     connectionQuality: 'good' | 'poor' | 'disconnected';
-    lastHeartbeat: Date | null;
-    reconnectAttempts: number;
+    lastHeartbeat: string | null;
   };
-  
-  // UI State
+
   ui: {
-    mapCenter: LatLng | null;
-    mapZoom: number;
     isBottomSheetExpanded: boolean;
     showProximityAlert: boolean;
     activeStatusBanner: string | null;
   };
-  
-  // Actions
-  initializeTracking: (bookingId: string) => Promise<void>;
-  updateDriverLocation: (location: LocationData) => void;
-  updateETA: (eta: ETAData) => void;
-  updateTripStatus: (status: TripStatus) => void;
-  connectWebSocket: () => Promise<void>;
-  disconnectWebSocket: () => void;
-  toggleBottomSheet: () => void;
-  recenterMap: () => void;
+
+  initializeTracking(bookingId: string): Promise<void>;
+  updateDriverLocation(location: { lat: number; lng: number }): void;
+  updateETA(eta: { seconds: number; text: string }): void;
+  updateTripStatus(status: string): void;
+  connectWebSocket(authToken: string, bookingId: string): Promise<void>;
+  disconnectWebSocket(): void;
+  toggleBottomSheet(): void;
 }
-```
-
-**Local Component State:**
-```typescript
-// TrackingMap.tsx
-interface TrackingMapState {
-  map: google.maps.Map | null;
-  markers: {
-    driver: google.maps.Marker | null;
-    pickup: google.maps.Marker | null;
-    destination: google.maps.Marker | null;
-  };
-  polyline: google.maps.Polyline | null;
-  isMapLoaded: boolean;
-  mapError: string | null;
-}
-
-// DriverInfoCard.tsx
-interface DriverInfoCardState {
-  sheetState: 'collapsed' | 'half' | 'expanded';
-  isDragging: boolean;
-  dragStartY: number;
-}
-
-// ETADisplay.tsx
-interface ETADisplayState {
-  formattedETA: string;
-  isUpdating: boolean;
-  lastUpdateText: string;  // "Updated 5 seconds ago"
-}
-```
-
-### Database Schema Updates
-
-```prisma
+Database Schema (Additions)
+prisma
+Copy code
 model Booking {
+  id               String   @id @default(cuid())
   // ... existing fields
-  
-  // Tracking Fields
+
   trackingEnabled  Boolean   @default(true)
   trackingStartedAt DateTime?
   trackingEndedAt   DateTime?
-  
-  // Driver Assignment
+
   assignedDriverId String?
   assignedDriver   User?     @relation("AssignedDriver", fields: [assignedDriverId], references: [id])
-  driverAssignedAt DateTime?
-  
+
   @@index([assignedDriverId])
 }
 
 model DriverLocation {
-  id                String   @id @default(cuid())
-  driverId          String
-  driver            User     @relation(fields: [driverId], references: [id])
-  bookingId         String?
-  booking           Booking? @relation(fields: [bookingId], references: [id])
-  
-  // Location Data
-  latitude          Float
-  longitude         Float
-  heading           Float?   // Direction in degrees (0-360)
-  speed             Float?   // Speed in km/h
-  accuracy          Float    // Accuracy in meters
-  
-  // Metadata
-  capturedAt        DateTime
-  createdAt         DateTime @default(now())
-  
+  id         String   @id @default(cuid())
+  driverId   String
+  driver     User     @relation(fields: [driverId], references: [id])
+  bookingId  String?
+  booking    Booking? @relation(fields: [bookingId], references: [id])
+
+  latitude   Float
+  longitude  Float
+  heading    Float?
+  speed      Float?
+  accuracy   Float
+  capturedAt DateTime @default(now())
+
   @@index([driverId, capturedAt])
   @@index([bookingId])
 }
+TrackingSession or deeper analytics models can remain optional.
 
-model TrackingSession {
-  id                String   @id @default(cuid())
-  bookingId         String   @unique
-  booking           Booking  @relation(fields: [bookingId], references: [id])
-  
-  passengerId       String
-  passenger         User     @relation(fields: [passengerId], references: [id])
-  
-  driverId          String
-  driver            User     @relation(fields: [driverId], references: [id])
-  
-  startedAt         DateTime @default(now())
-  endedAt           DateTime?
-  
-  // Analytics
-  locationUpdatesCount Int   @default(0)
-  avgUpdateInterval Float?  // Average seconds between updates
-  
-  @@index([bookingId])
-  @@index([passengerId])
-}
-```
+Core Components & Hooks
+Components
+TrackingMap.tsx
 
-### API Integration Schema
+Wraps 2GIS MapGL map.
 
-**Google Maps Integration:**
-```typescript
-// Load Google Maps API
-import { Loader } from '@googlemaps/js-api-loader';
+Handles initializing mapgl.Map, adding/removing markers, and recentering.
 
-const loader = new Loader({
-  apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,
-  version: 'weekly',
-  libraries: ['places', 'geometry', 'directions'],
-});
+DriverInfoCard.tsx
 
-// Initialize Map
-async function initializeMap(container: HTMLElement) {
-  const { Map } = await loader.importLibrary('maps');
-  
-  const map = new Map(container, {
-    center: { lat: 0, lng: 0 },
-    zoom: 15,
-    styles: customMapStyles,  // Custom styling
-    disableDefaultUI: true,
-    gestureHandling: 'greedy',
-  });
-  
-  return map;
-}
+Shows driver details, ETA, and basic trip info.
 
-// Calculate ETA with Directions API
-async function calculateETA(
-  origin: LatLng,
-  destination: LatLng
-): Promise<ETAData> {
-  const directionsService = new google.maps.DirectionsService();
-  
-  const result = await directionsService.route({
-    origin,
-    destination,
-    travelMode: google.maps.TravelMode.DRIVING,
-    drivingOptions: {
-      departureTime: new Date(),
-      trafficModel: google.maps.TrafficModel.BEST_GUESS,
-    },
-  });
-  
-  const route = result.routes[0];
-  const leg = route.legs[0];
-  
-  return {
-    seconds: leg.duration?.value || 0,
-    minutes: Math.ceil((leg.duration?.value || 0) / 60),
-    text: leg.duration?.text || '',
-    distance: {
-      meters: leg.distance?.value || 0,
-      text: leg.distance?.text || '',
-    },
-    polyline: route.overview_polyline,
-  };
-}
-```
+Collapsible/expandable bottom sheet on mobile; sidebar on desktop.
 
-**WebSocket Integration (Socket.IO):**
-```typescript
-// Client-side
-import { io, Socket } from 'socket.io-client';
+ETADisplay.tsx
 
-class TrackingWebSocket {
-  private socket: Socket | null = null;
-  
-  connect(authToken: string, bookingId: string) {
-    this.socket = io(process.env.NEXT_PUBLIC_WS_URL!, {
-      auth: { token: authToken },
-      transports: ['websocket'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-    
-    this.socket.on('connect', () => {
-      console.log('WebSocket connected');
-      this.socket?.emit('subscribe', { bookingId });
-    });
-    
-    this.socket.on('location_update', (data: LocationUpdate) => {
-      // Handle location update
-    });
-    
-    this.socket.on('proximity_alert', (data: ProximityAlert) => {
-      // Show notification
-    });
-    
-    this.socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-    });
-  }
-  
-  disconnect() {
-    this.socket?.disconnect();
-  }
-}
-```
+Prominent ETA + “distance remaining” text with state changes (nearby, arrived, unknown).
 
-## Implementation Requirements
+StatusBanner.tsx
 
-### Core Components
+Shows short-lived status banners for proximity, arrival, connection issues.
 
-#### 1. TrackingMap.tsx ⬜
-**Purpose**: Google Maps integration with markers
+ConnectionIndicator.tsx
 
-**Features**:
-- Map initialization and rendering
-- Driver marker with rotation
-- Pickup/destination markers
-- Route polyline display
-- Auto-centering and bounds adjustment
+Visual indicator (dot/label) for WebSocket connectivity.
 
-#### 2. DriverInfoCard.tsx ⬜
-**Purpose**: Swipeable bottom sheet with driver details
+Hooks
+useDriverTracking()
 
-**Features**:
-- Collapsible card (3 states)
-- Swipe gesture handling
-- Driver information display
-- Contact action buttons
-- Trip timeline
-
-#### 3. ETADisplay.tsx ⬜
-**Purpose**: Prominent ETA visualization
-
-**Features**:
-- Large, readable ETA text
-- Real-time updates
-- Proximity states (nearby, arrived)
-- Update timestamp
-
-#### 4. StatusBanner.tsx ⬜
-**Purpose**: In-app notifications for status changes
-
-**Features**:
-- Proximity alerts
-- Connection status
-- Trip status updates
-- Auto-dismiss after delay
-
-#### 5. ConnectionIndicator.tsx ⬜
-**Purpose**: WebSocket connection health display
-
-**Features**:
-- Connection quality indicator
-- Reconnection status
-- Offline mode message
-
-### Custom Hooks
-
-#### useDriverTracking() ⬜
-```typescript
+ts
+Copy code
 interface UseDriverTrackingReturn {
   isTracking: boolean;
-  driverLocation: LocationData | null;
-  eta: ETAData | null;
-  tripStatus: TripStatus;
+  driverLocation: { lat: number; lng: number } | null;
+  eta: { seconds: number; text: string } | null;
+  tripStatus: string;
   error: string | null;
-  
+
   startTracking: (bookingId: string) => Promise<void>;
   stopTracking: () => void;
   refreshETA: () => Promise<void>;
 }
-```
+useWebSocketTracking()
 
-#### useWebSocketTracking() ⬜
-```typescript
+ts
+Copy code
 interface UseWebSocketTrackingReturn {
   isConnected: boolean;
-  connectionQuality: ConnectionQuality;
-  lastUpdate: Date | null;
-  
+  lastUpdate: string | null;
+
   connect: (authToken: string, bookingId: string) => void;
   disconnect: () => void;
-  reconnect: () => void;
-  
-  onLocationUpdate: (callback: (data: LocationUpdate) => void) => void;
-  onProximityAlert: (callback: (data: ProximityAlert) => void) => void;
-  onStatusChange: (callback: (data: StatusUpdate) => void) => void;
-}
-```
 
-#### useGoogleMaps() ⬜
-```typescript
-interface UseGoogleMapsReturn {
+  onLocationUpdate: (cb: (data: LocationUpdate) => void) => void;
+  onProximityAlert: (cb: (data: ProximityAlert) => void) => void;
+  onStatusChange: (cb: (data: StatusUpdate) => void) => void;
+}
+use2GISMap() (optional helper)
+
+ts
+Copy code
+interface Use2GISMapReturn {
   isLoaded: boolean;
   loadError: Error | null;
-  
-  createMap: (container: HTMLElement, options: MapOptions) => google.maps.Map;
-  createMarker: (options: MarkerOptions) => google.maps.Marker;
-  createPolyline: (options: PolylineOptions) => google.maps.Polyline;
-  calculateETA: (origin: LatLng, destination: LatLng) => Promise<ETAData>;
+  initMap: (container: HTMLElement, center: [number, number]) => any; // mapgl.Map
 }
-```
+Acceptance Criteria
+Functional
+Real-Time Location
 
-### Utility Functions
+Passenger sees driver marker moving on a 2GIS map for active trips.
 
-#### src/lib/tracking/location-utils.ts ⬜
-```typescript
-export function calculateDistance(
-  point1: LatLng,
-  point2: LatLng
-): number;  // Returns meters
+Location updates at least every 5–10 seconds, with smooth marker transitions.
 
-export function isNearby(
-  driverLocation: LatLng,
-  targetLocation: LatLng,
-  radiusMeters: number = 500
-): boolean;
+ETA
 
-export function interpolateLocation(
-  from: LocationData,
-  to: LocationData,
-  progress: number  // 0 to 1
-): LatLng;
+ETA displayed and refreshed on location changes.
 
-export function smoothMarkerMovement(
-  marker: google.maps.Marker,
-  newPosition: LatLng,
-  durationMs: number
-): void;
-```
+ETA is human-readable (e.g. “12 minutes away”).
 
-#### src/lib/tracking/eta-calculator.ts ⬜
-```typescript
-export async function calculateETAWithTraffic(
-  origin: LatLng,
-  destination: LatLng
-): Promise<ETAData>;
+ETA reasonably accurate in typical city conditions (within ±5 mins for most trips).
 
-export function formatETAText(seconds: number): string;
+Proximity & Arrival
 
-export function getETAUpdateFrequency(
-  distanceMeters: number
-): number;  // Returns seconds between updates
-```
+“Driver is nearby” banner appears when driver within radius (e.g. < 500m).
 
-## Acceptance Criteria
+“Driver has arrived” shown when driver at/very close to pickup coordinates.
 
-### Functional Requirements
+Connection Handling
 
-#### 1. Real-Time Location Tracking ⬜
-- [x] Driver location updates every 5-10 seconds
-- [x] Marker animates smoothly between positions
-- [x] Marker rotates based on heading
-- [x] Map auto-centers when driver moves
-- [x] Location accuracy displayed
+WebSocket auto-reconnects.
 
-#### 2. ETA Calculation ⬜
-- [x] ETA calculated using Google Directions API
-- [x] ETA updates with each location change
-- [x] Traffic conditions considered
-- [x] ETA formatted as human-readable text
-- [x] ETA accuracy within ±5 minutes
+UI reflects “reconnecting” / “waiting for location” states.
 
-#### 3. Proximity Notifications ⬜
-- [x] Alert shown when driver <500m from pickup
-- [x] "Driver arrived" notification at pickup
-- [x] Notifications persist for 10 seconds
-- [x] Audio notification (optional)
-- [x] Vibration on mobile (optional)
+Tracking gracefully stops when trip is completed or cancelled.
 
-#### 4. Connection Handling ⬜
-- [x] WebSocket auto-reconnects on disconnect
-- [x] Shows "Reconnecting..." during outage
-- [x] Falls back to polling if WebSocket fails
-- [x] Shows "Waiting for location..." if no updates
-- [x] Recovers gracefully after network issues
+Non-Functional
+Map renders in < 2 seconds over typical connections.
 
-#### 5. Map Features ⬜
-- [x] Shows pickup and destination markers
-- [x] Route displayed as polyline (optional)
-- [x] Zoom in/out controls
-- [x] Recenter to driver location
-- [x] User location marker (if granted permission)
+WebSocket connection / reconnection feels responsive.
 
-### Non-Functional Requirements
+All map & tracking actions stay responsive on mid-range mobile devices.
 
-#### Performance ⬜
-- [x] Map loads <2 seconds
-- [x] Location updates render <200ms
-- [x] ETA calculation <1 second
-- [x] WebSocket connection <1 second
-- [x] Smooth animations (60 FPS)
+Security: Only the booking owner can access /bookings/[bookingId]/track and the associated WS channel.
 
-#### Security ⬜
-- [x] Only booking owner can track
-- [x] WebSocket authenticated with JWT
-- [x] Location data encrypted (WSS)
-- [x] No location stored after trip
+Implementation Phases (High Level)
+Foundation
 
-#### Accessibility ⬜
-- [x] Screen reader announces location updates
-- [x] ETA updates announced
-- [x] Map controls keyboard accessible
-- [x] High contrast mode support
+Configure 2GIS MapGL in the project.
 
-## Modified Files
+Add WebSocket tracking endpoint + auth.
 
-```
-src/app/
-├── bookings/[bookingId]/track/
-│   ├── page.tsx                                      ⬜
-│   ├── loading.tsx                                   ⬜
-│   └── components/
-│       ├── TrackingMap.tsx                           ⬜
-│       ├── DriverMarker.tsx                          ⬜
-│       ├── RoutePolyline.tsx                         ⬜
-│       ├── MapControls.tsx                           ⬜
-│       ├── DriverInfoCard.tsx                        ⬜
-│       ├── ETADisplay.tsx                            ⬜
-│       ├── TripTimeline.tsx                          ⬜
-│       ├── StatusBanner.tsx                          ⬜
-│       ├── DriverContactActions.tsx                  ⬜
-│       ├── ConnectionIndicator.tsx                   ⬜
-│       └── LocationFallback.tsx                      ⬜
-├── api/tracking/
-│   ├── [bookingId]/
-│   │   ├── route.ts                                  ⬜
-│   │   └── eta/route.ts                              ⬜
-│   ├── stream/route.ts                               ⬜
-│   └── driver-location/route.ts                      ⬜
-├── lib/
-│   ├── tracking/
-│   │   ├── location-utils.ts                         ⬜
-│   │   ├── eta-calculator.ts                         ⬜
-│   │   └── websocket-client.ts                       ⬜
-│   └── hooks/
-│       ├── useDriverTracking.ts                      ⬜
-│       ├── useWebSocketTracking.ts                   ⬜
-│       └── useGoogleMaps.ts                          ⬜
-└── types/tracking.ts                                 ⬜
-```
+Extend DB (if needed) with DriverLocation.
 
-## Implementation Status
+Map + UI
 
-**OVERALL STATUS: ⬜ NOT STARTED**
+Implement TrackingMap with 2GIS.
 
-### Phase 1: Foundation (Week 1) ⬜
-- [ ] Google Maps API setup
-- [ ] WebSocket infrastructure setup
-- [ ] Database schema for location tracking
-- [ ] Type definitions
+Add markers and basic driver movement.
 
-### Phase 2: Map & Markers (Week 1-2) ⬜
-- [ ] TrackingMap component
-- [ ] Driver marker with rotation
-- [ ] Pickup/destination markers
-- [ ] Map controls (zoom, recenter)
+Implement DriverInfoCard, ETADisplay, and StatusBanner.
 
-### Phase 3: Real-Time Updates (Week 2-3) ⬜
-- [ ] WebSocket client integration
-- [ ] Location update handling
-- [ ] Smooth marker animations
-- [ ] ETA calculation
+Real-Time Wiring
 
-### Phase 4: UI & Notifications (Week 3) ⬜
-- [ ] Driver info card (bottom sheet)
-- [ ] ETA display
-- [ ] Proximity alerts
-- [ ] Connection indicators
+Hook up useWebSocketTracking().
 
-### Phase 5: Testing & Optimization (Week 3-4) ⬜
-- [ ] Location update testing
-- [ ] WebSocket reliability testing
-- [ ] Performance optimization
-- [ ] E2E tracking scenarios
+Receive location updates and update map/ETA.
 
-## Dependencies
+Implement proximity detection and banners.
 
-- **Google Maps API**: JavaScript API + Directions API
-- **WebSocket Server**: Socket.IO or Pusher/Ably
-- **Story 33-36**: Booking infrastructure
-- **Driver App**: Location sharing enabled
+Hardening
 
-## Risk Assessment
+Add error states, loading states, and fallback modes.
 
-### Technical Risks
+Add tests (unit + basic E2E) for tracking flows.
 
-#### Risk 1: WebSocket Reliability
-- **Impact**: Critical (no real-time updates)
-- **Mitigation**: HTTP polling fallback
-- **Contingency**: Manual refresh option
+Verify with both private and shared bookings from stories 33 and 34.
 
-#### Risk 2: Battery Drain (Driver App)
-- **Impact**: Medium (driver complaints)
-- **Mitigation**: Configurable update intervals
-- **Contingency**: Reduce update frequency
-
-#### Risk 3: Location Accuracy
-- **Impact**: Medium (poor UX)
-- **Mitigation**: Filter low-accuracy updates
-- **Contingency**: Show accuracy radius
-
-## Testing Strategy
-
-```typescript
-describe('Driver Tracking', () => {
-  it('displays driver location on map', async () => {
-    // Test marker rendering
-  });
-  
-  it('updates marker when location changes', async () => {
-    // Test real-time updates
-  });
-  
-  it('shows proximity alert when nearby', async () => {
-    // Test notification
-  });
-  
-  it('handles WebSocket disconnection gracefully', async () => {
-    // Test fallback
-  });
-  
-  it('calculates accurate ETA', async () => {
-    // Test ETA accuracy
-  });
-});
-```
-
----
-
-**Document Version:** 1.0  
-**Last Updated:** January 24, 2025  
-**Status:** Ready for Development  
-**Estimated Effort:** 3-4 weeks (1 developer)
+Status: Ready for development with 2GIS MapGL
+Estimated Effort: ~3–4 weeks (1 dev) depending on routing/ETA depth.
