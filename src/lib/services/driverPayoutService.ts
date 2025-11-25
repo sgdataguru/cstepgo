@@ -76,6 +76,8 @@ export interface PayoutCalculation {
   tripsCount: number;
   currency: string;
   tenantId?: string;
+  periodStart?: Date;
+  periodEnd?: Date;
 }
 
 /**
@@ -187,6 +189,8 @@ export async function getUnpaidBookings(params: {
     tripsCount: uniqueTrips.size,
     currency: bookings[0]?.currency || 'KZT',
     tenantId: tenantId,
+    periodStart,
+    periodEnd,
   };
 }
 
@@ -211,8 +215,8 @@ export async function createPayout(
         status: PayoutStatus.PENDING,
         payoutMethod: adapter.name,
         payoutProvider: adapter.name,
-        periodStart: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-        periodEnd: new Date(),
+        periodStart: calculation.periodStart || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        periodEnd: calculation.periodEnd || new Date(),
         tripsCount: calculation.tripsCount,
         bookingsCount: calculation.bookingsCount,
         tenantId: calculation.tenantId,

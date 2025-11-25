@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PayoutStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { getDriverPayoutSummary } from '@/lib/services/driverPayoutService';
+import { 
+  getDriverPayoutSummary,
+  DRIVER_EARNINGS_RATE,
+  PLATFORM_COMMISSION_RATE,
+} from '@/lib/services/driverPayoutService';
 
 /**
  * GET /api/drivers/payouts
@@ -90,7 +94,7 @@ export async function GET(request: NextRequest) {
     // Calculate pending payout details
     const pendingAmount = unpaidBookings.reduce((sum, booking) => {
       const amount = Number(booking.totalAmount);
-      const driverEarnings = amount * 0.85; // 85% to driver
+      const driverEarnings = amount * DRIVER_EARNINGS_RATE;
       return sum + driverEarnings;
     }, 0);
 
@@ -128,8 +132,8 @@ export async function GET(request: NextRequest) {
           departureTime: b.trip.departureTime,
           route: `${b.trip.originName} → ${b.trip.destName}`,
           totalAmount: Number(b.totalAmount),
-          driverEarnings: Math.round(Number(b.totalAmount) * 0.85),
-          platformFee: Math.round(Number(b.totalAmount) * 0.15),
+          driverEarnings: Math.round(Number(b.totalAmount) * DRIVER_EARNINGS_RATE),
+          platformFee: Math.round(Number(b.totalAmount) * PLATFORM_COMMISSION_RATE),
           paymentMethod: b.paymentMethodType,
           createdAt: b.createdAt,
         })),

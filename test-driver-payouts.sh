@@ -39,9 +39,12 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -H "x-admin-token: ${ADMIN_TOKEN}" \
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | head -n-1)
 
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ]; then
+if [ "$HTTP_CODE" = "200" ]; then
   print_result 0 "Admin payouts endpoint accessible"
   echo "   Response: $(echo $BODY | jq -c '.success' 2>/dev/null || echo 'Server not running')"
+elif [ "$HTTP_CODE" = "401" ]; then
+  echo "   Note: Server returned 401 (authentication expected)"
+  print_result 0 "Admin payouts endpoint accessible (auth required)"
 else
   print_result 1 "Admin payouts endpoint failed with HTTP $HTTP_CODE"
 fi
@@ -57,9 +60,12 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | head -n-1)
 
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ]; then
+if [ "$HTTP_CODE" = "200" ]; then
   print_result 0 "Batch payout processing endpoint works"
   echo "   Response: $(echo $BODY | jq -c '.data.processedDrivers' 2>/dev/null || echo 'Server not running')"
+elif [ "$HTTP_CODE" = "401" ]; then
+  echo "   Note: Server returned 401 (authentication expected)"
+  print_result 0 "Batch payout processing endpoint accessible (auth required)"
 else
   print_result 1 "Batch payout processing failed with HTTP $HTTP_CODE"
 fi
@@ -74,9 +80,12 @@ RESPONSE=$(curl -s -w "\n%{http_code}" \
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 BODY=$(echo "$RESPONSE" | head -n-1)
 
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ]; then
+if [ "$HTTP_CODE" = "200" ]; then
   print_result 0 "Driver payouts endpoint accessible"
   echo "   Response: $(echo $BODY | jq -c '.success' 2>/dev/null || echo 'Server not running')"
+elif [ "$HTTP_CODE" = "401" ]; then
+  echo "   Note: Server returned 401 (authentication expected)"
+  print_result 0 "Driver payouts endpoint accessible (auth required)"
 else
   print_result 1 "Driver payouts endpoint failed with HTTP $HTTP_CODE"
 fi
@@ -110,10 +119,13 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
   "${BASE_URL}/api/admin/payouts/run")
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ]; then
+if [ "$HTTP_CODE" = "200" ]; then
   print_result 0 "Multi-tenant filtering supported"
+elif [ "$HTTP_CODE" = "401" ]; then
+  echo "   Note: Server returned 401 (authentication expected)"
+  print_result 0 "Multi-tenant filtering endpoint accessible (auth required)"
 else
-  print_result 1 "Multi-tenant filtering failed"
+  print_result 1 "Multi-tenant filtering failed with HTTP $HTTP_CODE"
 fi
 echo ""
 
@@ -126,10 +138,13 @@ RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
   "${BASE_URL}/api/admin/payouts/run")
 HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 
-if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "401" ]; then
+if [ "$HTTP_CODE" = "200" ]; then
   print_result 0 "Single driver payout processing works"
+elif [ "$HTTP_CODE" = "401" ]; then
+  echo "   Note: Server returned 401 (authentication expected)"
+  print_result 0 "Single driver payout endpoint accessible (auth required)"
 else
-  print_result 1 "Single driver payout failed"
+  print_result 1 "Single driver payout failed with HTTP $HTTP_CODE"
 fi
 echo ""
 
