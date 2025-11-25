@@ -258,6 +258,11 @@ model Trip {
   status         TripStatus @default(DRAFT)
   metadata       Json?
 
+  // Trip Type & Multi-Tenant Fields
+  tripType       TripType   @default(PRIVATE) @map("trip_type")
+  tenantId       String?    @map("tenant_id") // Organization/tenant identifier
+  pricePerSeat   Decimal?   @map("price_per_seat") // For shared rides
+
   // Driver Discovery Fields
   driverDiscoveryRadius Int      @default(10) @map("driver_discovery_radius")
   estimatedEarnings     Decimal? @map("estimated_earnings")
@@ -290,35 +295,39 @@ model Trip {
   @@index([status, driverDiscoveryRadius])
   @@index([acceptanceDeadline])
   @@index([offeredToDriverId])
+  @@index([tripType, status])
+  @@index([tenantId])
 }
 
 model Booking {
-  id          String        @id @default(cuid())
-  tripId      String
-  userId      String
-  status      BookingStatus @default(PENDING)
-  seatsBooked Int           @default(1)
-  totalAmount Decimal
-  currency    String        @default("KZT")
-  passengers  Json
-  notes       String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  confirmedAt DateTime?
-  cancelledAt DateTime?
-  trip        Trip          @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  user        User          @relation(fields: [userId], references: [id])
-  payment     Payment?
+  id                String            @id @default(cuid())
+  tripId            String
+  userId            String
+  status            BookingStatus     @default(PENDING)
+  seatsBooked       Int               @default(1)
+  totalAmount       Decimal
+  currency          String            @default("KZT")
+  passengers        Json
+  notes             String?
+  paymentMethodType PaymentMethodType @default(ONLINE) @map("payment_method_type")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  confirmedAt       DateTime?
+  cancelledAt       DateTime?
+  trip              Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user              User              @relation(fields: [userId], references: [id])
+  payment           Payment?
 
   @@index([tripId])
   @@index([userId])
   @@index([status])
+  @@index([paymentMethodType])
 }
 
 model Payment {
   id                 String        @id @default(cuid())
   bookingId          String        @unique
-  stripeIntentId     String        @unique
+  stripeIntentId     String?       @unique
   stripeClientSecret String?
   amount             Decimal
   currency           String        @default("KZT")
@@ -534,6 +543,11 @@ enum DriverStatus {
   SUSPENDED
 }
 
+enum TripType {
+  PRIVATE
+  SHARED
+}
+
 enum TripStatus {
   DRAFT
   PUBLISHED
@@ -581,6 +595,11 @@ enum PayoutStatus {
   PAID
   FAILED
   CANCELLED
+}
+
+enum PaymentMethodType {
+  ONLINE
+  CASH_TO_DRIVER
 }
 
 enum DeliveryChannel {

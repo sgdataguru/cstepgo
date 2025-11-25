@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuth, TokenPayload } from '@/lib/auth/middleware';
+import { withAuth } from '@/lib/auth/middleware';
+import { TokenPayload } from '@/lib/auth/jwt';
 import { validateFile, uploadToS3, isS3Configured } from '@/lib/services/fileUploadService';
 import prisma from '@/lib/prisma';
 import { nanoid } from 'nanoid';

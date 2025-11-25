@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAdmin, TokenPayload } from '@/lib/auth/middleware';
+import { withAdmin } from '@/lib/auth/middleware';
+import { TokenPayload } from '@/lib/auth/jwt';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 

@@ -1,32 +1,23 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import CryptoJS from 'crypto-js';
 
 // JWT Configuration - MUST be set in environment
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET;
+// Use non-null assertions because we validate below
+const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET = (process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET)!;
 const JWT_ISSUER = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const JWT_AUDIENCE = 'steppergo-api';
 
 // Token expiration times
-const ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m'; // 15 minutes
-const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
+const ACCESS_TOKEN_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '15m'; // 15 minutes
+const REFRESH_TOKEN_EXPIRES_IN: string = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d'; // 30 days
 
 // Encryption key for sensitive payload data - MUST be separate from JWT secrets
-const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY;
+const ENCRYPTION_KEY = process.env.JWT_ENCRYPTION_KEY || '';
 
-// Validate required environment variables
-if (!JWT_SECRET) {
-  throw new Error('CRITICAL: JWT_SECRET environment variable is not configured. Application cannot start without it.');
-}
-
-if (!JWT_REFRESH_SECRET) {
-  throw new Error('CRITICAL: JWT_REFRESH_SECRET environment variable is not configured. Application cannot start without it.');
-}
-
-if (!ENCRYPTION_KEY) {
-  throw new Error('CRITICAL: JWT_ENCRYPTION_KEY environment variable is not configured. Application cannot start without it.');
-}
+// Note: Environment variables are validated at runtime when functions are called
+// This allows the build to succeed even if .env is not configured
 
 export interface TokenPayload {
   userId: string;
@@ -54,6 +45,9 @@ export interface VerifyOptions {
  */
 function encryptPayloadData(data: string): string {
   try {
+    if (!ENCRYPTION_KEY) {
+      throw new Error('Encryption key is not configured');
+    }
     return CryptoJS.AES.encrypt(data, ENCRYPTION_KEY).toString();
   } catch (error) {
     console.error('Payload encryption error:', error);
@@ -66,6 +60,9 @@ function encryptPayloadData(data: string): string {
  */
 function decryptPayloadData(encryptedData: string): string {
   try {
+    if (!ENCRYPTION_KEY) {
+      throw new Error('Encryption key is not configured');
+    }
     const bytes = CryptoJS.AES.decrypt(encryptedData, ENCRYPTION_KEY);
     return bytes.toString(CryptoJS.enc.Utf8);
   } catch (error) {
@@ -100,13 +97,21 @@ export function signAccessToken(
   };
 
   // Sign the token
-  return jwt.sign(tokenPayload, JWT_SECRET!, {
-    expiresIn: options.expiresIn || ACCESS_TOKEN_EXPIRES_IN,
-    audience: options.audience || JWT_AUDIENCE,
-    issuer: options.issuer || JWT_ISSUER,
-    subject: options.subject || payload.userId,
-    algorithm: 'HS256',
-  });
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  const secret: string = JWT_SECRET;
+  return jwt.sign(
+    tokenPayload,
+    secret,
+    {
+      expiresIn: options.expiresIn || ACCESS_TOKEN_EXPIRES_IN,
+      audience: options.audience || JWT_AUDIENCE,
+      issuer: options.issuer || JWT_ISSUER,
+      subject: options.subject || payload.userId,
+      algorithm: 'HS256',
+    } as jwt.SignOptions
+  );
 }
 
 /**
@@ -128,14 +133,23 @@ export function signRefreshToken(
     jti: tokenId,
     iat: Math.floor(Date.now() / 1000),
   };
+  // @ts-ignore
 
-  return jwt.sign(tokenPayload, JWT_REFRESH_SECRET!, {
-    expiresIn: options.expiresIn || REFRESH_TOKEN_EXPIRES_IN,
-    audience: options.audience || JWT_AUDIENCE,
-    issuer: options.issuer || JWT_ISSUER,
-    subject: options.subject || payload.userId,
-    algorithm: 'HS256',
-  });
+  if (!JWT_REFRESH_SECRET) {
+    throw new Error('JWT_REFRESH_SECRET is not configured');
+  }
+  const secret: string = JWT_REFRESH_SECRET;
+  return jwt.sign(
+    tokenPayload,
+    secret,
+    {
+      expiresIn: options.expiresIn || REFRESH_TOKEN_EXPIRES_IN,
+      audience: options.audience || JWT_AUDIENCE,
+      issuer: options.issuer || JWT_ISSUER,
+      subject: options.subject || payload.userId,
+      algorithm: 'HS256',
+    } as jwt.SignOptions
+  );
 }
 
 /**
@@ -147,7 +161,11 @@ export function verifyAccessToken(
 ): TokenPayload {
   // Environment validation is done at module load time
   try {
-    const decoded = jwt.verify(token, JWT_SECRET!, {
+    if (!JWT_SECRET) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+    const secret: string = JWT_SECRET;
+    const decoded = jwt.verify(token, secret, {
       audience: options.audience || JWT_AUDIENCE,
       issuer: options.issuer || JWT_ISSUER,
       algorithms: ['HS256'],
@@ -175,7 +193,11 @@ export function verifyRefreshToken(
 ): TokenPayload {
   // Environment validation is done at module load time
   try {
-    const decoded = jwt.verify(token, JWT_REFRESH_SECRET!, {
+    if (!JWT_REFRESH_SECRET) {
+      throw new Error('JWT_REFRESH_SECRET is not configured');
+    }
+    const secret: string = JWT_REFRESH_SECRET;
+    const decoded = jwt.verify(token, secret, {
       audience: options.audience || JWT_AUDIENCE,
       issuer: options.issuer || JWT_ISSUER,
       algorithms: ['HS256'],
@@ -231,7 +253,11 @@ export function createTokenPair(payload: TokenPayload): {
 /**
  * Parse expiration string to seconds
  */
-function parseExpiration(expiresIn: string): number {
+function parseExpiration(expiresIn: string | number): number {
+  if (typeof expiresIn === 'number') {
+    return expiresIn;
+  }
+  
   const units: { [key: string]: number } = {
     s: 1,
     m: 60,
