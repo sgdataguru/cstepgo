@@ -108,7 +108,7 @@ export function rateLimit(
 } {
   const result = checkRateLimit(identifier, config);
 
-  const headers = {
+  const headers: Record<string, string> = {
     'X-RateLimit-Limit': config.maxTokens.toString(),
     'X-RateLimit-Remaining': result.remaining.toString(),
     'X-RateLimit-Reset': result.resetAt.toString(),
