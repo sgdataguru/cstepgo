@@ -25,6 +25,11 @@ export const GET = withAuth(async (req: NextRequest, user) => {
     const upcoming = searchParams.get('upcoming') === 'true';
     const past = searchParams.get('past') === 'true';
     const statsOnly = searchParams.get('stats') === 'true';
+    const tripType = searchParams.get('tripType');
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
+    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : undefined;
 
     // If stats only requested, return stats
     if (statsOnly) {
@@ -44,6 +49,11 @@ export const GET = withAuth(async (req: NextRequest, user) => {
       status: statusFilter,
       upcoming,
       past,
+      tripType: tripType || undefined,
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+      limit,
+      offset,
     });
 
     // Get additional stats for response
@@ -55,6 +65,8 @@ export const GET = withAuth(async (req: NextRequest, user) => {
       meta: {
         total: bookings.length,
         upcomingCount,
+        limit,
+        offset,
       },
     });
   } catch (error: any) {

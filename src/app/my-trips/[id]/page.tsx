@@ -490,6 +490,17 @@ export default function BookingDetailPage() {
                   </div>
                 )}
 
+                {/* View Receipt Button - Show for completed/confirmed bookings with successful payment */}
+                {((booking.status === 'COMPLETED' || booking.status === 'CONFIRMED') && 
+                  booking.payment?.status === 'SUCCEEDED') && (
+                  <Link
+                    href={`/my-trips/${booking.id}/receipt`}
+                    className="w-full block mt-4 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors text-center font-medium"
+                  >
+                    📄 View Receipt
+                  </Link>
+                )}
+
                 {/* Track Driver Button */}
                 {(booking.status === 'CONFIRMED' || booking.status === 'PENDING') && (
                   <Link

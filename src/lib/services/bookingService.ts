@@ -82,7 +82,7 @@ export interface BookingSummary {
 }
 
 /**
- * Get all bookings for a user
+ * Get all bookings for a user with optional filtering and pagination
  */
 export async function getUserBookings(
   userId: string,
@@ -90,6 +90,11 @@ export async function getUserBookings(
     status?: BookingStatus | BookingStatus[];
     upcoming?: boolean;
     past?: boolean;
+    tripType?: string;
+    startDate?: Date;
+    endDate?: Date;
+    limit?: number;
+    offset?: number;
   }
 ): Promise<BookingSummary[]> {
   const where: Prisma.BookingWhereInput = {
@@ -104,14 +109,29 @@ export async function getUserBookings(
   }
 
   // Filter by time (upcoming vs past)
+  const tripConditions: any = {};
+  
   if (filters?.upcoming) {
-    where.trip = {
-      departureTime: { gte: new Date() },
-    };
+    tripConditions.departureTime = { gte: new Date() };
   } else if (filters?.past) {
-    where.trip = {
-      departureTime: { lt: new Date() },
+    tripConditions.departureTime = { lt: new Date() };
+  }
+
+  // Filter by date range
+  if (filters?.startDate || filters?.endDate) {
+    tripConditions.departureTime = {
+      ...(filters.startDate ? { gte: filters.startDate } : {}),
+      ...(filters.endDate ? { lte: filters.endDate } : {}),
     };
+  }
+
+  // Filter by trip type
+  if (filters?.tripType) {
+    tripConditions.tripType = filters.tripType;
+  }
+
+  if (Object.keys(tripConditions).length > 0) {
+    where.trip = tripConditions;
   }
 
   const bookings = await prisma.booking.findMany({
@@ -138,6 +158,8 @@ export async function getUserBookings(
     orderBy: {
       createdAt: 'desc',
     },
+    take: filters?.limit,
+    skip: filters?.offset,
   });
 
   return bookings.map((booking) => ({
