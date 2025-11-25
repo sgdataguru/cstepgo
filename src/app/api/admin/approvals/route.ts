@@ -44,7 +44,7 @@ async function handleGet(req: NextRequest, user: TokenPayload) {
       });
 
       results.drivers = {
-        items: drivers.map((driver) => ({
+        items: drivers.map((driver: typeof drivers[0]) => ({
           id: driver.id,
           driverId: driver.driverId,
           userId: driver.userId,
