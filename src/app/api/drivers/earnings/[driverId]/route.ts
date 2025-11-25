@@ -61,7 +61,7 @@ export async function GET(
     });
 
     // Calculate earnings (driver gets 85% after 15% platform fee)
-    const trips = completedTrips.map(trip => {
+    const trips = completedTrips.map((trip: typeof completedTrips[0]) => {
       const totalFare = Number(trip.basePrice) + Number(trip.platformFee);
       const driverEarnings = totalFare * 0.85;
       

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAccessToken, extractBearerToken, TokenPayload } from './jwt';
 import prisma from '@/lib/prisma';
 
+// Re-export TokenPayload for convenience
+export type { TokenPayload };
+
 export interface AuthenticatedRequest extends NextRequest {
   user?: TokenPayload;
 }

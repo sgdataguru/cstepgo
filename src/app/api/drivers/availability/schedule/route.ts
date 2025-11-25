@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      data: schedules.map(schedule => ({
+      data: schedules.map((schedule: typeof schedules[0]) => ({
         id: schedule.id,
         startTime: schedule.startTime,
         endTime: schedule.endTime,
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Schedule overlaps with existing schedule',
-          overlappingSchedules: overlappingSchedules.map(s => ({
+          overlappingSchedules: overlappingSchedules.map((s: typeof overlappingSchedules[0]) => ({
             id: s.id,
             startTime: s.startTime,
             endTime: s.endTime,
@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     if (startTime <= now && endTime >= now && validatedData.scheduleType !== 'custom') {
       // Use transaction to ensure atomicity
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.driver.update({
           where: { id: driver.id },
           data: {

@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
           acceptsLongDistance: driver.acceptsLongDistance,
           autoOfflineMinutes: driver.autoOfflineMinutes,
         },
-        schedules: currentSchedules.map(schedule => ({
+        schedules: currentSchedules.map((schedule: typeof currentSchedules[0]) => ({
           id: schedule.id,
           startTime: schedule.startTime,
           endTime: schedule.endTime,
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
           isRecurring: schedule.isRecurring,
           recurringPattern: schedule.recurringPattern,
         })),
-        recentHistory: recentHistory.map(history => ({
+        recentHistory: recentHistory.map((history: typeof recentHistory[0]) => ({
           id: history.id,
           previousStatus: history.previousStatus,
           newStatus: history.newStatus,
