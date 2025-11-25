@@ -98,7 +98,15 @@ export default function TrackDriverPage() {
   const fetchTrackingData = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
+      
+      let token: string | null = null;
+      try {
+        token = localStorage.getItem('access_token');
+      } catch (err) {
+        console.error('localStorage not available:', err);
+        router.push('/auth/login');
+        return;
+      }
       
       if (!token) {
         router.push('/auth/login');
@@ -132,7 +140,13 @@ export default function TrackDriverPage() {
   }, [fetchTrackingData]);
 
   // Set up WebSocket connection for live updates
-  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') || '' : '';
+  let token = '';
+  try {
+    token = typeof window !== 'undefined' ? (localStorage.getItem('access_token') || '') : '';
+  } catch (err) {
+    console.error('localStorage not available:', err);
+  }
+  
   const tripIds = trackingData ? [trackingData.trip.id] : [];
 
   const handleDriverLocation = useCallback((location: DriverLocationUpdateEvent) => {

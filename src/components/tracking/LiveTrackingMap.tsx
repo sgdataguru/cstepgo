@@ -53,7 +53,10 @@ export default function LiveTrackingMap({
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
         
         if (!apiKey) {
-          console.error('Google Maps API key not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.');
+          // Log for developers but show user-friendly message to users
+          if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+            console.error('Google Maps API key not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in your environment variables.');
+          }
           setMapError('Map service unavailable. Please try again later.');
           return;
         }

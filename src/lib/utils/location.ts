@@ -28,11 +28,11 @@ export function calculateETA(
   // Calculate distance using Haversine formula
   const distance = calculateDistance(fromLat, fromLng, toLat, toLng);
 
-  // Use current speed or assume average city speed of 40 km/h
-  const speed = currentSpeed > 0 ? currentSpeed : 40;
+  // Use current speed or assume average city speed
+  const speed = currentSpeed > 0 ? currentSpeed : LOCATION_CONSTANTS.DEFAULT_SPEED;
   
-  // Calculate ETA in minutes, add 20% buffer for traffic
-  const minutes = Math.round((distance / speed) * 60 * 1.2);
+  // Calculate ETA in minutes, add traffic buffer
+  const minutes = Math.round((distance / speed) * 60 * LOCATION_CONSTANTS.TRAFFIC_BUFFER);
 
   // Driver is nearby if within 1 km
   const isNearby = distance < 1.0;
