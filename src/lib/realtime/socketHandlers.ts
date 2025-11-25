@@ -349,8 +349,8 @@ export function setupRealtimeHandlers(socket: Socket, io: SocketIOServer): void 
             driver.id,
             { latitude, longitude, heading, speed, accuracy },
             {
-              pickupMinutes: etaToPickup.minutes,
-              destinationMinutes: etaToDestination.minutes,
+              pickupMinutes: etaToPickup.pickupMinutes,
+              destinationMinutes: etaToDestination.pickupMinutes,
             }
           );
         }

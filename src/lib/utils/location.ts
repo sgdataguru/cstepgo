@@ -110,7 +110,7 @@ export function isDriverNearby(
  * @returns Formatted string (e.g., "5 min", "1 hr 30 min")
  */
 export function formatETA(minutes: number): string {
-  if (minutes < 1) return 'Arriving now';
+  if (minutes <= 0) return 'Arriving now';
   if (minutes < 60) return `${minutes} min`;
   
   const hours = Math.floor(minutes / 60);

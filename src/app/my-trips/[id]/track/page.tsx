@@ -241,6 +241,11 @@ export default function TrackDriverPage() {
 
   const currentLocation = liveLocation || trackingData.driverLocation;
   const isDriverNearby = trackingData.eta?.isNearby || false;
+  
+  // Get the last updated timestamp - use timestamp for WebSocket data, lastUpdated for API data
+  const lastUpdatedTime = liveLocation 
+    ? liveLocation.timestamp 
+    : trackingData.driverLocation?.lastUpdated;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -294,9 +299,9 @@ export default function TrackDriverPage() {
                   showDestination={true}
                 />
               </div>
-              {currentLocation && (
+              {currentLocation && lastUpdatedTime && (
                 <div className="p-3 bg-gray-50 border-t text-xs text-gray-500">
-                  Last updated: {format(new Date(currentLocation.lastUpdated), 'HH:mm:ss')}
+                  Last updated: {format(new Date(lastUpdatedTime), 'HH:mm:ss')}
                   {currentLocation.accuracy && (
                     <span className="ml-3">Accuracy: ±{currentLocation.accuracy.toFixed(0)}m</span>
                   )}
