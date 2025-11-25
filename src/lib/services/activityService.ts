@@ -341,7 +341,7 @@ export async function updateActivity(
         ...(durationMinutes && { durationMinutes }),
         ...(scheduleType && { scheduleType }),
         ...(availableDays && { availableDays }),
-        ...(blackoutDates && { blackoutDates: blackoutDates.map(d => new Date(d)) }),
+        ...(blackoutDates && { blackoutDates: blackoutDates.map((d: string) => new Date(d)) }),
         ...(advanceBookingDays && { advanceBookingDays }),
         ...(cancellationPolicy && { cancellationPolicy: cancellationPolicy as any }),
         ...(inclusions && { inclusions }),
@@ -360,7 +360,7 @@ export async function updateActivity(
       
       // Create new schedules
       await tx.activitySchedule.createMany({
-        data: schedules.map((schedule) => ({
+        data: schedules.map((schedule: any) => ({
           activityId,
           dayOfWeek: schedule.dayOfWeek || null,
           startTime: schedule.startTime,
