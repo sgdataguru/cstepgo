@@ -490,6 +490,16 @@ export default function BookingDetailPage() {
                   </div>
                 )}
 
+                {/* Track Driver Button */}
+                {(booking.status === 'CONFIRMED' || booking.status === 'PENDING') && (
+                  <Link
+                    href={`/my-trips/${booking.id}/track`}
+                    className="w-full block mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center font-medium"
+                  >
+                    🚗 Track Driver Live
+                  </Link>
+                )}
+
                 {canCancelBooking(booking) && (
                   <button
                     onClick={() => setShowCancelModal(true)}

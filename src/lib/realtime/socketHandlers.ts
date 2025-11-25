@@ -13,6 +13,7 @@ import {
   PassengerSubscription,
 } from '@/types/realtime-events';
 import { WEBSOCKET_HEARTBEAT_INTERVAL } from '@/lib/constants/realtime';
+import { calculateETA } from '@/lib/utils/location';
 
 /**
  * Setup real-time event handlers for a socket connection
@@ -311,13 +312,48 @@ export function setupRealtimeHandlers(socket: Socket, io: SocketIOServer): void 
         },
       });
 
-      // If associated with an active trip, broadcast to passengers
+      // If associated with an active trip, broadcast to passengers with ETA
       if (tripId) {
-        await realtimeBroadcastService.broadcastDriverLocation(
-          tripId,
-          driver.id,
-          { latitude, longitude, heading, speed, accuracy }
-        );
+        // Get trip details to calculate ETA
+        const trip = await prisma.trip.findUnique({
+          where: { id: tripId },
+          select: {
+            originLat: true,
+            originLng: true,
+            destLat: true,
+            destLng: true,
+            status: true,
+          },
+        });
+
+        if (trip) {
+          // Calculate ETA to pickup and destination
+          const etaToPickup = calculateETA(
+            latitude,
+            longitude,
+            trip.originLat,
+            trip.originLng,
+            speed || 0
+          );
+
+          const etaToDestination = calculateETA(
+            latitude,
+            longitude,
+            trip.destLat,
+            trip.destLng,
+            speed || 0
+          );
+
+          await realtimeBroadcastService.broadcastDriverLocation(
+            tripId,
+            driver.id,
+            { latitude, longitude, heading, speed, accuracy },
+            {
+              pickupMinutes: etaToPickup.pickupMinutes,
+              destinationMinutes: etaToDestination.pickupMinutes,
+            }
+          );
+        }
       }
 
       socket.emit('driver:location:updated', {
