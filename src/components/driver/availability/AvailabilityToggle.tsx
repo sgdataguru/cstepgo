@@ -1,7 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Power, MapPin, Settings, Clock } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Power, MapPin, Settings, Clock, AlertCircle } from 'lucide-react';
+import { 
+  DEFAULT_AUTO_OFFLINE_MINUTES,
+  MIN_AUTO_OFFLINE_MINUTES,
+  MAX_AUTO_OFFLINE_MINUTES,
+  DRIVER_HEARTBEAT_INTERVAL_MS
+} from '@/lib/constants/driver';
 
 interface AvailabilityStatus {
   availability: string;
@@ -37,12 +43,73 @@ export const AvailabilityToggle: React.FC<AvailabilityToggleProps> = ({
     acceptsPrivateTrips: true,
     acceptsSharedTrips: true,
     acceptsLongDistance: true,
-    autoOfflineMinutes: 30
+    autoOfflineMinutes: DEFAULT_AUTO_OFFLINE_MINUTES
   });
   
   const [showSettings, setShowSettings] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [minutesUntilOffline, setMinutesUntilOffline] = useState<number | null>(null);
+  
+  // Heartbeat interval ref
+  const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Send heartbeat to keep driver online
+  const sendHeartbeat = useCallback(async () => {
+    // Only send heartbeat if driver is online (AVAILABLE or BUSY)
+    if (status.availability === 'OFFLINE') {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/drivers/heartbeat', {
+        method: 'POST',
+        headers: {
+          'x-driver-id': driverId
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data?.minutesUntilOffline !== undefined) {
+          setMinutesUntilOffline(data.data.minutesUntilOffline);
+        }
+        if (data.data?.lastActivityAt) {
+          setStatus(prev => ({
+            ...prev,
+            lastActivityAt: data.data.lastActivityAt
+          }));
+        }
+      }
+    } catch (err) {
+      console.warn('Heartbeat failed:', err);
+      // Don't show error to user for heartbeat failures - it's not critical
+    }
+  }, [driverId, status.availability]);
+
+  // Start/stop heartbeat based on availability
+  useEffect(() => {
+    if (status.availability !== 'OFFLINE') {
+      // Start heartbeat interval
+      heartbeatIntervalRef.current = setInterval(sendHeartbeat, DRIVER_HEARTBEAT_INTERVAL_MS);
+      
+      // Send initial heartbeat
+      sendHeartbeat();
+    } else {
+      // Stop heartbeat when offline
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      setMinutesUntilOffline(null);
+    }
+    
+    return () => {
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+    };
+  }, [status.availability, sendHeartbeat]);
 
   // Load current availability status
   useEffect(() => {
@@ -312,17 +379,63 @@ export const AvailabilityToggle: React.FC<AvailabilityToggleProps> = ({
           </div>
 
           {/* Auto Offline Setting */}
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-start">
-              <Clock className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">Auto Offline</p>
-                <p className="text-xs text-blue-700 mt-1">
-                  You&apos;ll be automatically set to offline after {preferences.autoOfflineMinutes} minutes of inactivity
-                </p>
+          <div className="space-y-3">
+            <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
+              <Clock className="w-4 h-4 mr-2" />
+              Auto Offline: {preferences.autoOfflineMinutes} minutes
+            </label>
+            <input
+              type="range"
+              min={MIN_AUTO_OFFLINE_MINUTES}
+              max={MAX_AUTO_OFFLINE_MINUTES}
+              step="30"
+              value={preferences.autoOfflineMinutes}
+              onChange={(e) => updatePreferences({ autoOfflineMinutes: parseInt(e.target.value) })}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              disabled={isUpdating}
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1 hour</span>
+              <span>2 hours</span>
+              <span>4 hours</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              You&apos;ll be automatically set to offline after this period of inactivity.
+              Your browser will send periodic heartbeat signals to keep you online while the portal is open.
+            </p>
+          </div>
+
+          {/* Auto Offline Status Indicator */}
+          {status.availability !== 'OFFLINE' && minutesUntilOffline !== null && (
+            <div className={`p-4 rounded-lg border ${
+              minutesUntilOffline <= 15 
+                ? 'bg-yellow-50 border-yellow-200' 
+                : 'bg-blue-50 border-blue-200'
+            }`}>
+              <div className="flex items-start">
+                {minutesUntilOffline <= 15 ? (
+                  <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5" />
+                ) : (
+                  <Clock className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
+                )}
+                <div>
+                  <p className={`text-sm font-medium ${
+                    minutesUntilOffline <= 15 ? 'text-yellow-900' : 'text-blue-900'
+                  }`}>
+                    {minutesUntilOffline <= 15 ? 'Activity Warning' : 'Auto Offline Timer'}
+                  </p>
+                  <p className={`text-xs mt-1 ${
+                    minutesUntilOffline <= 15 ? 'text-yellow-700' : 'text-blue-700'
+                  }`}>
+                    {minutesUntilOffline <= 0 
+                      ? 'You may be set offline soon. Take an action to stay online.'
+                      : `You'll be set offline in approximately ${minutesUntilOffline} minutes if inactive.`
+                    }
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

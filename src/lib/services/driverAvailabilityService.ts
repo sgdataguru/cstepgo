@@ -1,14 +1,24 @@
 import { PrismaClient } from '@prisma/client';
+import { 
+  DEFAULT_AUTO_OFFLINE_MINUTES,
+  AUTO_OFFLINE_REASON 
+} from '../constants/driver';
 
 const prisma = new PrismaClient();
 
 /**
  * Service to handle automatic offline status for inactive drivers
  * This should be run periodically (e.g., every 5 minutes) as a cron job or background task
+ * 
+ * Browser-based auto-offline logic:
+ * - Driver is marked OFFLINE if: now - lastActivityAt >= autoOfflineMinutes
+ * - Default autoOfflineMinutes is 120 (2 hours)
+ * - lastActivityAt is updated by driver-initiated actions and heartbeat pings
  */
 export class DriverAvailabilityService {
   /**
    * Set drivers to offline if they've been inactive for longer than their configured timeout
+   * Uses driver's individual autoOfflineMinutes setting (default: 120 minutes / 2 hours)
    */
   static async setInactiveDriversOffline(): Promise<{
     updated: number;
@@ -18,6 +28,7 @@ export class DriverAvailabilityService {
     
     // Find drivers who are AVAILABLE or BUSY but haven't been active within their timeout window
     // Using Prisma's type-safe methods to avoid SQL injection
+    // Pre-filter with default timeout (120 minutes) for efficiency
     const drivers = await prisma.driver.findMany({
       where: {
         status: 'APPROVED',
@@ -30,18 +41,19 @@ export class DriverAvailabilityService {
           },
           {
             lastActivityAt: {
-              lt: new Date(Date.now() - 30 * 60 * 1000) // Default 30 minutes if not set
+              lt: new Date(Date.now() - DEFAULT_AUTO_OFFLINE_MINUTES * 60 * 1000)
             }
           }
         ]
       }
     });
     
-    // Filter by individual auto_offline_minutes
+    // Filter by individual auto_offline_minutes (or default to 120 minutes)
     const inactiveDrivers = drivers.filter(driver => {
       if (!driver.lastActivityAt) return true;
       const inactiveMinutes = (now.getTime() - driver.lastActivityAt.getTime()) / (1000 * 60);
-      return inactiveMinutes >= driver.autoOfflineMinutes;
+      const autoOfflineTimeout = driver.autoOfflineMinutes || DEFAULT_AUTO_OFFLINE_MINUTES;
+      return inactiveMinutes >= autoOfflineTimeout;
     });
     
     const updatedDrivers: Array<{ id: string; driverId: string; lastActivityAt: Date | null }> = [];
@@ -60,16 +72,17 @@ export class DriverAvailabilityService {
         });
         
         // Log the change
+        const autoOfflineTimeout = driver.autoOfflineMinutes || DEFAULT_AUTO_OFFLINE_MINUTES;
         await prisma.driverAvailabilityHistory.create({
           data: {
             driverId: driver.id,
             previousStatus: previousAvailability,
             newStatus: 'OFFLINE',
-            changeReason: `Auto-offline after ${driver.autoOfflineMinutes} minutes of inactivity`,
+            changeReason: AUTO_OFFLINE_REASON.INACTIVITY(autoOfflineTimeout),
             triggeredBy: 'system',
             metadata: {
               lastActivityAt: driver.lastActivityAt,
-              autoOfflineMinutes: driver.autoOfflineMinutes
+              autoOfflineMinutes: autoOfflineTimeout
             }
           }
         });
@@ -154,7 +167,7 @@ export class DriverAvailabilityService {
             driverId: schedule.driver.id,
             previousStatus: schedule.driver.availability,
             newStatus: targetStatus,
-            changeReason: `Scheduled ${schedule.scheduleType}: ${schedule.reason || 'No reason provided'}`,
+            changeReason: AUTO_OFFLINE_REASON.SCHEDULED(schedule.scheduleType, schedule.reason || undefined),
             triggeredBy: 'system',
             metadata: {
               scheduleId: schedule.id,
@@ -241,7 +254,7 @@ export class DriverAvailabilityService {
               driverId: schedule.driver.id,
               previousStatus: schedule.driver.availability,
               newStatus: 'AVAILABLE',
-              changeReason: `Scheduled ${schedule.scheduleType} ended`,
+              changeReason: AUTO_OFFLINE_REASON.SCHEDULE_ENDED(schedule.scheduleType),
               triggeredBy: 'system',
               metadata: {
                 scheduleId: schedule.id,

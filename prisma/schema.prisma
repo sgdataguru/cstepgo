@@ -103,7 +103,7 @@ model Driver {
   acceptsSharedTrips  Boolean   @default(true) @map("accepts_shared_trips")
   acceptsLongDistance Boolean   @default(true) @map("accepts_long_distance")
   lastActivityAt      DateTime? @map("last_activity_at")
-  autoOfflineMinutes  Int       @default(30) @map("auto_offline_minutes")
+  autoOfflineMinutes  Int       @default(120) @map("auto_offline_minutes")
 
   // Application Status
   appliedAt       DateTime  @default(now())

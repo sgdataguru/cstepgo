@@ -349,8 +349,11 @@ const DRIVER_EARNINGS = 0.85;   // 85%
 - `Payout.tenantId` - Separate payout processing per tenant
 
 ### Auto-Offline Logic
-- Driver goes OFFLINE if no activity for `autoOfflineMinutes` (default: 30)
+- Driver goes OFFLINE if no activity for `autoOfflineMinutes` (default: 120 minutes / 2 hours)
+- Configurable range: 60-240 minutes (1-4 hours)
 - Tracked via `Driver.lastActivityAt`
+- Browser-based heartbeat calls refresh `lastActivityAt` to prevent premature offline
+- Activity types that update `lastActivityAt`: availability toggle, trip accept/decline, heartbeat, location update, preferences update
 
 ---
 
