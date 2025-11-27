@@ -471,6 +471,58 @@ NEXT_PUBLIC_APP_URL=https://steppergo.com
 
 ## API Reference
 
+### Admin Middleware
+
+The admin middleware (`src/lib/auth/adminMiddleware.ts`) provides secure role-based access control for admin routes.
+
+#### `requireAdmin(request: NextRequest): Promise<NextResponse | null>`
+
+Validates that the request comes from an authenticated user with the ADMIN role.
+
+**Authentication Flow:**
+1. Extracts JWT token from `Authorization` header (Bearer token) or `access_token` cookie
+2. Verifies the JWT token using `verifyAccessToken()`
+3. Checks that the user's role is `ADMIN`
+4. Optionally validates the session against the database for token revocation support
+5. Returns `null` if authorized (request proceeds), or an error response if unauthorized
+
+**Error Responses:**
+- `401 Unauthorized` - No token provided, invalid token, expired token, or session expired
+- `403 Forbidden` - User authenticated but does not have ADMIN role
+- `500 Internal Server Error` - Server-side error during validation
+
+**Usage Example:**
+```typescript
+import { requireAdmin } from '@/lib/auth/adminMiddleware';
+
+export async function POST(request: NextRequest) {
+  // Check admin authentication
+  const authCheck = await requireAdmin(request);
+  if (authCheck) return authCheck;  // Returns error response if not authorized
+  
+  // Proceed with admin-only logic
+  // ...
+}
+```
+
+**Security Note:** The `requireAdmin` function enforces proper JWT authentication and ADMIN role validation in all environments (development, staging, production). There is no bypass mechanism.
+
+### Alternative: withAdmin Wrapper
+
+For a more concise syntax, use the `withAdmin` wrapper from `@/lib/auth/middleware`:
+
+```typescript
+import { withAdmin } from '@/lib/auth/middleware';
+
+async function handlePost(req: NextRequest, user: TokenPayload) {
+  // User is guaranteed to be an admin here
+  const adminId = user.userId;
+  // ...
+}
+
+export const POST = withAdmin(handlePost);
+```
+
 ### Authentication Endpoints
 
 | Method | Endpoint | Auth | Description |
