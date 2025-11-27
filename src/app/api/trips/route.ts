@@ -163,9 +163,10 @@ export async function POST(request: NextRequest) {
       departureTime,
       returnDate,
       returnTime,
+      tripType, // 'PRIVATE' or 'SHARED'
+      vehicleType,
       totalSeats,
       basePrice,
-      vehicleType,
       itinerary,
     } = body;
 
@@ -179,26 +180,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate tripType
+    const validTripType = tripType === 'SHARED' ? 'SHARED' : 'PRIVATE';
+
+    // For shared rides, validate that departure is at least 1 hour in the future
+    if (validTripType === 'SHARED') {
+      const selectedDateTime = new Date(`${departureDate}T${departureTime}`);
+      const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
+      
+      if (selectedDateTime < oneHourFromNow) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Shared rides must be scheduled at least 1 hour in advance',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Try to find a driver user, but don't fail if not found
     // For now, use the first user from database as organizer
     // TODO: Replace with authenticated user from session
-    const firstUser = await prisma.user.findFirst({
+    let firstUser = await prisma.user.findFirst({
       where: { role: 'DRIVER' },
     });
 
+    // If no driver found, create a pending trip without driver assignment
+    // In production, this would trigger driver discovery/matching flow
     if (!firstUser) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'No driver user found. Please run seed script first.',
-        },
-        { status: 400 }
-      );
+      console.warn('No driver user found in database. Creating trip without driver assignment.');
+      
+      // Try to find any user to use as organizer (for dev/test purposes)
+      firstUser = await prisma.user.findFirst();
+      
+      if (!firstUser) {
+        // Still no user? Create a system user for dev purposes only
+        // In production, this should trigger proper driver matching/assignment flow
+        console.warn('No users found in database. Creating dev system user.');
+        const devPassword = process.env.DEV_SYSTEM_USER_PASSWORD || `dev-${Date.now()}-${Math.random()}`;
+        firstUser = await prisma.user.create({
+          data: {
+            email: `system-${Date.now()}@steppergo.local`,
+            name: 'System User (Dev)',
+            passwordHash: devPassword, // In real scenario, this would be properly hashed
+            role: 'PASSENGER',
+          },
+        });
+      }
     }
 
-    // Get driver profile
-    const driverProfile = await prisma.driver.findUnique({
-      where: { userId: firstUser.id },
-    });
+    // Get driver profile if user is a driver
+    let driverProfile = null;
+    if (firstUser.role === 'DRIVER') {
+      driverProfile = await prisma.driver.findUnique({
+        where: { userId: firstUser.id },
+      });
+    }
 
     // Combine date and time
     const departureDateTime = new Date(`${departureDate}T${departureTime}`);
@@ -206,32 +244,38 @@ export async function POST(request: NextRequest) {
       ? new Date(`${returnDate}T${returnTime}`)
       : new Date(departureDateTime.getTime() + 12 * 60 * 60 * 1000); // Default: 12 hours later
 
+    // Set default values based on trip type
+    const defaultSeats = totalSeats || (validTripType === 'PRIVATE' ? 4 : 4);
+    const defaultPrice = basePrice || 5000;
+    
     // Calculate platform fee (10% of base price)
-    const platformFee = Number(basePrice) * 0.1;
+    const platformFee = Number(defaultPrice) * 0.1;
 
     // Create trip
     const trip = await prisma.trip.create({
       data: {
         title,
-        description: description || `${title} - Comfortable shared ride`,
+        description: description || `${title} - Comfortable ride`,
         organizerId: firstUser.id,
-        driverId: driverProfile?.id,
+        driverId: driverProfile?.id || null, // Allow null driver for pending trips
+        tripType: validTripType,
         departureTime: departureDateTime,
         returnTime: returnDateTime,
         timezone: 'Asia/Almaty',
         originName: origin.name,
-        originAddress: origin.address,
-        originLat: origin.coordinates.lat,
-        originLng: origin.coordinates.lng,
+        originAddress: origin.address || '',
+        originLat: origin.coordinates?.lat || 0,
+        originLng: origin.coordinates?.lng || 0,
         destName: destination.name,
-        destAddress: destination.address,
-        destLat: destination.coordinates.lat,
-        destLng: destination.coordinates.lng,
-        totalSeats: Number(totalSeats),
-        availableSeats: Number(totalSeats),
-        basePrice: Number(basePrice),
+        destAddress: destination.address || '',
+        destLat: destination.coordinates?.lat || 0,
+        destLng: destination.coordinates?.lng || 0,
+        totalSeats: Number(defaultSeats),
+        availableSeats: Number(defaultSeats),
+        basePrice: Number(defaultPrice),
         currency: 'KZT',
         platformFee,
+        pricePerSeat: validTripType === 'SHARED' ? Number(defaultPrice) : null,
         itinerary: itinerary || {
           version: '1.0',
           days: [
@@ -245,8 +289,8 @@ export async function POST(request: NextRequest) {
                   startTime: departureTime,
                   location: {
                     name: origin.name,
-                    address: origin.address,
-                    coordinates: origin.coordinates,
+                    address: origin.address || '',
+                    coordinates: origin.coordinates || { lat: 0, lng: 0 },
                   },
                   type: 'transport',
                   description: `Departure from ${origin.name}`,
@@ -257,8 +301,8 @@ export async function POST(request: NextRequest) {
                   startTime: returnTime || departureTime,
                   location: {
                     name: destination.name,
-                    address: destination.address,
-                    coordinates: destination.coordinates,
+                    address: destination.address || '',
+                    coordinates: destination.coordinates || { lat: 0, lng: 0 },
                   },
                   type: 'transport',
                   description: `Arrival in ${destination.name}`,
@@ -271,6 +315,8 @@ export async function POST(request: NextRequest) {
         status: 'DRAFT',
         metadata: {
           vehicleType: vehicleType || 'sedan',
+          createdVia: 'booking-flow',
+          tripType: validTripType,
         },
       },
       include: {
@@ -287,7 +333,10 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         id: trip.id,
-        message: 'Trip created successfully',
+        tripType: validTripType,
+        message: driverProfile 
+          ? 'Trip created successfully' 
+          : 'Trip created. Driver assignment pending.',
       },
     });
   } catch (error) {

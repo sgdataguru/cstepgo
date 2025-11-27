@@ -269,7 +269,9 @@ export async function createActivity(
       where: { id: ownerId },
       data: {
         totalActivities: { increment: 1 },
-        activeActivities: status === 'ACTIVE' ? { increment: 1 } : undefined,
+        // Only increment activeActivities when status is actually 'ACTIVE'
+        // For create operation, status can only be 'DRAFT' or 'PENDING_APPROVAL'
+        // so we don't increment activeActivities here
       },
     });
     

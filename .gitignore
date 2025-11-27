@@ -80,3 +80,4 @@ Thumbs.db
 steppergo/
 
 /src/generated/prisma
+.env
