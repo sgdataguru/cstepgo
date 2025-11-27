@@ -215,13 +215,15 @@ export async function POST(request: NextRequest) {
       firstUser = await prisma.user.findFirst();
       
       if (!firstUser) {
-        // Still no user? Create a system user for dev purposes
-        console.warn('No users found in database. Creating system user for development.');
+        // Still no user? Create a system user for dev purposes only
+        // In production, this should trigger proper driver matching/assignment flow
+        console.warn('No users found in database. Creating dev system user.');
+        const devPassword = process.env.DEV_SYSTEM_USER_PASSWORD || `dev-${Date.now()}-${Math.random()}`;
         firstUser = await prisma.user.create({
           data: {
-            email: 'system@steppergo.local',
-            name: 'System User',
-            passwordHash: 'dev-only-hash',
+            email: `system-${Date.now()}@steppergo.local`,
+            name: 'System User (Dev)',
+            passwordHash: devPassword, // In real scenario, this would be properly hashed
             role: 'PASSENGER',
           },
         });

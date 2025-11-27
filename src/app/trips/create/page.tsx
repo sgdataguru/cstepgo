@@ -27,7 +27,13 @@ export default function CreateTripPage() {
     // Set current time (rounded to next 5 minutes)
     const minutes = now.getMinutes();
     const roundedMinutes = Math.ceil(minutes / 5) * 5;
-    now.setMinutes(roundedMinutes);
+    
+    if (roundedMinutes >= 60) {
+      now.setHours(now.getHours() + 1);
+      now.setMinutes(0);
+    } else {
+      now.setMinutes(roundedMinutes);
+    }
     now.setSeconds(0);
     const timeStr = now.toTimeString().slice(0, 5);
     setDepartureTime(timeStr);
@@ -90,7 +96,13 @@ export default function CreateTripPage() {
         finalDepartureDate = now.toISOString().split('T')[0];
         const minutes = now.getMinutes();
         const roundedMinutes = Math.ceil(minutes / 5) * 5;
-        now.setMinutes(roundedMinutes);
+        
+        if (roundedMinutes >= 60) {
+          now.setHours(now.getHours() + 1);
+          now.setMinutes(0);
+        } else {
+          now.setMinutes(roundedMinutes);
+        }
         now.setSeconds(0);
         finalDepartureTime = now.toTimeString().slice(0, 5);
       }
