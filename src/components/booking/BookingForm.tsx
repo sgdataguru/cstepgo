@@ -176,9 +176,7 @@ export default function BookingForm({
     ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md'
     : 'bg-white dark:bg-gray-800';
   
-  const headingClasses = isHero
-    ? 'text-gray-900 dark:text-white'
-    : 'text-gray-900 dark:text-white';
+  const headingClasses = 'text-gray-900 dark:text-white';
 
   const textMutedClasses = isHero
     ? 'text-gray-600 dark:text-gray-300'
