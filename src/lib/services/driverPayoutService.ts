@@ -7,10 +7,16 @@
 
 import { PayoutStatus, BookingStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import {
+  getPlatformFeeRate,
+  getDriverEarningsRate,
+  DEFAULT_PLATFORM_FEE_RATE,
+} from '@/lib/services/platformSettingsService';
 
-// Platform commission rate (driver gets 85%, platform gets 15%)
-export const PLATFORM_COMMISSION_RATE = 0.15;
-export const DRIVER_EARNINGS_RATE = 0.85;
+// Legacy constants for backward compatibility
+// These are now dynamically loaded from the database
+export const PLATFORM_COMMISSION_RATE = DEFAULT_PLATFORM_FEE_RATE;
+export const DRIVER_EARNINGS_RATE = 1 - DEFAULT_PLATFORM_FEE_RATE;
 
 /**
  * Payout adapter interface for pluggable providers
@@ -81,7 +87,8 @@ export interface PayoutCalculation {
 }
 
 /**
- * Calculate driver earnings from a booking
+ * Calculate driver earnings from a booking (sync version for backward compatibility)
+ * Uses the default platform commission rate
  */
 export function calculateDriverEarnings(bookingAmount: number): {
   grossAmount: number;
@@ -96,6 +103,29 @@ export function calculateDriverEarnings(bookingAmount: number): {
     grossAmount,
     platformFee,
     driverEarnings,
+  };
+}
+
+/**
+ * Calculate driver earnings from a booking (async version using database config)
+ * Uses the configured platform fee rate from the database
+ */
+export async function calculateDriverEarningsAsync(bookingAmount: number): Promise<{
+  grossAmount: number;
+  platformFee: number;
+  driverEarnings: number;
+  platformFeeRate: number;
+}> {
+  const platformFeeRate = await getPlatformFeeRate();
+  const grossAmount = bookingAmount;
+  const platformFee = Math.round(grossAmount * platformFeeRate);
+  const driverEarnings = grossAmount - platformFee;
+
+  return {
+    grossAmount,
+    platformFee,
+    driverEarnings,
+    platformFeeRate,
   };
 }
 
@@ -119,6 +149,9 @@ export async function getUnpaidBookings(params: {
   if (!driver) {
     throw new Error('Driver not found');
   }
+
+  // Get the current platform fee rate
+  const platformFeeRate = await getPlatformFeeRate();
 
   // Build the where clause for bookings
   const whereClause: Prisma.BookingWhereInput = {
@@ -156,10 +189,12 @@ export async function getUnpaidBookings(params: {
     },
   });
 
-  // Calculate earnings for each booking
+  // Calculate earnings for each booking using the configured platform fee rate
   const bookingDetails = bookings.map(booking => {
     const amount = Number(booking.totalAmount);
-    const { grossAmount, platformFee, driverEarnings } = calculateDriverEarnings(amount);
+    const grossAmount = amount;
+    const platformFee = Math.round(grossAmount * platformFeeRate);
+    const driverEarnings = grossAmount - platformFee;
 
     return {
       id: booking.id,
