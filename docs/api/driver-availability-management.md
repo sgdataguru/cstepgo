@@ -60,7 +60,7 @@ x-driver-id: <driver-id>
       "acceptsPrivateTrips": true,
       "acceptsSharedTrips": true,
       "acceptsLongDistance": true,
-      "autoOfflineMinutes": 30
+      "autoOfflineMinutes": 120
     },
     "schedules": [
       {
@@ -133,6 +133,63 @@ Content-Type: application/json
 - `AVAILABLE` - Driver is online and accepting trips
 - `BUSY` - Driver is online but temporarily not accepting new trips
 - `OFFLINE` - Driver is offline
+
+#### Driver Heartbeat
+
+Send periodic heartbeat to keep driver online and refresh `lastActivityAt`. This endpoint should be called from the browser while the driver portal tab is open to prevent auto-offline during normal usage.
+
+**Endpoint:** `POST /api/drivers/heartbeat`
+
+**Headers:**
+```
+x-driver-id: <driver-id>
+```
+
+**Recommended Usage:**
+- Call every 5 minutes while driver is ONLINE (AVAILABLE or BUSY)
+- The heartbeat is ignored if driver is OFFLINE
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Heartbeat received",
+  "data": {
+    "availability": "AVAILABLE",
+    "lastActivityAt": "2024-11-23T10:40:00Z",
+    "autoOfflineMinutes": 120,
+    "autoOfflineAt": "2024-11-23T12:40:00Z",
+    "minutesUntilOffline": 120,
+    "activityType": "heartbeat"
+  }
+}
+```
+
+#### Get Activity Status
+
+Get current activity status and time until auto-offline.
+
+**Endpoint:** `GET /api/drivers/heartbeat`
+
+**Headers:**
+```
+x-driver-id: <driver-id>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "availability": "AVAILABLE",
+    "lastActivityAt": "2024-11-23T10:35:00Z",
+    "autoOfflineMinutes": 120,
+    "autoOfflineAt": "2024-11-23T12:35:00Z",
+    "minutesUntilOffline": 115,
+    "isOnline": true
+  }
+}
+```
 
 ### Schedule Management
 
@@ -343,7 +400,7 @@ interface DriverAvailabilityPreferences {
   acceptsPrivateTrips: boolean;   // Accept private bookings
   acceptsSharedTrips: boolean;    // Accept shared bookings
   acceptsLongDistance: boolean;   // Accept long-distance trips
-  autoOfflineMinutes: number;     // Auto-offline after inactivity
+  autoOfflineMinutes: number;     // Auto-offline after inactivity (default: 120 min, range: 60-240)
 }
 ```
 
