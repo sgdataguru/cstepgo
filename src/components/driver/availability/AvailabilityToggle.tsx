@@ -406,7 +406,7 @@ export const AvailabilityToggle: React.FC<AvailabilityToggleProps> = ({
           </div>
 
           {/* Auto Offline Status Indicator */}
-          {status.availability !== 'OFFLINE' && minutesUntilOffline !== null && (
+          {status.availability !== 'OFFLINE' && minutesUntilOffline !== null && minutesUntilOffline >= 0 && (
             <div className={`p-4 rounded-lg border ${
               minutesUntilOffline <= 15 
                 ? 'bg-yellow-50 border-yellow-200' 
@@ -427,7 +427,7 @@ export const AvailabilityToggle: React.FC<AvailabilityToggleProps> = ({
                   <p className={`text-xs mt-1 ${
                     minutesUntilOffline <= 15 ? 'text-yellow-700' : 'text-blue-700'
                   }`}>
-                    {minutesUntilOffline <= 0 
+                    {minutesUntilOffline === 0 
                       ? 'You may be set offline soon. Take an action to stay online.'
                       : `You'll be set offline in approximately ${minutesUntilOffline} minutes if inactive.`
                     }

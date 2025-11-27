@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { DRIVER_ACTIVITY_TYPES } from '@/lib/constants/driver';
+import { DRIVER_ACTIVITY_TYPES, DEFAULT_AUTO_OFFLINE_MINUTES } from '@/lib/constants/driver';
 
 const prisma = new PrismaClient();
 
@@ -98,8 +98,10 @@ export async function POST(request: NextRequest) {
     });
     
     // Calculate time until auto-offline (for frontend warning display)
-    const autoOfflineAt = new Date(now.getTime() + (updatedDriver.autoOfflineMinutes * 60 * 1000));
-    const minutesUntilOffline = updatedDriver.autoOfflineMinutes;
+    // After heartbeat, lastActivityAt is set to now, so auto-offline is now + autoOfflineMinutes
+    const autoOfflineTimeout = updatedDriver.autoOfflineMinutes ?? DEFAULT_AUTO_OFFLINE_MINUTES;
+    const autoOfflineAt = new Date(now.getTime() + (autoOfflineTimeout * 60 * 1000));
+    const minutesUntilOffline = autoOfflineTimeout;
     
     return NextResponse.json({
       success: true,
@@ -107,7 +109,7 @@ export async function POST(request: NextRequest) {
       data: {
         availability: updatedDriver.availability,
         lastActivityAt: updatedDriver.lastActivityAt,
-        autoOfflineMinutes: updatedDriver.autoOfflineMinutes,
+        autoOfflineMinutes: autoOfflineTimeout,
         autoOfflineAt: autoOfflineAt.toISOString(),
         minutesUntilOffline: minutesUntilOffline,
         activityType: DRIVER_ACTIVITY_TYPES.HEARTBEAT,
@@ -162,12 +164,13 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     let minutesUntilOffline: number | null = null;
     let autoOfflineAt: string | null = null;
+    const autoOfflineTimeout = driver.autoOfflineMinutes ?? DEFAULT_AUTO_OFFLINE_MINUTES;
     
     // Calculate time until auto-offline if driver is online
     if (driver.availability !== 'OFFLINE' && driver.lastActivityAt) {
       const timeSinceActivity = (now.getTime() - driver.lastActivityAt.getTime()) / (1000 * 60);
-      minutesUntilOffline = Math.max(0, Math.round(driver.autoOfflineMinutes - timeSinceActivity));
-      autoOfflineAt = new Date(driver.lastActivityAt.getTime() + (driver.autoOfflineMinutes * 60 * 1000)).toISOString();
+      minutesUntilOffline = Math.max(0, Math.round(autoOfflineTimeout - timeSinceActivity));
+      autoOfflineAt = new Date(driver.lastActivityAt.getTime() + (autoOfflineTimeout * 60 * 1000)).toISOString();
     }
     
     return NextResponse.json({
@@ -175,7 +178,7 @@ export async function GET(request: NextRequest) {
       data: {
         availability: driver.availability,
         lastActivityAt: driver.lastActivityAt,
-        autoOfflineMinutes: driver.autoOfflineMinutes,
+        autoOfflineMinutes: autoOfflineTimeout,
         autoOfflineAt: autoOfflineAt,
         minutesUntilOffline: minutesUntilOffline,
         isOnline: driver.availability !== 'OFFLINE',
