@@ -9,7 +9,7 @@ export default function HomePage() {
       <div className="fixed top-4 right-4 z-50 flex flex-col sm:flex-row gap-2">
         <Link
           href="/module-overview"
-          className="bg-purple-500/90 backdrop-blur-sm hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+          className="bg-purple-500/90 backdrop-blur-sm hover:bg-purple-500 text-white px-4 py-3 min-h-[44px] rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
         >
           <span className="text-lg">📊</span>
           <span className="hidden sm:inline">Module Overview</span>
@@ -17,7 +17,7 @@ export default function HomePage() {
         </Link>
         <Link
           href="/auth/register"
-          className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-900 px-4 py-2 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 border border-gray-200"
+          className="bg-white/90 backdrop-blur-sm hover:bg-white text-gray-900 px-4 py-3 min-h-[44px] rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2 border border-gray-200"
         >
           <span className="text-lg">👤</span>
           <span className="hidden sm:inline">Register as Passenger</span>
@@ -25,7 +25,7 @@ export default function HomePage() {
         </Link>
         <Link
           href="/admin/drivers/new"
-          className="bg-primary-modernSg/90 backdrop-blur-sm hover:bg-primary-modernSg text-white px-4 py-2 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+          className="bg-primary-modernSg/90 backdrop-blur-sm hover:bg-primary-modernSg text-white px-4 py-3 min-h-[44px] rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center gap-2"
         >
           <span className="text-lg">🚗</span>
           <span className="hidden sm:inline">Apply as Driver</span>
@@ -91,13 +91,13 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row gap-6 justify-center items-center mt-12">
               <Link
                 href="/trips"
-                className="bg-white text-gray-900 px-8 py-4 rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-200 min-w-[200px] text-center"
+                className="bg-white text-gray-900 px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center"
               >
                 Browse Trips
               </Link>
               <Link
                 href="/trips/create"
-                className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-200 min-w-[200px] text-center"
+                className="bg-transparent border-2 border-white text-white px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center"
               >
                 Create Trip
               </Link>
@@ -122,7 +122,7 @@ export default function HomePage() {
                 <Link
                   key={route.id}
                   href={`/trips?origin_city=${encodeURIComponent(route.from)}&destination_city=${encodeURIComponent(route.to)}`}
-                  className="group bg-gradient-to-br from-neutral-light to-white border border-gray-200 p-6 rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-105"
+                  className="group bg-gradient-to-br from-neutral-light to-white border border-gray-200 p-6 min-h-[100px] rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-lg font-semibold text-gray-900">{route.from}</span>

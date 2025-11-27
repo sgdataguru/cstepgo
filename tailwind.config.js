@@ -41,6 +41,18 @@ module.exports = {
         body: ['"Inter"', 'sans-serif'],
         accent: ['"Clash Display"', 'sans-serif'],
       },
+      minHeight: {
+        'tap': '44px',
+      },
+      minWidth: {
+        'tap': '44px',
+      },
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
       keyframes: {
         shimmer: {
           '0%, 100%': { opacity: 1 },

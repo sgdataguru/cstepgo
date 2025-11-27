@@ -144,13 +144,13 @@ export default function CreateTripPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-safe-lg">
+      <div className="container mx-auto px-4 py-8 pb-32 md:pb-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/trips"
-            className="text-primary-modernSg hover:underline mb-4 inline-block"
+            className="text-primary-modernSg hover:underline mb-4 inline-flex items-center gap-1 min-h-[44px] py-2"
           >
             ← Back to Trips
           </Link>
@@ -166,7 +166,7 @@ export default function CreateTripPage() {
 
         {/* Single-Page Form */}
         <form onSubmit={handleSubmit}>
-          <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+          <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8">
             <div className="space-y-6">
               {/* Error Display */}
               {error && (
@@ -219,7 +219,7 @@ export default function CreateTripPage() {
                   <button
                     type="button"
                     onClick={() => setRideType('PRIVATE')}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    className={`p-4 rounded-xl border-2 transition-all text-left min-h-[88px] ${
                       rideType === 'PRIVATE'
                         ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
@@ -245,7 +245,7 @@ export default function CreateTripPage() {
                   <button
                     type="button"
                     onClick={() => setRideType('SHARED')}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    className={`p-4 rounded-xl border-2 transition-all text-left min-h-[88px] ${
                       rideType === 'SHARED'
                         ? 'border-primary-modernSg bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
@@ -290,7 +290,7 @@ export default function CreateTripPage() {
                         value={departureDate}
                         onChange={(e) => setDepartureDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                        className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                         required
                       />
                     </div>
@@ -303,7 +303,7 @@ export default function CreateTripPage() {
                         type="time"
                         value={departureTime}
                         onChange={(e) => setDepartureTime(e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                        className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                         required
                       />
                     </div>
@@ -320,7 +320,7 @@ export default function CreateTripPage() {
                 <select
                   value={vehicleType}
                   onChange={(e) => setVehicleType(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                  className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                   required
                 >
                   <option value="sedan">Sedan (Default)</option>
@@ -333,12 +333,12 @@ export default function CreateTripPage() {
                 </p>
               </div>
 
-              {/* Submit Button */}
-              <div className="pt-4">
+              {/* Submit Button - Hidden on mobile, shown on desktop */}
+              <div className="pt-4 hidden md:block">
                 <button
                   type="submit"
                   disabled={loading || !origin || !destination}
-                  className="w-full bg-primary-peranakan text-white px-8 py-4 rounded-lg font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-primary-peranakan text-white px-8 py-4 min-h-[48px] rounded-lg font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -415,6 +415,27 @@ export default function CreateTripPage() {
               </div>
             </div>
           )}
+
+          {/* Fixed Bottom CTA for Mobile */}
+          <div className="fixed-bottom-cta md:hidden px-4 pt-4">
+            <button
+              type="submit"
+              disabled={loading || !origin || !destination}
+              className="w-full bg-primary-peranakan text-white px-8 py-4 min-h-[48px] rounded-lg font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Continue to Pricing
+                  <span className="text-xl">→</span>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>
