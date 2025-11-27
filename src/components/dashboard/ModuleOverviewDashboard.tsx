@@ -282,32 +282,32 @@ export default function ModuleOverviewDashboard() {
           </p>
           
           {/* Overall Progress */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="card-lg mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-gray-800">Overall Progress</h2>
-              <span className="text-3xl font-bold text-emerald-600">100%</span>
+              <h2 className="text-heading-3 text-gray-800">Overall Progress</h2>
+              <span className="text-display-md font-bold text-success">100%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
               <div className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-4 rounded-full w-full transition-all duration-1000"></div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <div className="text-2xl font-bold text-emerald-600">{modules.length}</div>
-                <div className="text-gray-600">Modules Complete</div>
+                <div className="text-heading-3 text-success">{modules.length}</div>
+                <div className="text-body-small text-gray-600">Modules Complete</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-heading-3 text-info">
                   {modules.reduce((acc, module) => acc + module.features.length, 0)}
                 </div>
-                <div className="text-gray-600">Features Built</div>
+                <div className="text-body-small text-gray-600">Features Built</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-purple-600">200+</div>
-                <div className="text-gray-600">Components</div>
+                <div className="text-heading-3 text-purple-600">200+</div>
+                <div className="text-body-small text-gray-600">Components</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-orange-600">50+</div>
-                <div className="text-gray-600">Routes</div>
+                <div className="text-heading-3 text-warning">50+</div>
+                <div className="text-body-small text-gray-600">Routes</div>
               </div>
             </div>
           </div>

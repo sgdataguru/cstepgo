@@ -465,41 +465,41 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
           <div className="space-y-8">
             {/* Quick Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="card">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Completed Today</p>
-                    <p className="text-3xl font-bold text-gray-900">{dashboardData.summary.completedTripsToday}</p>
+                    <p className="text-caption">Completed Today</p>
+                    <p className="text-display-md font-bold text-gray-900">{dashboardData.summary.completedTripsToday}</p>
                   </div>
-                  <Car className="w-8 h-8 text-blue-500" />
+                  <Car className="w-8 h-8 text-info" />
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="card">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">{TEXT.TODAY_EARNINGS}</p>
-                    <p className="text-3xl font-bold text-green-600">{formatCurrency(dashboardData.earnings.today)}</p>
+                    <p className="text-caption">{TEXT.TODAY_EARNINGS}</p>
+                    <p className="text-display-md font-bold text-success">{formatCurrency(dashboardData.earnings.today)}</p>
                   </div>
-                  <TrendingUp className="w-8 h-8 text-green-500" />
+                  <TrendingUp className="w-8 h-8 text-success" />
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="card">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Upcoming Trips</p>
-                    <p className="text-3xl font-bold text-orange-600">{dashboardData.summary.upcomingTripsCount}</p>
+                    <p className="text-caption">Upcoming Trips</p>
+                    <p className="text-display-md font-bold text-warning">{dashboardData.summary.upcomingTripsCount}</p>
                   </div>
-                  <Clock className="w-8 h-8 text-orange-500" />
+                  <Clock className="w-8 h-8 text-warning" />
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
+              <div className="card">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Your Rating</p>
-                    <p className="text-3xl font-bold text-purple-600">{dashboardData.driver.rating}</p>
+                    <p className="text-caption">Your Rating</p>
+                    <p className="text-display-md font-bold text-purple-600">{dashboardData.driver.rating}</p>
                   </div>
                   <Users className="w-8 h-8 text-purple-500" />
                 </div>
@@ -537,18 +537,18 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
             )}
 
             {/* Trip Offers Status */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">Trip Offers</h2>
+            <div className="card">
+              <div className="px-6 py-4 border-b -mx-6 -mt-6">
+                <h2 className="text-heading-4 text-gray-900">Trip Offers</h2>
               </div>
-              <div className="p-6">
+              <div className="pt-6">
                 {activeOffer ? (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="card !bg-warning-light !border-warning p-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+                      <div className="w-3 h-3 bg-warning rounded-full animate-pulse"></div>
                       <div>
-                        <p className="font-medium text-yellow-800">Active Trip Offer</p>
-                        <p className="text-sm text-yellow-700">
+                        <p className="font-medium text-warning-dark">Active Trip Offer</p>
+                        <p className="text-body-small text-warning-dark">
                           You have {activeOffer.timeRemainingSeconds} seconds to respond to a trip request
                         </p>
                       </div>
@@ -557,8 +557,8 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-lg font-medium mb-2">No active trip offers</p>
-                    <p>{TEXT.NO_TRIPS}</p>
+                    <p className="text-heading-4 mb-2">No active trip offers</p>
+                    <p className="text-body-small">{TEXT.NO_TRIPS}</p>
                   </div>
                 )}
               </div>
@@ -566,12 +566,12 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
 
             {/* Upcoming Trips Preview */}
             {dashboardData.upcomingTrips.length > 0 && (
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-4 border-b flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-gray-900">Upcoming Trips</h2>
+              <div className="card">
+                <div className="px-6 py-4 border-b -mx-6 -mt-6 flex justify-between items-center">
+                  <h2 className="text-heading-4 text-gray-900">Upcoming Trips</h2>
                   <button 
                     onClick={() => setActiveTab('rides')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1"
+                    className="text-primary hover:text-primary-dark text-body-small font-medium flex items-center gap-1"
                   >
                     View All <ChevronRight className="w-4 h-4" />
                   </button>
