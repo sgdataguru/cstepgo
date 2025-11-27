@@ -188,7 +188,7 @@ export default function AdminSettingsPage() {
                       max={settings?.maxValue ? settings.maxValue * 100 : 50}
                       step={1}
                       value={feePercentage}
-                      onChange={(e) => setFeePercentage(parseInt(e.target.value) || 0)}
+                      onChange={(e) => setFeePercentage(Math.round(parseFloat(e.target.value)) || 0)}
                       className={`w-full px-4 py-3 pr-12 border rounded-lg text-lg font-semibold focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                         !isValidFee ? 'border-red-300 bg-red-50' : 'border-gray-300'
                       }`}

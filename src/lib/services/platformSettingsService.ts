@@ -187,25 +187,5 @@ export function clearCache(): void {
   cacheTimestamp = null;
 }
 
-/**
- * Calculate driver earnings from a booking amount
- * Uses the configured platform fee rate
- */
-export async function calculateDriverEarningsFromBooking(bookingAmount: number): Promise<{
-  grossAmount: number;
-  platformFee: number;
-  driverEarnings: number;
-  platformFeeRate: number;
-}> {
-  const platformFeeRate = await getPlatformFeeRate();
-  const grossAmount = bookingAmount;
-  const platformFee = Math.round(grossAmount * platformFeeRate);
-  const driverEarnings = grossAmount - platformFee;
-
-  return {
-    grossAmount,
-    platformFee,
-    driverEarnings,
-    platformFeeRate,
-  };
-}
+// Note: For driver earnings calculations, use calculateDriverEarningsAsync
+// from driverPayoutService.ts which uses this service's getPlatformFeeRate()

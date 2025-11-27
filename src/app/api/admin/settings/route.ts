@@ -96,8 +96,11 @@ export async function PUT(request: NextRequest) {
         );
       }
 
-      // TODO: Get actual admin user ID from session
-      const adminUserId = 'admin'; // Placeholder
+      // TODO: Extract actual admin user ID from authenticated session
+      // Currently using placeholder for development - the requireAdmin middleware
+      // already validates the user is an admin, but we need to properly extract the ID
+      // from the session/JWT token when production auth is implemented
+      const adminUserId = 'admin'; // Placeholder - to be replaced with session user ID
 
       const result = await updatePlatformFeeRate(feeRate, adminUserId);
 

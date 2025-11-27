@@ -13,9 +13,18 @@ import {
   DEFAULT_PLATFORM_FEE_RATE,
 } from '@/lib/services/platformSettingsService';
 
-// Legacy constants for backward compatibility
-// These are now dynamically loaded from the database
+/**
+ * @deprecated Use getPlatformFeeRate() for the configured value.
+ * This constant is retained for backward compatibility only.
+ * New code should use the async getPlatformFeeRate() function.
+ */
 export const PLATFORM_COMMISSION_RATE = DEFAULT_PLATFORM_FEE_RATE;
+
+/**
+ * @deprecated Use getDriverEarningsRate() for the configured value.
+ * This constant is retained for backward compatibility only.
+ * New code should use the async getDriverEarningsRate() function.
+ */
 export const DRIVER_EARNINGS_RATE = 1 - DEFAULT_PLATFORM_FEE_RATE;
 
 /**
