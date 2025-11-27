@@ -1,44 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { verifyAccessToken, extractBearerToken } from './jwt';
+import prisma from '@/lib/prisma';
 
 /**
  * Admin middleware - checks if user has ADMIN role
  * Usage: Wrap admin API routes with this middleware
+ * 
+ * This function verifies JWT tokens and validates that the user has the ADMIN role.
+ * Returns null if authorized, or an error response if unauthorized.
  */
 export async function requireAdmin(request: NextRequest): Promise<NextResponse | null> {
   try {
-    // TODO: Implement proper session/JWT authentication
-    // For now, check Authorization header or cookie
-    
+    // Extract token from Authorization header or cookie
     const authHeader = request.headers.get('Authorization');
-    const sessionToken = request.cookies.get('session')?.value;
+    let token = extractBearerToken(authHeader);
     
-    if (!authHeader && !sessionToken) {
+    // Fallback to cookie if no Authorization header
+    if (!token) {
+      token = request.cookies.get('access_token')?.value || null;
+    }
+    
+    if (!token) {
       return NextResponse.json(
         { error: 'Unauthorized - No authentication provided' },
         { status: 401 }
       );
     }
     
-    // TODO: Validate session token and get user
-    // const session = await prisma.session.findUnique({
-    //   where: { token: sessionToken },
-    //   include: { user: true },
-    // });
+    // Verify JWT token
+    let payload;
+    try {
+      payload = verifyAccessToken(token);
+    } catch (error: any) {
+      if (error.message.includes('expired')) {
+        return NextResponse.json(
+          { error: 'Token expired', code: 'TOKEN_EXPIRED' },
+          { status: 401 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Invalid token', code: 'INVALID_TOKEN' },
+        { status: 401 }
+      );
+    }
     
-    // Mock: For development, allow admin access
-    // Remove this in production!
-    console.warn('⚠️ [DEV MODE] Admin middleware bypassed - implement proper auth!');
+    // Check if user has ADMIN role
+    if (payload.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
+    }
     
-    // In production, check:
-    // if (!session || session.user.role !== 'ADMIN') {
-    //   return NextResponse.json(
-    //     { error: 'Forbidden - Admin access required' },
-    //     { status: 403 }
-    //   );
-    // }
+    // Optionally verify session in database (for token revocation)
+    if (payload.sessionId) {
+      const session = await prisma.session.findFirst({
+        where: {
+          userId: payload.userId,
+          token: payload.sessionId,
+          expiresAt: { gt: new Date() },
+        },
+      });
+
+      if (!session) {
+        return NextResponse.json(
+          { error: 'Session expired or invalid' },
+          { status: 401 }
+        );
+      }
+    }
     
     // Allow request to proceed
     return null;
