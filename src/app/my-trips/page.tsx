@@ -184,28 +184,28 @@ export default function MyTripsPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm font-medium text-gray-500">Total Bookings</div>
-              <div className="mt-2 text-3xl font-bold text-gray-900">{stats.total}</div>
+            <div className="card">
+              <div className="text-caption">Total Bookings</div>
+              <div className="mt-2 text-display-md font-bold text-gray-900">{stats.total}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm font-medium text-gray-500">Upcoming</div>
-              <div className="mt-2 text-3xl font-bold text-blue-600">{stats.upcoming}</div>
+            <div className="card">
+              <div className="text-caption">Upcoming</div>
+              <div className="mt-2 text-display-md font-bold text-info">{stats.upcoming}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm font-medium text-gray-500">Completed</div>
-              <div className="mt-2 text-3xl font-bold text-green-600">{stats.completed}</div>
+            <div className="card">
+              <div className="text-caption">Completed</div>
+              <div className="mt-2 text-display-md font-bold text-success">{stats.completed}</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="text-sm font-medium text-gray-500">Cancelled</div>
-              <div className="mt-2 text-3xl font-bold text-red-600">{stats.cancelled}</div>
+            <div className="card">
+              <div className="text-caption">Cancelled</div>
+              <div className="mt-2 text-display-md font-bold text-error">{stats.cancelled}</div>
             </div>
           </div>
         )}
 
         {/* Filter Tabs */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="border-b border-gray-200">
+        <div className="card mb-6">
+          <div className="border-b border-gray-200 -mx-6 -mt-6 px-6">
             <nav className="-mb-px flex" aria-label="Tabs">
               <button
                 onClick={() => setFilter('upcoming')}
@@ -243,14 +243,14 @@ export default function MyTripsPage() {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <p className="text-red-800">{error}</p>
+          <div className="card !bg-error-light !border-error p-4 mb-6">
+            <p className="text-error-dark">{error}</p>
           </div>
         )}
 
         {/* Bookings List */}
         {bookings.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
+          <div className="card p-12 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
               fill="none"
@@ -264,8 +264,8 @@ export default function MyTripsPage() {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No bookings found</h3>
-            <p className="mt-1 text-gray-500">
+            <h3 className="mt-2 text-heading-4 text-gray-900">No bookings found</h3>
+            <p className="mt-1 text-body-small text-gray-500">
               {filter === 'upcoming'
                 ? "You don't have any upcoming trips."
                 : filter === 'past'
@@ -275,7 +275,7 @@ export default function MyTripsPage() {
             <div className="mt-6">
               <Link
                 href="/"
-                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="btn-primary inline-flex items-center"
               >
                 Browse Trips
               </Link>
@@ -287,7 +287,7 @@ export default function MyTripsPage() {
               <Link
                 key={booking.id}
                 href={`/my-trips/${booking.id}`}
-                className="block bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+                className="card-interactive block"
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between">
