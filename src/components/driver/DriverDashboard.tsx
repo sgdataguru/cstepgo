@@ -106,6 +106,8 @@ interface DashboardData {
     thisWeek: number;
     currency: string;
   };
+  platformFeeRate?: number;
+  driverEarningsRate?: number;
   summary: {
     isOnline: boolean;
     hasActiveTrip: boolean;
@@ -130,9 +132,9 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
     handleTimeout
   } = useTripAcceptance();
 
-  // Constants
-  const PLATFORM_FEE_RATE = 0.15;
-  const DRIVER_EARNINGS_RATE = 0.85;
+  // Constants (used as fallbacks if API doesn't provide rates)
+  const DEFAULT_PLATFORM_FEE_RATE = 0.15;
+  const DEFAULT_DRIVER_EARNINGS_RATE = 0.85;
   const REFRESH_INTERVAL_MS = 30000; // 30 seconds
   const POLL_INTERVAL_MS = 5000; // 5 seconds
   
@@ -147,6 +149,10 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'rides' | 'earnings' | 'notifications'>('overview');
+  
+  // Get the configured rates from dashboard data, with fallbacks
+  const platformFeeRate = dashboardData?.platformFeeRate ?? DEFAULT_PLATFORM_FEE_RATE;
+  const driverEarningsRate = dashboardData?.driverEarningsRate ?? DEFAULT_DRIVER_EARNINGS_RATE;
 
   // Poll for active trip offers
   useEffect(() => {
@@ -792,21 +798,21 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
                       <p className="text-sm text-gray-600">Total revenue from trips</p>
                     </div>
                     <p className="text-lg font-semibold text-gray-900">
-                      {formatCurrency(Math.round(dashboardData.earnings.thisWeek / DRIVER_EARNINGS_RATE))}
+                      {formatCurrency(Math.round(dashboardData.earnings.thisWeek / driverEarningsRate))}
                     </p>
                   </div>
                   <div className="flex justify-between items-center py-3 border-b">
                     <div>
-                      <p className="font-medium text-gray-900">Platform Fee ({Math.round(PLATFORM_FEE_RATE * 100)}%)</p>
+                      <p className="font-medium text-gray-900">Platform Fee ({Math.round(platformFeeRate * 100)}%)</p>
                       <p className="text-sm text-gray-600">StepperGO service fee</p>
                     </div>
                     <p className="text-lg font-semibold text-red-600">
-                      -{formatCurrency(Math.round(dashboardData.earnings.thisWeek * PLATFORM_FEE_RATE / DRIVER_EARNINGS_RATE))}
+                      -{formatCurrency(Math.round(dashboardData.earnings.thisWeek * platformFeeRate / driverEarningsRate))}
                     </p>
                   </div>
                   <div className="flex justify-between items-center py-3">
                     <div>
-                      <p className="font-medium text-green-900">Net Earnings ({Math.round(DRIVER_EARNINGS_RATE * 100)}%)</p>
+                      <p className="font-medium text-green-900">Net Earnings ({Math.round(driverEarningsRate * 100)}%)</p>
                       <p className="text-sm text-gray-600">Your take-home pay</p>
                     </div>
                     <p className="text-xl font-bold text-green-600">

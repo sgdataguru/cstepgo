@@ -3,6 +3,8 @@
  * Implements the pricing formula based on occupancy, distance, and time
  */
 
+import { DEFAULT_PLATFORM_FEE_RATE } from '@/lib/services/platformSettingsService';
+
 export interface PricingParams {
   distance: number; // in km
   duration: number; // in hours
@@ -241,7 +243,7 @@ export function estimatePricingFromDistance(
   // Typical rates for Central Asia
   const baseRatePerKm = 50; // KZT per km (approximately)
   const fixedFees = 2000; // KZT (fuel, tolls, etc.)
-  const platformMargin = 0.15; // 15% platform fee
+  const platformMargin = DEFAULT_PLATFORM_FEE_RATE; // Use configured default platform fee
   const minimumPrice = 3000; // KZT minimum
   
   // Estimate duration (60 km/h average for mountain roads)

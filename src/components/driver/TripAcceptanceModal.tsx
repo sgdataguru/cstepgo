@@ -413,8 +413,8 @@ export const TripAcceptanceModal: React.FC<TripAcceptanceModalProps> = ({
                 <span className="font-medium">{formatCurrency(tripOffer.platformFee)}</span>
               </div>
               <div className="flex justify-between text-sm text-red-600">
-                <span>Service Fee (-15%)</span>
-                <span>-{formatCurrency((tripOffer.basePrice + tripOffer.platformFee) * 0.15)}</span>
+                <span>Service Fee</span>
+                <span>-{formatCurrency((tripOffer.basePrice + tripOffer.platformFee) - tripOffer.estimatedEarnings)}</span>
               </div>
               <Separator className="my-3" />
               <div className="flex justify-between text-lg font-bold text-emerald-600">

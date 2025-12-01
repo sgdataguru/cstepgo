@@ -46,9 +46,12 @@ export const TRIP_DIFFICULTY = {
   DIFFICULT: 'difficult',
 } as const;
 
-// Driver earnings rate (85% of total fare)
-export const DRIVER_EARNINGS_RATE = 0.85;
-export const PLATFORM_FEE_RATE = 0.15;
+// Default driver earnings rate (85% of total fare) - actual rate from database config
+// Note: For actual calculations, use getDriverEarningsRate() from platformSettingsService
+// These constants are kept for backward compatibility
+import { DEFAULT_PLATFORM_FEE_RATE } from '@/lib/services/platformSettingsService';
+export const DRIVER_EARNINGS_RATE = 1 - DEFAULT_PLATFORM_FEE_RATE;
+export const PLATFORM_FEE_RATE = DEFAULT_PLATFORM_FEE_RATE;
 
 // Distance thresholds for trip matching (km)
 export const DISTANCE_THRESHOLDS = {

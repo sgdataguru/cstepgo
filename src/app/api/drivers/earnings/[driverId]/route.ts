@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getDriverEarningsRate } from '@/lib/services/platformSettingsService';
 
 const prisma = new PrismaClient();
 
@@ -60,10 +61,13 @@ export async function GET(
       }
     });
 
-    // Calculate earnings (driver gets 85% after 15% platform fee)
+    // Get the configured driver earnings rate
+    const driverEarningsRate = await getDriverEarningsRate();
+
+    // Calculate earnings using configured rate
     const trips = completedTrips.map((trip: typeof completedTrips[0]) => {
       const totalFare = Number(trip.basePrice) + Number(trip.platformFee);
-      const driverEarnings = totalFare * 0.85;
+      const driverEarnings = totalFare * driverEarningsRate;
       
       return {
         ...trip,
