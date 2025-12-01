@@ -159,7 +159,7 @@ interface FareCalculationResponse {
 ├── Search Widget Card (elevated, white bg)
 │   ├── Location Input (Origin) with autocomplete
 │   ├── Location Input (Destination) with autocomplete
-│   ├── Date/Time Picker (calendar + time slots)
+│   ├── Take the current time and date
 │   ├── Passenger Count Selector (1-8)
 │   └── "Calculate Fare" Button (primary, blue-600)
 └── OR
