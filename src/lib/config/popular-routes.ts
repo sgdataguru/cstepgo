@@ -96,7 +96,7 @@ export function buildRouteUrl(route: PopularRoute): string {
     destination_city: route.destinationCity,
   });
   
-  if (route.isPrivateSample) {
+  if (route.bookingType === 'PRIVATE') {
     params.set('bookingType', 'PRIVATE');
   }
   
@@ -110,7 +110,7 @@ export function formatRoutePrice(route: PopularRoute): string {
   const symbol = route.currency === 'KZT' ? '₸' : route.currency;
   const priceText = `From ${symbol}${route.startingPrice.toLocaleString()}`;
   
-  if (route.isPrivateSample) {
+  if (route.bookingType === 'PRIVATE') {
     return `${priceText} (Private cab)`;
   }
   

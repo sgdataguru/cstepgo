@@ -12,13 +12,15 @@ interface PopularRouteCardProps {
  * Individual route card component
  */
 function PopularRouteCard({ route }: PopularRouteCardProps) {
+  const isPrivate = route.bookingType === 'PRIVATE';
+  
   const handleClick = () => {
     // Fire analytics event for route click
     trackEvent.popularRouteClicked({
       routeId: route.id,
       originCity: route.originCity,
       destinationCity: route.destinationCity,
-      isPrivate: route.isPrivateSample,
+      isPrivate,
       bookingType: route.bookingType,
     });
   };
@@ -31,7 +33,7 @@ function PopularRouteCard({ route }: PopularRouteCardProps) {
     >
       <div>
         {/* Private badge */}
-        {route.isPrivateSample && (
+        {isPrivate && (
           <span className="inline-block bg-primary-modernSg/10 text-primary-modernSg text-xs font-semibold px-2 py-1 rounded-full mb-3">
             🚗 Private Cab
           </span>
