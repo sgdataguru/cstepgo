@@ -130,7 +130,7 @@ const PricingBreakdownModal: React.FC<PricingBreakdownModalProps> = ({
           {/* Platform Fee */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Platform Fee{breakdown.subtotal > 0 ? ` (${Math.round((breakdown.platformFee / breakdown.subtotal) * 100)}%)` : ''}</span>
+              <span className="text-gray-600">Platform Fee{breakdown.subtotal > 0 && breakdown.platformFee >= 0 ? ` (${Math.round((breakdown.platformFee / breakdown.subtotal) * 100)}%)` : ''}</span>
               <span className="font-medium">
                 {formatCurrency(breakdown.platformFee, currency)}
               </span>
