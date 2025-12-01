@@ -1,32 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { requireAdmin } from '@/lib/auth/adminMiddleware';
 
 const prisma = new PrismaClient();
 
-// Get admin from session (simplified authentication)
-async function getAdminFromRequest(request: NextRequest) {
-  const adminId = request.headers.get('x-admin-id');
-  
-  if (!adminId) {
-    throw new Error('Admin not authenticated');
-  }
-  
-  const user = await prisma.user.findUnique({
-    where: { id: adminId }
-  });
-  
-  if (!user || user.role !== 'ADMIN') {
-    throw new Error('Admin access required');
-  }
-  
-  return user;
-}
-
-// GET - Get driver availability overview for admin dashboard
+/**
+ * GET /api/admin/drivers/availability
+ * Get driver availability overview for admin dashboard
+ * 
+ * Requires admin authentication via JWT token with ADMIN role
+ */
 export async function GET(request: NextRequest) {
+  // Check admin authentication - only users with ADMIN role can access
+  const authCheck = await requireAdmin(request);
+  if (authCheck) return authCheck;
+
   try {
-    await getAdminFromRequest(request);
-    
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status'); // 'AVAILABLE', 'BUSY', 'OFFLINE'
     const city = searchParams.get('city');
@@ -181,20 +170,6 @@ export async function GET(request: NextRequest) {
     
   } catch (error) {
     console.error('Get driver availability error:', error);
-    
-    if (error instanceof Error && error.message === 'Admin not authenticated') {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-    
-    if (error instanceof Error && error.message === 'Admin access required') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
     
     return NextResponse.json(
       { error: 'Failed to retrieve driver availability data' },

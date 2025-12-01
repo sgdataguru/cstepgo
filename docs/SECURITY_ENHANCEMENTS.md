@@ -531,12 +531,21 @@ export const POST = withAdmin(handlePost);
 
 ### Admin Endpoints
 
+All admin endpoints require authentication with a valid JWT token containing the ADMIN role. The `requireAdmin` middleware or `withAdmin` wrapper validates both the JWT token and admin role before allowing access.
+
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | GET | `/api/admin/approvals` | Admin | List pending approvals |
 | POST | `/api/admin/approvals/driver` | Admin | Approve/reject driver |
 | GET | `/api/admin/documents` | Admin | List pending documents |
 | POST | `/api/admin/documents` | Admin | Verify/reject document |
+| GET | `/api/admin/drivers` | Admin | List all drivers |
+| POST | `/api/admin/drivers` | Admin | Register new driver |
+| GET | `/api/admin/drivers/availability` | Admin | Get driver availability overview |
+| GET | `/api/admin/payouts/run` | Admin | Get payout status and history |
+| POST | `/api/admin/payouts/run` | Admin | Trigger payout processing |
+| GET | `/api/admin/settings` | Admin | Get platform settings |
+| PUT | `/api/admin/settings` | Admin | Update platform settings |
 
 ### File Upload Endpoints
 
