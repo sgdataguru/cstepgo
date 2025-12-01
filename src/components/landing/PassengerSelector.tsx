@@ -22,7 +22,7 @@ export function PassengerSelector({ value, onChange, maxPassengers }: PassengerS
           value={value}
           onChange={(e) => onChange(parseInt(e.target.value))}
           className="
-            w-full h-14 px-4 pr-12 text-base 
+            w-full h-14 min-h-[44px] px-4 pr-12 text-base 
             border-2 border-gray-300 rounded-xl bg-gray-50 
             appearance-none cursor-pointer
             transition-all duration-200
