@@ -72,6 +72,7 @@ export async function GET(
       returnTime: trip.returnTime,
       timezone: trip.timezone,
       status: trip.status.toLowerCase(),
+      tripType: trip.tripType, // Include trip type
       location: {
         origin: {
           name: trip.originName,
@@ -98,7 +99,9 @@ export async function GET(
       pricing: {
         basePrice: Number(trip.basePrice),
         currency: trip.currency,
-        pricePerPerson: Number(trip.basePrice),
+        pricePerPerson: trip.tripType === 'SHARED' && trip.pricePerSeat 
+          ? Number(trip.pricePerSeat) 
+          : Number(trip.basePrice),
         platformFee: Number(trip.platformFee),
         dynamicFactors: [],
         minimumPrice: Number(trip.basePrice) * 0.8,
