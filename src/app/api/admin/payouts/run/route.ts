@@ -6,28 +6,22 @@ import {
   runDriverPayout,
   MockPayoutAdapter,
 } from '@/lib/services/driverPayoutService';
+import { requireAdmin } from '@/lib/auth/adminMiddleware';
 
 /**
  * POST /api/admin/payouts/run
  * 
  * Trigger payout processing for eligible drivers
  * Supports single driver or batch processing
+ * 
+ * Requires admin authentication via JWT token with ADMIN role
  */
 export async function POST(request: NextRequest) {
-  try {
-    // TODO: Add admin authentication middleware
-    // For now, check for admin token in header
-    const adminToken = request.headers.get('x-admin-token');
-    if (!adminToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Admin authentication required',
-        },
-        { status: 401 }
-      );
-    }
+  // Check admin authentication - only users with ADMIN role can access
+  const authCheck = await requireAdmin(request);
+  if (authCheck) return authCheck;
 
+  try {
     const body = await request.json();
     const {
       driverId,
@@ -99,21 +93,15 @@ export async function POST(request: NextRequest) {
  * GET /api/admin/payouts/run
  * 
  * Get payout processing status and history
+ * 
+ * Requires admin authentication via JWT token with ADMIN role
  */
 export async function GET(request: NextRequest) {
-  try {
-    // TODO: Add admin authentication middleware
-    const adminToken = request.headers.get('x-admin-token');
-    if (!adminToken) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Admin authentication required',
-        },
-        { status: 401 }
-      );
-    }
+  // Check admin authentication - only users with ADMIN role can access
+  const authCheck = await requireAdmin(request);
+  if (authCheck) return authCheck;
 
+  try {
     const { searchParams } = new URL(request.url);
     const driverId = searchParams.get('driverId');
     const status = searchParams.get('status') as PayoutStatus | null;
