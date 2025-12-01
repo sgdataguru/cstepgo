@@ -1,5 +1,6 @@
 import { HeroSection } from '@/components/landing/HeroSection';
 import { BookingForm } from '@/components/booking';
+import { PopularRoutesSection } from '@/components/landing/PopularRoutesSection';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -109,81 +110,7 @@ export default function HomePage() {
       </section>
 
       {/* Popular Routes Section */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 text-center mb-4">
-              Popular Routes
-            </h2>
-            <p className="text-center text-gray-600 mb-12 text-lg">
-              Discover the most traveled destinations across Kazakhstan and Kyrgyzstan
-            </p>
-
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {popularRoutes.map((route) => (
-                <Link
-                  key={route.id}
-                  href={`/trips?origin_city=${encodeURIComponent(route.from)}&destination_city=${encodeURIComponent(route.to)}`}
-                  className="group bg-gradient-to-br from-neutral-light to-white border border-gray-200 p-6 min-h-[100px] rounded-2xl hover:shadow-xl transition-all duration-300 hover:scale-105 flex flex-col justify-between"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-lg font-semibold text-gray-900">{route.from}</span>
-                    <span className="text-primary-modernSg">→</span>
-                    <span className="text-lg font-semibold text-gray-900">{route.to}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{route.distance}</p>
-                  <p className="text-primary-accent font-bold text-xl">{route.price}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      <PopularRoutesSection />
     </main>
   );
 }
-
-const popularRoutes = [
-  {
-    id: 1,
-    from: 'Almaty',
-    to: 'Charyn Canyon',
-    distance: '~200 km',
-    price: 'From ₸2,500'
-  },
-  {
-    id: 2,
-    from: 'Almaty',
-    to: 'Bishkek',
-    distance: '~240 km',
-    price: 'From ₸3,500'
-  },
-  {
-    id: 3,
-    from: 'Bishkek',
-    to: 'Issyk-Kul',
-    distance: '~250 km',
-    price: 'From ₸3,000'
-  },
-  {
-    id: 4,
-    from: 'Almaty Airport',
-    to: 'Almaty City',
-    distance: '~25 km',
-    price: 'From ₸800'
-  },
-  {
-    id: 5,
-    from: 'Almaty',
-    to: 'Medeu',
-    distance: '~30 km',
-    price: 'From ₸1,200'
-  },
-  {
-    id: 6,
-    from: 'Bishkek',
-    to: 'Osh',
-    distance: '~680 km',
-    price: 'From ₸8,500'
-  }
-];
