@@ -1,5 +1,5 @@
 import { HeroSection } from '@/components/landing/HeroSection';
-import { SearchWidget } from '@/components/landing/SearchWidget';
+import { BookingForm } from '@/components/booking';
 import Link from 'next/link';
 
 export default function HomePage() {
@@ -34,8 +34,8 @@ export default function HomePage() {
       </div>
 
       <HeroSection>
-        {/* Main heading and search widget */}
-        <div className="flex flex-col items-center justify-center min-h-screen px-4">
+        {/* Main heading and booking form */}
+        <div className="flex flex-col items-center justify-center min-h-screen px-4 py-16">
           {/* Heading */}
           <div className="text-center mb-8 md:mb-12">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-4 drop-shadow-2xl">
@@ -48,8 +48,10 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Search Widget */}
-          <SearchWidget />
+          {/* New Booking Form Widget */}
+          <div className="w-full max-w-4xl">
+            <BookingForm variant="hero" />
+          </div>
         </div>
       </HeroSection>
 
