@@ -92,7 +92,7 @@ export function LocationInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={`
-            w-full h-14 pl-12 pr-4 text-base 
+            w-full h-14 min-h-[44px] pl-12 pr-4 text-base 
             border-2 rounded-xl bg-gray-50
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-[#40E0D0]/10
@@ -121,7 +121,7 @@ export function LocationInput({
               key={suggestion.id}
               type="button"
               onClick={() => handleSelectSuggestion(suggestion)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0"
+              className="w-full px-4 py-3 min-h-[48px] text-left hover:bg-gray-50 transition-colors flex items-start gap-3 border-b border-gray-100 last:border-b-0"
             >
               <MapPin size={18} className="text-[#40E0D0] mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">

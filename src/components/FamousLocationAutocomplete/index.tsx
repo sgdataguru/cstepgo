@@ -141,7 +141,7 @@ export default function FamousLocationAutocomplete({
           onFocus={handleInputFocus}
           placeholder={placeholder}
           className={`
-            w-full pl-10 pr-10 py-2.5 
+            w-full pl-10 pr-10 py-3 min-h-[44px]
             bg-white dark:bg-gray-800 
             border rounded-lg
             text-gray-900 dark:text-white
@@ -158,7 +158,7 @@ export default function FamousLocationAutocomplete({
             <button
               type="button"
               onClick={handleClear}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="p-1 min-h-[40px] min-w-[40px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
@@ -196,7 +196,7 @@ export default function FamousLocationAutocomplete({
               key={location.id}
               type="button"
               onClick={() => handleLocationSelect(location)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+              className="w-full px-4 py-3 min-h-[48px] text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
             >
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-teal-500 mt-0.5 flex-shrink-0" />

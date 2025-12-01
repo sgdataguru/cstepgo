@@ -1,156 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import FamousLocationAutocomplete from '@/components/FamousLocationAutocomplete';
-import { Location } from '@/types/trip-types';
+import BookingForm from '@/components/booking/BookingForm';
 
 export default function CreateTripPage() {
-  const router = useRouter();
-  const [origin, setOrigin] = useState<Location | null>(null);
-  const [destination, setDestination] = useState<Location | null>(null);
-  const [rideType, setRideType] = useState<'PRIVATE' | 'SHARED'>('PRIVATE');
-  const [vehicleType, setVehicleType] = useState('sedan');
-  const [departureDate, setDepartureDate] = useState('');
-  const [departureTime, setDepartureTime] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  // Initialize current date/time for private rides
-  useEffect(() => {
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    setDepartureDate(dateStr);
-    
-    // Set current time (rounded to next 5 minutes)
-    const minutes = now.getMinutes();
-    const roundedMinutes = Math.ceil(minutes / 5) * 5;
-    
-    if (roundedMinutes >= 60) {
-      now.setHours(now.getHours() + 1);
-      now.setMinutes(0);
-    } else {
-      now.setMinutes(roundedMinutes);
-    }
-    now.setSeconds(0);
-    const timeStr = now.toTimeString().slice(0, 5);
-    setDepartureTime(timeStr);
-  }, []);
-
-  // Validate departure time for shared rides
-  const validateDepartureTime = (): boolean => {
-    if (rideType === 'PRIVATE') {
-      return true; // No validation needed for private rides
-    }
-
-    if (!departureDate || !departureTime) {
-      setValidationError('Please select both date and time for shared ride');
-      return false;
-    }
-
-    const selectedDateTime = new Date(`${departureDate}T${departureTime}`);
-    const now = new Date();
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-
-    if (selectedDateTime < oneHourFromNow) {
-      setValidationError('Shared rides must be scheduled at least 1 hour in advance');
-      return false;
-    }
-
-    setValidationError(null);
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      setLoading(true);
-      setError(null);
-      setValidationError(null);
-
-      // Validate required fields
-      if (!origin || !destination) {
-        setError('Please select both origin and destination');
-        return;
-      }
-
-      if (!vehicleType) {
-        setError('Please select a vehicle type');
-        return;
-      }
-
-      // Validate departure time
-      if (!validateDepartureTime()) {
-        return;
-      }
-
-      // For private rides, use current server time
-      let finalDepartureDate = departureDate;
-      let finalDepartureTime = departureTime;
-      
-      if (rideType === 'PRIVATE') {
-        const now = new Date();
-        finalDepartureDate = now.toISOString().split('T')[0];
-        const minutes = now.getMinutes();
-        const roundedMinutes = Math.ceil(minutes / 5) * 5;
-        
-        if (roundedMinutes >= 60) {
-          now.setHours(now.getHours() + 1);
-          now.setMinutes(0);
-        } else {
-          now.setMinutes(roundedMinutes);
-        }
-        now.setSeconds(0);
-        finalDepartureTime = now.toTimeString().slice(0, 5);
-      }
-
-      // Generate title
-      const title = `${origin.name} to ${destination.name}`;
-
-      const response = await fetch('/api/trips', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          description: `${rideType === 'PRIVATE' ? 'Private cab' : 'Shared ride'} from ${origin.name} to ${destination.name}`,
-          origin,
-          destination,
-          departureDate: finalDepartureDate,
-          departureTime: finalDepartureTime,
-          tripType: rideType,
-          vehicleType,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create trip');
-      }
-
-      // Success! Redirect to the trip details page for fare calculation and confirmation
-      router.push(`/trips/${data.data.id}`);
-    } catch (err) {
-      console.error('Error creating trip:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create trip');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 pb-safe-lg">
+      <div className="container mx-auto px-4 py-8 pb-32 md:pb-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/trips"
-            className="text-primary-modernSg hover:underline mb-4 inline-block"
+            className="text-primary-modernSg hover:underline mb-4 inline-flex items-center gap-1 min-h-[44px] py-2"
           >
             ← Back to Trips
           </Link>
@@ -166,7 +27,7 @@ export default function CreateTripPage() {
 
         {/* Single-Page Form */}
         <form onSubmit={handleSubmit}>
-          <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+          <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 md:p-8">
             <div className="space-y-6">
               {/* Error Display */}
               {error && (
@@ -219,7 +80,7 @@ export default function CreateTripPage() {
                   <button
                     type="button"
                     onClick={() => setRideType('PRIVATE')}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    className={`p-4 rounded-xl border-2 transition-all text-left min-h-[88px] ${
                       rideType === 'PRIVATE'
                         ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
@@ -245,7 +106,7 @@ export default function CreateTripPage() {
                   <button
                     type="button"
                     onClick={() => setRideType('SHARED')}
-                    className={`p-4 rounded-xl border-2 transition-all text-left ${
+                    className={`p-4 rounded-xl border-2 transition-all text-left min-h-[88px] ${
                       rideType === 'SHARED'
                         ? 'border-primary-modernSg bg-blue-50 dark:bg-blue-900/20'
                         : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
@@ -290,7 +151,7 @@ export default function CreateTripPage() {
                         value={departureDate}
                         onChange={(e) => setDepartureDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                        className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                         required
                       />
                     </div>
@@ -303,7 +164,7 @@ export default function CreateTripPage() {
                         type="time"
                         value={departureTime}
                         onChange={(e) => setDepartureTime(e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                        className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                         required
                       />
                     </div>
@@ -320,7 +181,7 @@ export default function CreateTripPage() {
                 <select
                   value={vehicleType}
                   onChange={(e) => setVehicleType(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                  className="w-full px-4 py-3 min-h-[44px] rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
                   required
                 >
                   <option value="sedan">Sedan (Default)</option>
@@ -333,12 +194,12 @@ export default function CreateTripPage() {
                 </p>
               </div>
 
-              {/* Submit Button */}
-              <div className="pt-4">
+              {/* Submit Button - Hidden on mobile, shown on desktop */}
+              <div className="pt-4 hidden md:block">
                 <button
                   type="submit"
                   disabled={loading || !origin || !destination}
-                  className="w-full bg-primary-peranakan text-white px-8 py-4 rounded-lg font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-primary-peranakan text-white px-8 py-4 min-h-[48px] rounded-lg font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -415,6 +276,27 @@ export default function CreateTripPage() {
               </div>
             </div>
           )}
+
+          {/* Fixed Bottom CTA for Mobile */}
+          <div className="fixed-bottom-cta md:hidden px-4 pt-4">
+            <button
+              type="submit"
+              disabled={loading || !origin || !destination}
+              className="w-full bg-primary-peranakan text-white px-8 py-4 min-h-[48px] rounded-lg font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Continue to Pricing
+                  <span className="text-xl">→</span>
+                </>
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>

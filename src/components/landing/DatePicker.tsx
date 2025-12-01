@@ -59,7 +59,7 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
           readOnly
           onClick={() => setIsOpen(!isOpen)}
           className="
-            w-full h-14 pl-12 pr-20 text-base 
+            w-full h-14 min-h-[44px] pl-12 pr-20 text-base 
             border-2 border-gray-300 rounded-xl bg-gray-50 
             cursor-pointer
             transition-all duration-200
@@ -71,7 +71,7 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
           <button
             type="button"
             onClick={handlePrevDay}
-            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            className="p-2 min-h-[40px] min-w-[40px] hover:bg-gray-200 rounded transition-colors flex items-center justify-center"
             aria-label="Previous day"
           >
             <ChevronLeft size={18} className="text-gray-500" />
@@ -79,7 +79,7 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
           <button
             type="button"
             onClick={handleNextDay}
-            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            className="p-2 min-h-[40px] min-w-[40px] hover:bg-gray-200 rounded transition-colors flex items-center justify-center"
             aria-label="Next day"
           >
             <ChevronRight size={18} className="text-gray-500" />

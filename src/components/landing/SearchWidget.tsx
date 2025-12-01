@@ -168,28 +168,28 @@ export function SearchWidget() {
 
       {/* Private/Share Toggle */}
       <div className="flex gap-6 mb-6">
-        <label className="flex items-center gap-2 cursor-pointer group">
+        <label className="flex items-center gap-2 cursor-pointer group min-h-[44px] py-2">
           <input
             type="radio"
             name="bookingType"
             value="Private"
             checked={formData.bookingType === 'Private'}
             onChange={(e) => handleBookingTypeChange('Private')}
-            className="w-6 h-6 accent-[#40E0D0] cursor-pointer"
+            className="w-6 h-6 min-w-[24px] min-h-[24px] accent-[#40E0D0] cursor-pointer"
           />
           <span className="font-medium text-gray-900 group-hover:text-[#40E0D0] transition-colors">
             Private
           </span>
         </label>
 
-        <label className="flex items-center gap-2 cursor-pointer group">
+        <label className="flex items-center gap-2 cursor-pointer group min-h-[44px] py-2">
           <input
             type="radio"
             name="bookingType"
             value="Share"
             checked={formData.bookingType === 'Share'}
             onChange={(e) => handleBookingTypeChange('Share')}
-            className="w-6 h-6 accent-[#40E0D0] cursor-pointer"
+            className="w-6 h-6 min-w-[24px] min-h-[24px] accent-[#40E0D0] cursor-pointer"
           />
           <span className="font-medium text-gray-900 group-hover:text-[#40E0D0] transition-colors">
             Share
@@ -278,13 +278,14 @@ export function SearchWidget() {
           onClick={handleCreateTrip}
           disabled={isCreatingTrip}
           className="
-            flex-1 h-[60px] text-lg font-semibold 
+            flex-1 h-[56px] min-h-[48px] text-lg font-semibold 
             bg-[#FFD700] text-gray-900 rounded-xl 
             hover:bg-[#FFD700]/90 hover:shadow-lg hover:-translate-y-0.5 
             active:translate-y-0 
             disabled:opacity-50 disabled:cursor-not-allowed
             transition-all duration-200
             focus:outline-none focus:ring-2 focus:ring-[#FFD700]/50
+            flex items-center justify-center
           "
         >
           {isCreatingTrip ? (
@@ -305,7 +306,7 @@ export function SearchWidget() {
           onClick={handleBrowseAllTrips}
           disabled={isCreatingTrip}
           className="
-            flex-1 h-[60px] text-lg font-semibold 
+            flex-1 h-[56px] min-h-[48px] text-lg font-semibold 
             flex items-center justify-center gap-2
             bg-white border-2 border-[#40E0D0] text-[#40E0D0]
             rounded-xl 

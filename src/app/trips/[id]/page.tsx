@@ -254,8 +254,8 @@ export default function TripDetailPage() {
             </div>
           </div>
 
-          {/* Right Column - Booking Card */}
-          <div className="lg:col-span-1">
+          {/* Right Column - Booking Card (Hidden on Mobile, shown via fixed CTA) */}
+          <div className="lg:col-span-1 hidden lg:block">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sticky top-6">
               <PricingDisplay
                 currentPrice={trip.pricing.pricePerPerson}
@@ -271,7 +271,7 @@ export default function TripDetailPage() {
                 <button
                   onClick={handleBookTrip}
                   disabled={trip.capacity.available === 0 || trip.status !== 'published'}
-                  className="w-full bg-primary-peranakan text-white px-6 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                  className="w-full bg-primary-peranakan text-white px-6 py-4 min-h-[48px] rounded-lg font-semibold text-lg hover:shadow-xl transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:shadow-none"
                 >
                   {trip.capacity.available === 0 ? 'Fully Booked' : 'Book Now'}
                 </button>
@@ -283,7 +283,7 @@ export default function TripDetailPage() {
                 )}
 
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-                  You won't be charged yet
+                  You won&apos;t be charged yet
                 </p>
               </div>
 
@@ -304,6 +304,56 @@ export default function TripDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Mobile Pricing Card (Visible only on mobile, above the fixed CTA) */}
+          <div className="lg:hidden col-span-full">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-24">
+              <PricingDisplay
+                currentPrice={trip.pricing.pricePerPerson}
+                originalPrice={trip.pricing.basePrice}
+                currency={trip.pricing.currency}
+                totalSeats={trip.capacity.total}
+                occupiedSeats={trip.capacity.booked}
+                showSavings={true}
+                showSeats={true}
+              />
+
+              {/* Features */}
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-xl">✓</span>
+                  <span>Instant confirmation</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-xl">✓</span>
+                  <span>Free cancellation up to 24h before</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-xl">✓</span>
+                  <span>Verified driver</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fixed Bottom CTA for Mobile */}
+      <div className="fixed-bottom-cta lg:hidden px-4 pt-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="text-xs text-gray-500 dark:text-gray-400">Price per person</div>
+            <div className="text-xl font-bold text-gray-900 dark:text-white">
+              {trip.pricing.currency} {trip.pricing.pricePerPerson.toLocaleString()}
+            </div>
+          </div>
+          <button
+            onClick={handleBookTrip}
+            disabled={trip.capacity.available === 0 || trip.status !== 'published'}
+            className="flex-1 bg-primary-peranakan text-white px-6 py-4 min-h-[48px] rounded-lg font-semibold text-lg hover:shadow-xl transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:shadow-none"
+          >
+            {trip.capacity.available === 0 ? 'Fully Booked' : 'Book Now'}
+          </button>
         </div>
       </div>
 
