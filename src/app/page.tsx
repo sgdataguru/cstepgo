@@ -89,19 +89,25 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* CTA Buttons */}
+            {/* Registration CTA Buttons */}
             <div className="flex flex-col md:flex-row gap-6 justify-center items-center mt-12">
               <Link
-                href="/trips"
-                className="bg-white text-gray-900 px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center"
+                href="/auth/register"
+                className="bg-white text-gray-900 px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-modernSg"
               >
-                Browse Trips
+                Register as Passenger
               </Link>
               <Link
-                href="/trips/create"
-                className="bg-transparent border-2 border-white text-white px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center"
+                href="/admin/drivers/new"
+                className="bg-transparent border-2 border-white text-white px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:bg-white hover:text-gray-900 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-primary-modernSg"
               >
-                Create Trip
+                Register as Driver
+              </Link>
+              <Link
+                href="/trips/create?bookingType=private"
+                className="bg-primary-accent/90 text-gray-900 px-8 py-4 min-h-[48px] rounded-xl font-semibold text-lg hover:bg-primary-accent hover:shadow-2xl hover:scale-105 transition-all duration-200 min-w-[200px] text-center flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary-accent focus:ring-offset-2 focus:ring-offset-primary-modernSg"
+              >
+                Register a Private Trip
               </Link>
             </div>
           </div>
