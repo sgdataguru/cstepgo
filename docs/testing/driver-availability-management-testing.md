@@ -31,7 +31,9 @@
 
 ### 4. Auto-Offline
 
-✅ **Inactivity**: Go online → Wait 30+ minutes → Trigger cron → Verify offline
+✅ **Inactivity**: Go online → Wait until `autoOfflineMinutes` (default: 120 min / 2 hours) → Trigger cron → Verify offline
+✅ **Heartbeat**: Go online → Keep portal tab open → Verify heartbeat refreshes `lastActivityAt` every 5 minutes
+✅ **Custom Timeout**: Set custom `autoOfflineMinutes` (60-240 min range) → Verify timeout applies correctly
 
 ### 5. Admin Monitoring
 
