@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getPlatformFeeRate, getDriverEarningsRate } from '@/lib/services/platformSettingsService';
 
 export async function GET(
   request: NextRequest,
@@ -73,6 +74,10 @@ export async function GET(
     // Calculate driver rating (mock for now - could be from reviews table)
     const rating = 4.8; // Mock rating
 
+    // Get the configured platform fee and driver earnings rates
+    const platformFeeRate = await getPlatformFeeRate();
+    const driverEarningsRate = await getDriverEarningsRate();
+
     const dashboardData = {
       driver: {
         id: driver.id,
@@ -82,14 +87,14 @@ export async function GET(
       },
       stats: {
         todayTrips,
-        todayEarnings: Math.round(todayEarnings * 0.85), // After 15% platform fee
+        todayEarnings: Math.round(todayEarnings * driverEarningsRate),
         activeTrips,
         rating
       },
       summary: {
         totalRevenue: todayEarnings,
-        platformFee: Math.round(todayEarnings * 0.15),
-        netEarnings: Math.round(todayEarnings * 0.85)
+        platformFee: Math.round(todayEarnings * platformFeeRate),
+        netEarnings: Math.round(todayEarnings * driverEarningsRate)
       }
     };
 

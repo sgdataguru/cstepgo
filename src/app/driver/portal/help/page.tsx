@@ -49,7 +49,7 @@ export default function HelpPage() {
     {
       category: 'Earnings',
       question: 'What percentage does StepperGO take as a platform fee?',
-      answer: 'StepperGO charges a 15% platform fee on each trip. This means you keep 85% of the total fare. The platform fee covers payment processing, insurance, and platform maintenance.'
+      answer: 'StepperGO charges a platform fee on each trip (default is 15%). The exact percentage is set by the platform and can be viewed in your earnings breakdown. The platform fee covers payment processing, insurance, and platform maintenance.'
     },
     {
       category: 'Trips',

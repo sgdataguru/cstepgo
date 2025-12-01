@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { getDriverEarningsRate, getPlatformFeeRate } from '@/lib/services/platformSettingsService';
 
 const prisma = new PrismaClient();
 
@@ -154,11 +155,15 @@ export async function GET(request: NextRequest) {
       }
     });
     
-    // Calculate total earnings (driver gets 85% after 15% platform fee)
+    // Get the configured platform fee and driver earnings rates
+    const platformFeeRate = await getPlatformFeeRate();
+    const driverEarningsRate = await getDriverEarningsRate();
+    
+    // Calculate total earnings using configured rate
     const calculateEarnings = (trips: { basePrice: any; platformFee: any }[]) => {
       return trips.reduce((total: any, trip: any) => {
         const tripTotal = Number(trip.basePrice) + Number(trip.platformFee);
-        return total + (tripTotal * 0.85);
+        return total + (tripTotal * driverEarningsRate);
       }, 0);
     };
     
@@ -212,7 +217,7 @@ export async function GET(request: NextRequest) {
         0
       );
       
-      const estimatedEarnings = (Number(activeTrip.basePrice) + Number(activeTrip.platformFee)) * 0.85;
+      const estimatedEarnings = (Number(activeTrip.basePrice) + Number(activeTrip.platformFee)) * driverEarningsRate;
       
       const now = new Date();
       const departureTime = new Date(activeTrip.departureTime);
@@ -260,11 +265,11 @@ export async function GET(request: NextRequest) {
         activeTrip: activeTripDetails,
         upcomingTrips: upcomingTrips.map((trip: any) => ({
           ...trip,
-          estimatedEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * 0.85)
+          estimatedEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * driverEarningsRate)
         })),
         recentTrips: recentTrips.map((trip: any) => ({
           ...trip,
-          actualEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * 0.85)
+          actualEarnings: Math.round((Number(trip.basePrice) + Number(trip.platformFee)) * driverEarningsRate)
         })),
         earnings: {
           today: todayTotal,
@@ -272,6 +277,8 @@ export async function GET(request: NextRequest) {
           currency: 'KZT' // Kazakhstan Tenge
         },
         location: currentLocation,
+        platformFeeRate, // Include platform fee rate for client-side calculations
+        driverEarningsRate, // Include driver earnings rate for client-side calculations
         summary: {
           isOnline: driver.availability === 'AVAILABLE',
           hasActiveTrip: !!activeTrip,

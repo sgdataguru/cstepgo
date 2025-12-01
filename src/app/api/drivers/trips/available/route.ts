@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient, TripType } from '@prisma/client';
+import { getDriverEarningsRate } from '@/lib/services/platformSettingsService';
 
 const prisma = new PrismaClient();
 
@@ -54,11 +55,7 @@ function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 }
 
-// Calculate estimated earnings (driver keeps 85% after 15% platform fee)
-function calculateEstimatedEarnings(basePrice: number, platformFee: number): number {
-  const totalFare = basePrice + platformFee;
-  return totalFare * 0.85; // Driver gets 85%
-}
+// Note: Driver earnings rate is now fetched from platformSettingsService via getDriverEarningsRate()
 
 // GET /api/drivers/trips/available - Get available trips for driver
 export async function GET(request: NextRequest) {
@@ -182,6 +179,9 @@ export async function GET(request: NextRequest) {
       }
     });
     
+    // Get the driver earnings rate once for all calculations
+    const driverEarningsRate = await getDriverEarningsRate();
+    
     // Filter trips by distance and calculate additional data
     const tripsWithDistance = allTrips
       .map((trip: any) => {
@@ -192,10 +192,8 @@ export async function GET(request: NextRequest) {
           trip.originLng
         );
         
-        const estimatedEarnings = calculateEstimatedEarnings(
-          Number(trip.basePrice),
-          Number(trip.platformFee)
-        );
+        const totalFare = Number(trip.basePrice) + Number(trip.platformFee);
+        const estimatedEarnings = totalFare * driverEarningsRate;
         
         const totalBookedSeats = trip.bookings.reduce(
           (sum: number, booking: any) => sum + booking.seatsBooked, 
