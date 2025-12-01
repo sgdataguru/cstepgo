@@ -84,4 +84,17 @@ export const trackEvent = {
       timestamp: new Date().toISOString(),
     });
   },
+
+  popularRouteClicked: (data: {
+    routeId: string;
+    originCity: string;
+    destinationCity: string;
+    isPrivate: boolean;
+    bookingType: 'PRIVATE' | 'SHARED';
+  }) => {
+    posthog.capture('popular_route_clicked', {
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+  },
 };
