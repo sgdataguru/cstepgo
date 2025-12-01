@@ -6,13 +6,13 @@ import BookingForm from '@/components/booking/BookingForm';
 /**
  * Trip Creation Page
  * 
- * Single-page entry for booking rides. This page:
+ * Single-page entry for booking rides. Uses the BookingForm component which:
  * - Collects origin, destination, ride type (PRIVATE/SHARED), and vehicle type
- * - For Private cabs: departure time is current server time (immediate)
- * - For Shared rides: user selects departure date/time, must be at least 1 hour in advance
+ * - For Private cabs: BookingForm uses current time as departure (immediate booking)
+ * - For Shared rides: BookingForm shows date/time picker with 1 hour minimum advance validation
  * - Does NOT display fare - redirects to trip details for pricing and confirmation
  * 
- * Gracefully handles missing drivers by creating pending trips.
+ * The API gracefully handles missing drivers by creating pending trips.
  */
 export default function CreateTripPage() {
   return (

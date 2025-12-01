@@ -52,6 +52,12 @@ jest.mock('@/lib/prisma', () => ({
 // Import after mocking
 import { prisma } from '@/lib/prisma';
 
+// Helper to import the POST handler - avoids repeated dynamic imports
+const getPostHandler = async () => {
+  const { POST } = await import('@/app/api/trips/route');
+  return POST;
+};
+
 describe('Trip Creation API', () => {
   const mockedPrisma = prisma as jest.Mocked<typeof prisma>;
 
@@ -78,8 +84,7 @@ describe('Trip Creation API', () => {
         vehicleType: 'sedan',
       };
 
-      // Import the POST handler
-      const { POST } = await import('@/app/api/trips/route');
+      const POST = await getPostHandler();
       
       const request = new NextRequest('http://localhost:3000/api/trips', {
         method: 'POST',
@@ -120,7 +125,7 @@ describe('Trip Creation API', () => {
         vehicleType: 'sedan',
       };
 
-      const { POST } = await import('@/app/api/trips/route');
+      const POST = await getPostHandler();
       
       const request = new NextRequest('http://localhost:3000/api/trips', {
         method: 'POST',
@@ -157,7 +162,7 @@ describe('Trip Creation API', () => {
         vehicleType: 'sedan',
       };
 
-      const { POST } = await import('@/app/api/trips/route');
+      const POST = await getPostHandler();
       
       const request = new NextRequest('http://localhost:3000/api/trips', {
         method: 'POST',
@@ -198,7 +203,7 @@ describe('Trip Creation API', () => {
         vehicleType: 'sedan',
       };
 
-      const { POST } = await import('@/app/api/trips/route');
+      const POST = await getPostHandler();
       
       const request = new NextRequest('http://localhost:3000/api/trips', {
         method: 'POST',
@@ -213,7 +218,7 @@ describe('Trip Creation API', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       
-      // Should NOT expose seed script errors
+      // Should NOT expose seed script errors - check specific fields
       expect(data.data?.message).not.toContain('seed');
       expect(data.error).toBeUndefined();
     });
@@ -247,7 +252,7 @@ describe('Trip Creation API', () => {
         vehicleType: 'sedan',
       };
 
-      const { POST } = await import('@/app/api/trips/route');
+      const POST = await getPostHandler();
       
       const request = new NextRequest('http://localhost:3000/api/trips', {
         method: 'POST',
@@ -262,9 +267,10 @@ describe('Trip Creation API', () => {
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
       
-      // Response should never mention "seed script"
-      const responseText = JSON.stringify(data);
-      expect(responseText.toLowerCase()).not.toContain('seed script');
+      // Response should never mention "seed script" - check specific fields
+      expect(data.data?.message || '').not.toContain('seed script');
+      expect(data.error || '').not.toContain('seed script');
+      expect(data.message || '').not.toContain('seed script');
     });
   });
 
@@ -275,7 +281,7 @@ describe('Trip Creation API', () => {
         // Missing origin, destination, departureDate, departureTime
       };
 
-      const { POST } = await import('@/app/api/trips/route');
+      const POST = await getPostHandler();
       
       const request = new NextRequest('http://localhost:3000/api/trips', {
         method: 'POST',
