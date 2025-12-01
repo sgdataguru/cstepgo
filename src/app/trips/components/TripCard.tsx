@@ -93,6 +93,16 @@ const TripCard: React.FC<TripCardProps> = ({
         
         {/* Top-left badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
+          {/* Trip Type Badge */}
+          {trip.tripType && (
+            <div className={`px-2 py-1 rounded-md text-xs font-semibold ${
+              trip.tripType === 'PRIVATE' 
+                ? 'bg-purple-500 text-white' 
+                : 'bg-primary-modernSg text-white'
+            }`}>
+              {trip.tripType === 'PRIVATE' ? '👑 Private' : '👥 Shared'}
+            </div>
+          )}
           {trip.metadata?.isBestSelling && <TripBadge type="bestselling" />}
           {trip.metadata?.isTour && <TripBadge type="tour" />}
         </div>

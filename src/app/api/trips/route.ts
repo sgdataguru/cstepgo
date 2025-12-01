@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const destination = searchParams.get('destination');
     const date = searchParams.get('date');
     const status = searchParams.get('status') || 'PUBLISHED';
+    const tripType = searchParams.get('tripType'); // 'PRIVATE' or 'SHARED'
 
     // Build dynamic where clause
     const where: any = {
@@ -38,6 +39,11 @@ export async function GET(request: NextRequest) {
         gte: searchDate,
         lt: nextDay,
       };
+    }
+    
+    // Add trip type filter if specified
+    if (tripType && (tripType === 'PRIVATE' || tripType === 'SHARED')) {
+      where.tripType = tripType;
     }
 
     const trips = await prisma.trip.findMany({
@@ -85,6 +91,7 @@ export async function GET(request: NextRequest) {
       returnTime: trip.returnTime,
       timezone: trip.timezone,
       status: trip.status.toLowerCase(),
+      tripType: trip.tripType, // Include trip type for filtering/display
       location: {
         origin: {
           name: trip.originName,
@@ -111,7 +118,9 @@ export async function GET(request: NextRequest) {
       pricing: {
         basePrice: Number(trip.basePrice),
         currency: trip.currency,
-        pricePerPerson: Number(trip.basePrice),
+        pricePerPerson: trip.tripType === 'SHARED' && trip.pricePerSeat 
+          ? Number(trip.pricePerSeat) 
+          : Number(trip.basePrice),
         platformFee: Number(trip.platformFee),
         dynamicFactors: [],
         minimumPrice: Number(trip.basePrice) * 0.8,
@@ -168,6 +177,7 @@ export async function POST(request: NextRequest) {
       totalSeats,
       basePrice,
       itinerary,
+      publishImmediately, // For shared trips: publish immediately
     } = body;
 
     if (!title || !origin || !destination || !departureDate || !departureTime) {
@@ -312,7 +322,9 @@ export async function POST(request: NextRequest) {
             },
           ],
         },
-        status: 'DRAFT',
+        // For shared trips with publishImmediately flag, publish immediately
+        status: (validTripType === 'SHARED' && publishImmediately) ? 'PUBLISHED' : 'DRAFT',
+        publishedAt: (validTripType === 'SHARED' && publishImmediately) ? new Date() : null,
         metadata: {
           vehicleType: vehicleType || 'sedan',
           createdVia: 'booking-flow',
@@ -329,14 +341,22 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Build response message based on trip type
+    let message = 'Trip created successfully';
+    if (validTripType === 'SHARED' && publishImmediately) {
+      message = 'Shared ride created and published! It is now visible in the trips listing.';
+    } else if (!driverProfile) {
+      message = 'Trip created. Driver assignment pending.';
+    }
+
     return NextResponse.json({
       success: true,
       data: {
         id: trip.id,
         tripType: validTripType,
-        message: driverProfile 
-          ? 'Trip created successfully' 
-          : 'Trip created. Driver assignment pending.',
+        status: trip.status,
+        pricePerSeat: trip.pricePerSeat ? Number(trip.pricePerSeat) : null,
+        message,
       },
     });
   } catch (error) {

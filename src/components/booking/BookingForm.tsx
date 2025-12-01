@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import FamousLocationAutocomplete from '@/components/FamousLocationAutocomplete';
 import { Location } from '@/types/trip-types';
+import { calculateFare, formatCurrency, estimateDuration } from '@/lib/pricing/fareCalculation';
 
 export interface BookingFormProps {
   /** When true, applies styles for hero section (transparent backgrounds, light text) */
@@ -19,6 +20,10 @@ export interface BookingFormProps {
 /**
  * Reusable BookingForm component for trip creation
  * Used on both home page (hero variant) and /trips/create page (default variant)
+ * 
+ * Flow branching:
+ * - Private trip: Redirects to /trips/private/quote for fare estimate + driver search
+ * - Shared trip: Creates trip immediately via API and redirects to /trips
  */
 export default function BookingForm({
   variant = 'default',
@@ -38,6 +43,26 @@ export default function BookingForm({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const isHero = variant === 'hero';
+  
+  // Calculate fare estimate in real-time
+  const fareEstimate = useMemo(() => {
+    if (!origin?.coordinates || !destination?.coordinates) return null;
+    
+    return calculateFare({
+      originLat: origin.coordinates.lat,
+      originLng: origin.coordinates.lng,
+      destLat: destination.coordinates.lat,
+      destLng: destination.coordinates.lng,
+      tripType: rideType,
+      vehicleType: vehicleType as 'sedan' | 'suv' | 'van' | 'bus',
+    });
+  }, [origin, destination, rideType, vehicleType]);
+  
+  // Calculate estimated duration
+  const durationEstimate = useMemo(() => {
+    if (!fareEstimate) return null;
+    return estimateDuration(fareEstimate.distanceKm);
+  }, [fareEstimate]);
 
   // Initialize current date/time for private rides
   useEffect(() => {
@@ -96,41 +121,53 @@ export default function BookingForm({
       // Validate required fields
       if (!origin || !destination) {
         setError('Please select both origin and destination');
+        setLoading(false);
         onSubmitComplete?.(false);
         return;
       }
 
       if (!vehicleType) {
         setError('Please select a vehicle type');
+        setLoading(false);
         onSubmitComplete?.(false);
         return;
       }
 
       // Validate departure time
       if (!validateDepartureTime()) {
+        setLoading(false);
         onSubmitComplete?.(false);
         return;
       }
 
-      // For private rides, use current server time
-      let finalDepartureDate = departureDate;
-      let finalDepartureTime = departureTime;
+      // ========== BRANCH LOGIC BASED ON TRIP TYPE ==========
       
       if (rideType === 'PRIVATE') {
-        const now = new Date();
-        finalDepartureDate = now.toISOString().split('T')[0];
-        const minutes = now.getMinutes();
-        const roundedMinutes = Math.ceil(minutes / 5) * 5;
+        // PRIVATE TRIP FLOW:
+        // Redirect to fare estimate + driver search page with form data as query params
+        const params = new URLSearchParams({
+          originName: origin.name,
+          originAddress: origin.address || '',
+          originLat: String(origin.coordinates?.lat || 0),
+          originLng: String(origin.coordinates?.lng || 0),
+          destName: destination.name,
+          destAddress: destination.address || '',
+          destLat: String(destination.coordinates?.lat || 0),
+          destLng: String(destination.coordinates?.lng || 0),
+          vehicleType,
+        });
         
-        if (roundedMinutes >= 60) {
-          now.setHours(now.getHours() + 1);
-          now.setMinutes(0);
-        } else {
-          now.setMinutes(roundedMinutes);
-        }
-        now.setSeconds(0);
-        finalDepartureTime = now.toTimeString().slice(0, 5);
+        onSubmitComplete?.(true);
+        router.push(`/trips/private/quote?${params.toString()}`);
+        return;
       }
+      
+      // SHARED TRIP FLOW:
+      // Create trip immediately and redirect to /trips listing
+      
+      // For shared rides, validate and use the selected departure time
+      const finalDepartureDate = departureDate;
+      const finalDepartureTime = departureTime;
 
       // Generate title
       const title = `${origin.name} to ${destination.name}`;
@@ -142,25 +179,29 @@ export default function BookingForm({
         },
         body: JSON.stringify({
           title,
-          description: `${rideType === 'PRIVATE' ? 'Private cab' : 'Shared ride'} from ${origin.name} to ${destination.name}`,
+          description: `Shared ride from ${origin.name} to ${destination.name}`,
           origin,
           destination,
           departureDate: finalDepartureDate,
           departureTime: finalDepartureTime,
-          tripType: rideType,
+          tripType: 'SHARED',
           vehicleType,
+          // Request immediate publishing for shared rides
+          publishImmediately: true,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Failed to create trip');
+        throw new Error(data.error || 'Failed to create shared trip');
       }
 
-      // Success! Redirect to the trip details page for fare calculation and confirmation
+      // Success! For shared trips, redirect to /trips listing with success message
       onSubmitComplete?.(true, data.data.id);
-      router.push(`/trips/${data.data.id}`);
+      
+      // Show success toast-like behavior via URL param
+      router.push(`/trips?created=${data.data.id}&type=shared`);
     } catch (err) {
       console.error('Error creating trip:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to create trip';
@@ -361,25 +402,33 @@ export default function BookingForm({
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Processing...
+                  {rideType === 'SHARED' ? 'Creating Shared Ride...' : 'Processing...'}
+                </>
+              ) : rideType === 'PRIVATE' ? (
+                <>
+                  Get Fare Estimate
+                  <span className="text-xl">→</span>
                 </>
               ) : (
                 <>
-                  Continue to Pricing
+                  Create Shared Ride
                   <span className="text-xl">→</span>
                 </>
               )}
             </button>
             <p className={`text-sm ${textMutedClasses} text-center mt-3`}>
-              Next step: View pricing and confirm your booking
+              {rideType === 'PRIVATE' 
+                ? 'Next: View fare estimate and search for drivers'
+                : 'Your shared ride will be visible in the trips listing'
+              }
             </p>
           </div>
         </div>
       </div>
 
-      {/* Trip Summary Preview */}
+      {/* Trip Summary Preview with Fare Estimate */}
       {(origin || destination) && (
-        <div className={`max-w-3xl mx-auto mt-6 ${containerClasses} rounded-lg p-6 shadow-sm border-2 border-purple-200 dark:border-purple-800`}>
+        <div className={`max-w-3xl mx-auto mt-6 ${containerClasses} rounded-lg p-6 shadow-sm border-2 ${rideType === 'PRIVATE' ? 'border-purple-200 dark:border-purple-800' : 'border-primary-modernSg/30 dark:border-primary-modernSg/50'}`}>
           <h3 className={`font-semibold ${headingClasses} mb-4`}>Trip Summary</h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
@@ -431,6 +480,41 @@ export default function BookingForm({
               </div>
             )}
           </div>
+          
+          {/* Fare Estimate Section */}
+          {fareEstimate && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className={`text-sm ${textMutedClasses}`}>Estimated Distance:</span>
+                  <span className={`ml-2 ${headingClasses} font-medium`}>
+                    {fareEstimate.distanceKm} km
+                  </span>
+                  {durationEstimate && (
+                    <span className={`ml-2 ${textMutedClasses}`}>
+                      ({durationEstimate.displayText})
+                    </span>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className={`text-sm ${textMutedClasses}`}>
+                    {rideType === 'PRIVATE' ? 'Estimated Fare' : 'Per Seat'}
+                  </div>
+                  <div className={`text-2xl font-bold ${rideType === 'PRIVATE' ? 'text-purple-600 dark:text-purple-400' : 'text-primary-modernSg'}`}>
+                    {rideType === 'PRIVATE' 
+                      ? formatCurrency(fareEstimate.totalFare)
+                      : formatCurrency(fareEstimate.pricePerSeat || 0)
+                    }
+                  </div>
+                  {rideType === 'SHARED' && (
+                    <div className={`text-xs ${textMutedClasses}`}>
+                      Total: {formatCurrency(fareEstimate.totalFare)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </form>
