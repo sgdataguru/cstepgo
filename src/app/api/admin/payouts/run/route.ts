@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PayoutStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+
+// Define PayoutStatus enum locally (matches Prisma schema)
+enum PayoutStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  PAID = 'PAID',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
 import {
   runBatchPayout,
   runDriverPayout,
@@ -158,7 +166,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        payouts: payouts.map(p => ({
+        payouts: payouts.map((p: any) => ({
           id: p.id,
           driver: {
             id: p.driver.id,
@@ -183,7 +191,7 @@ export async function GET(request: NextRequest) {
         total,
         limit,
         offset,
-        summary: summary.reduce((acc, s) => {
+        summary: summary.reduce((acc: any, s: any) => {
           acc[s.status] = {
             count: s._count.id,
             total: Number(s._sum.amount || 0),

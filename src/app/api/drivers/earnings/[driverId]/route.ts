@@ -92,18 +92,18 @@ export async function GET(
     startOfWeek.setDate(today.getDate() - today.getDay());
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const todayTrips = trips.filter(trip => new Date(trip.departureTime) >= today);
-    const weekTrips = trips.filter(trip => new Date(trip.departureTime) >= startOfWeek);
-    const monthTrips = trips.filter(trip => new Date(trip.departureTime) >= startOfMonth);
+    const todayTrips = trips.filter((trip: any) => new Date(trip.departureTime) >= today);
+    const weekTrips = trips.filter((trip: any) => new Date(trip.departureTime) >= startOfWeek);
+    const monthTrips = trips.filter((trip: any) => new Date(trip.departureTime) >= startOfMonth);
 
     const summary = {
-      today: todayTrips.reduce((sum, trip) => sum + trip.earnings, 0),
-      thisWeek: weekTrips.reduce((sum, trip) => sum + trip.earnings, 0),
-      thisMonth: monthTrips.reduce((sum, trip) => sum + trip.earnings, 0),
-      allTime: trips.reduce((sum, trip) => sum + trip.earnings, 0),
+      today: todayTrips.reduce((sum: number, trip: any) => sum + trip.earnings, 0),
+      thisWeek: weekTrips.reduce((sum: number, trip: any) => sum + trip.earnings, 0),
+      thisMonth: monthTrips.reduce((sum: number, trip: any) => sum + trip.earnings, 0),
+      allTime: trips.reduce((sum: number, trip: any) => sum + trip.earnings, 0),
       pendingPayout: payouts
-        .filter(p => p.status === 'PENDING' || p.status === 'PROCESSING')
-        .reduce((sum, p) => sum + Number(p.amount), 0),
+        .filter((p: any) => p.status === 'PENDING' || p.status === 'PROCESSING')
+        .reduce((sum: number, p: any) => sum + Number(p.amount), 0),
       currency: 'KZT'
     };
 
@@ -114,14 +114,14 @@ export async function GET(
       date.setDate(today.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       
-      const dayTrips = trips.filter(trip => {
+      const dayTrips = trips.filter((trip: any) => {
         const tripDate = new Date(trip.departureTime);
         return tripDate.toISOString().split('T')[0] === dateStr;
       });
       
       chartData.push({
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        earnings: dayTrips.reduce((sum, trip) => sum + trip.earnings, 0)
+        earnings: dayTrips.reduce((sum: number, trip: any) => sum + trip.earnings, 0)
       });
     }
 
