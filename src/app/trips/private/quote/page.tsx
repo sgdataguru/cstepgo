@@ -92,7 +92,8 @@ function PrivateQuoteContent() {
       setConfirming(true);
       setError(null);
       
-      // Create the private trip
+      // TODO: Re-enable online payments in future - for MVP, use cash only
+      // Create the private trip with cash payment
       const response = await fetch('/api/trips', {
         method: 'POST',
         headers: {
@@ -116,6 +117,7 @@ function PrivateQuoteContent() {
           tripType: 'PRIVATE',
           vehicleType,
           basePrice: fareEstimate?.totalFare,
+          paymentMethodType: 'CASH_TO_DRIVER', // Cash payment for MVP
         }),
       });
       
@@ -127,8 +129,8 @@ function PrivateQuoteContent() {
       
       setTripId(data.data.id);
       
-      // Redirect to trip details / tracking page
-      router.push(`/trips/${data.data.id}?confirmed=true`);
+      // Redirect to confirmation page
+      router.push(`/booking/confirmed?tripId=${data.data.id}&fare=${fareEstimate?.totalFare}&currency=KZT`);
     } catch (err) {
       console.error('Error confirming booking:', err);
       setError(err instanceof Error ? err.message : 'Failed to confirm booking');
@@ -313,6 +315,26 @@ function PrivateQuoteContent() {
           {error && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
               <p className="text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+          
+          {/* Cash Payment Notice */}
+          {driverSearchStatus === 'found' && fareEstimate && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="text-4xl">💵</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                    Cash Payment at Trip End
+                  </h3>
+                  <p className="text-amber-800 dark:text-amber-200 mb-2">
+                    You will pay <strong>{formatCurrency(fareEstimate.totalFare)}</strong> to the driver in cash at the end of your trip.
+                  </p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                    No online payment required. Simply have cash ready when you reach your destination.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
           
