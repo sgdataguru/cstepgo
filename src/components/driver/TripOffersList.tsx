@@ -202,6 +202,16 @@ export function TripOffersList({
                 </div>
               </div>
 
+              {/* Payment Method Notice */}
+              <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm">
+                  <span>💵</span>
+                  <span className="text-amber-900">
+                    <span className="font-medium">Payment:</span> May include cash collection from passengers
+                  </span>
+                </div>
+              </div>
+
               {/* Deadline */}
               {offer.acceptanceDeadline && (
                 <div className="flex items-center justify-between px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">

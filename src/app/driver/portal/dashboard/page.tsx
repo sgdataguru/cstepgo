@@ -47,6 +47,12 @@ interface DashboardData {
         name: string;
       };
     }>;
+    paymentSummary?: {
+      totalCashToCollect: number;
+      cashCollectionBookings: number;
+      prepaidBookings: number;
+      currency: string;
+    };
   };
   upcomingTrips: Array<any>;
   earnings: {
@@ -247,9 +253,16 @@ export default function DashboardPage() {
               <Car className="w-6 h-6 mr-2" />
               Active Trip
             </h2>
-            <span className="px-4 py-2 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm">
-              In Progress
-            </span>
+            <div className="flex items-center gap-2">
+              {activeTrip.paymentSummary && activeTrip.paymentSummary.cashCollectionBookings > 0 && (
+                <span className="px-3 py-1.5 bg-amber-500/90 rounded-full text-sm font-semibold backdrop-blur-sm flex items-center gap-1.5">
+                  💵 CASH
+                </span>
+              )}
+              <span className="px-4 py-2 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm">
+                In Progress
+              </span>
+            </div>
           </div>
           <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
             <h3 className="text-xl font-semibold mb-3">{activeTrip.trip.title}</h3>
@@ -283,6 +296,26 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+            
+            {/* Cash Collection Summary */}
+            {activeTrip.paymentSummary && activeTrip.paymentSummary.cashCollectionBookings > 0 && (
+              <div className="bg-amber-500/20 border-2 border-amber-300/50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">💵</span>
+                    <div>
+                      <p className="font-semibold text-lg">Cash to Collect</p>
+                      <p className="text-sm opacity-90">Collect from passengers at trip end</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-3xl font-bold">₸{activeTrip.paymentSummary.totalCashToCollect.toLocaleString()}</p>
+                    <p className="text-sm opacity-90">{activeTrip.paymentSummary.cashCollectionBookings} booking(s)</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <button
               onClick={() => router.push(`/driver/trips/${activeTrip.trip.id}`)}
               className="w-full bg-white text-blue-600 font-semibold py-3 rounded-lg hover:bg-blue-50 transition-colors"

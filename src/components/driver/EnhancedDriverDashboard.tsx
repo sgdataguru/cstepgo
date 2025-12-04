@@ -37,6 +37,7 @@ interface DashboardStats {
   completedTripsToday: number;
   rating: number;
   totalTrips: number;
+  estimatedCashToCollect?: number;
 }
 
 export function EnhancedDriverDashboard({
@@ -51,6 +52,7 @@ export function EnhancedDriverDashboard({
     completedTripsToday: 0,
     rating: 0,
     totalTrips: 0,
+    estimatedCashToCollect: 0,
   });
   const [notifications, setNotifications] = useState<NotificationEvent[]>([]);
   const [activeTab, setActiveTab] = useState<'offers' | 'active' | 'history'>('offers');
@@ -107,6 +109,7 @@ export function EnhancedDriverDashboard({
           completedTripsToday: data.summary?.completedTripsToday || 0,
           rating: data.driver?.rating || 0,
           totalTrips: data.driver?.totalTrips || 0,
+          estimatedCashToCollect: data.activeTrip?.paymentSummary?.totalCashToCollect || 0,
         });
       }
     } catch (error) {
@@ -267,17 +270,30 @@ export function EnhancedDriverDashboard({
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className={`${stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 ? 'bg-amber-50 border-2 border-amber-200' : 'bg-white'} rounded-lg shadow-sm p-6`}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Rating</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
-                  {stats.rating.toFixed(1)} ⭐
+                <p className="text-sm text-gray-600">
+                  {stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 ? '💵 Cash to Collect' : 'Rating'}
                 </p>
-                <p className="text-xs text-gray-500">{stats.totalTrips} trips</p>
+                <p className={`text-2xl font-bold mt-1 ${stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 ? 'text-amber-900' : 'text-gray-900'}`}>
+                  {stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 
+                    ? `₸${stats.estimatedCashToCollect.toLocaleString()}`
+                    : `${stats.rating.toFixed(1)} ⭐`
+                  }
+                </p>
+                {stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 ? (
+                  <p className="text-xs text-amber-700 mt-1">From active trip</p>
+                ) : (
+                  <p className="text-xs text-gray-500">{stats.totalTrips} trips</p>
+                )}
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-yellow-600" />
+              <div className={`w-12 h-12 ${stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 ? 'bg-amber-200' : 'bg-yellow-100'} rounded-full flex items-center justify-center`}>
+                {stats.estimatedCashToCollect && stats.estimatedCashToCollect > 0 ? (
+                  <span className="text-2xl">💵</span>
+                ) : (
+                  <CheckCircle className="w-6 h-6 text-yellow-600" />
+                )}
               </div>
             </div>
           </div>
