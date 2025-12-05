@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { classifyTrip, calculateTripDurationHours } from '@/lib/utils/tripZoneClassifier';
 import { calculateBundleFare } from '@/lib/utils/fareEstimator';
+import { calculateHaversineDistance } from '@/lib/utils/geoUtils';
 
 /**
  * POST /api/trips/bundle/estimate - Calculate fare estimate for a trip bundle
@@ -72,17 +73,12 @@ export async function POST(request: NextRequest) {
 
         if (!distance) {
           // Calculate using Haversine formula
-          const R = 6371;
-          const dLat = toRadians(trip.destLat - trip.originLat);
-          const dLng = toRadians(trip.destLng - trip.originLng);
-          const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(trip.originLat)) *
-              Math.cos(toRadians(trip.destLat)) *
-              Math.sin(dLng / 2) *
-              Math.sin(dLng / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          distance = R * c;
+          distance = calculateHaversineDistance(
+            trip.originLat,
+            trip.originLng,
+            trip.destLat,
+            trip.destLng
+          );
         }
       }
 
@@ -130,8 +126,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function toRadians(degrees: number): number {
-  return degrees * (Math.PI / 180);
 }

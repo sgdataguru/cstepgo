@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { classifyTrip } from '@/lib/utils/tripZoneClassifier';
+import { calculateHaversineDistance } from '@/lib/utils/geoUtils';
 
 /**
  * GET /api/trips/kazakhstan - List Kazakhstan trips with zone filtering
@@ -101,17 +102,12 @@ export async function GET(request: NextRequest) {
         
         // Calculate distance if not provided
         if (!distance) {
-          const R = 6371; // Earth's radius in km
-          const dLat = toRadians(trip.destLat - trip.originLat);
-          const dLng = toRadians(trip.destLng - trip.originLng);
-          const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(trip.originLat)) *
-              Math.cos(toRadians(trip.destLat)) *
-              Math.sin(dLng / 2) *
-              Math.sin(dLng / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          distance = R * c;
+          distance = calculateHaversineDistance(
+            trip.originLat,
+            trip.originLng,
+            trip.destLat,
+            trip.destLng
+          );
         }
       }
 
@@ -157,8 +153,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function toRadians(degrees: number): number {
-  return degrees * (Math.PI / 180);
 }
