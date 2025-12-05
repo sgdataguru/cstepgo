@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getUserFromRequest } from '@/lib/auth/middleware';
 
 /**
  * POST /api/trips/bundle/book - Create a bundle booking
@@ -11,7 +11,7 @@ import { getCurrentUser } from '@/lib/auth/session';
 export async function POST(request: NextRequest) {
   try {
     // Get current user
-    const user = await getCurrentUser();
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'Authentication required' },
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     // Create bundle booking record
     const bundle = await prisma.tripBundle.create({
       data: {
-        userId: user.id,
+        userId: user.userId,
         tripIds,
         totalDays: totalDays || 0,
         adjustedDays: totalDays || 0,
