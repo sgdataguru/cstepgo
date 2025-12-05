@@ -45,8 +45,9 @@ export default function TripDetailPage() {
   }, [params.id]);
 
   const handleBookTrip = () => {
-    // TODO: Implement booking flow in Gate 2
-    alert('Booking feature coming in Gate 2! This will integrate with Stripe payments.');
+    // TODO: Implement cash-first booking flow - for MVP, skip online payment
+    // In the future, this will offer both online and cash payment options
+    alert('Cash payment booking coming soon! Use the private cab booking flow for now.');
   };
 
   if (loading) {
@@ -282,9 +283,13 @@ export default function TripDetailPage() {
                   </p>
                 )}
 
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-                  You won&apos;t be charged yet
-                </p>
+                {/* TODO: Re-enable online payments in future - for MVP, show cash payment notice */}
+                <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm">
+                    <span className="text-lg">💵</span>
+                    <span>Pay cash to driver at trip end</span>
+                  </div>
+                </div>
               </div>
 
               {/* Features */}

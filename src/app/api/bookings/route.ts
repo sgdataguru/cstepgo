@@ -28,7 +28,8 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
       tripId,
       seatsBooked = 1,
       passengers,
-      paymentMethodType = 'ONLINE',
+      // TODO: Re-enable online payments in future - for MVP, default to cash
+      paymentMethodType = 'CASH_TO_DRIVER',
       notes,
     } = body;
 

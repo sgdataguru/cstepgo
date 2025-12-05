@@ -20,6 +20,11 @@ export interface Trip {
   departureTime: string;
   originName: string;
   destName: string;
+  paymentSummary?: {
+    totalCashToCollect: number;
+    cashCollectionBookings: number;
+    currency: string;
+  };
 }
 
 interface TripStatusUpdateCardProps {
@@ -254,6 +259,35 @@ export const TripStatusUpdateCard: React.FC<TripStatusUpdateCardProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Payment Method Indicator */}
+      {trip.paymentSummary && trip.paymentSummary.cashCollectionBookings > 0 && (
+        <div className="mb-4 bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">💵</span>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-semibold text-amber-900">Payment: Cash</span>
+                <span className="px-2 py-0.5 bg-amber-200 text-amber-800 text-xs font-medium rounded-full">
+                  Collect at trip end
+                </span>
+              </div>
+              <p className="text-sm text-amber-800 mb-2">
+                You will collect payment directly from passengers at the end of the trip
+              </p>
+              <div className="flex items-center justify-between pt-2 border-t border-amber-200">
+                <span className="text-sm font-medium text-amber-900">Total cash to collect:</span>
+                <span className="text-xl font-bold text-amber-900">
+                  ₸{trip.paymentSummary.totalCashToCollect.toLocaleString()}
+                </span>
+              </div>
+              <p className="text-xs text-amber-700 mt-1">
+                {trip.paymentSummary.cashCollectionBookings} passenger(s) paying cash
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error/Success Messages */}
       {error && (

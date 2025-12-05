@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { TripType, BookingStatus } from '@prisma/client';
+
+// Define enums locally (matches Prisma schema)
+enum TripType {
+  PRIVATE = 'PRIVATE',
+  SHARED = 'SHARED',
+}
+
+enum BookingStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+  REFUNDED = 'REFUNDED',
+}
 
 // Validation schema for shared ride booking
 const sharedBookingSchema = z.object({
@@ -15,6 +28,8 @@ const sharedBookingSchema = z.object({
   })),
   notes: z.string().optional(),
   tenantId: z.string().optional(), // Multi-tenant support
+  // TODO: Re-enable online payments in future - for MVP, default to cash
+  paymentMethodType: z.enum(['ONLINE', 'CASH_TO_DRIVER']).optional().default('CASH_TO_DRIVER'),
 });
 
 // Calculate total price for shared ride booking
@@ -45,7 +60,7 @@ export async function POST(request: NextRequest) {
     const validatedData = sharedBookingSchema.parse(body);
     
     // Use Prisma transaction for atomic operations
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // 1. Get trip details with lock to prevent race conditions
       const trip = await tx.trip.findUnique({
         where: { 
@@ -81,7 +96,7 @@ export async function POST(request: NextRequest) {
 
       // 4. Calculate actual available seats
       const totalBookedSeats = trip.bookings.reduce(
-        (sum, booking) => sum + booking.seatsBooked,
+        (sum: number, booking: any) => sum + booking.seatsBooked,
         0
       );
       const actualAvailableSeats = trip.totalSeats - totalBookedSeats;
@@ -119,6 +134,8 @@ export async function POST(request: NextRequest) {
       }
 
       // 9. Create booking
+      // TODO: Re-enable online payments in future - for MVP, auto-confirm cash bookings
+      const paymentMethodType = validatedData.paymentMethodType || 'CASH_TO_DRIVER';
       const booking = await tx.booking.create({
         data: {
           tripId: validatedData.tripId,
@@ -128,7 +145,9 @@ export async function POST(request: NextRequest) {
           currency: trip.currency,
           passengers: validatedData.passengers,
           notes: validatedData.notes,
-          status: BookingStatus.PENDING,
+          paymentMethodType,
+          status: paymentMethodType === 'CASH_TO_DRIVER' ? BookingStatus.CONFIRMED : BookingStatus.PENDING,
+          confirmedAt: paymentMethodType === 'CASH_TO_DRIVER' ? new Date() : null,
         },
         include: {
           trip: {
@@ -162,6 +181,23 @@ export async function POST(request: NextRequest) {
           status: newAvailableSeats === 0 ? 'FULL' : trip.status,
         }
       });
+
+      // 11. If cash payment, create a payment record with pending cash status
+      if (paymentMethodType === 'CASH_TO_DRIVER') {
+        await tx.payment.create({
+          data: {
+            bookingId: booking.id,
+            amount: totalAmount,
+            currency: trip.currency,
+            status: 'PENDING',
+            paymentMethod: 'cash',
+            metadata: {
+              paymentType: 'cash_to_driver',
+              description: 'Payment to be collected by driver',
+            },
+          },
+        });
+      }
 
       return {
         booking,
@@ -341,7 +377,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        bookings: bookings.map(booking => ({
+        bookings: bookings.map((booking: any) => ({
           id: booking.id,
           tripId: booking.tripId,
           tripTitle: booking.trip.title,

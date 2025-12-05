@@ -463,11 +463,16 @@ export default function BookingDetailPage() {
                   <label className="block text-sm font-medium text-gray-500">Payment Method</label>
                   <span className={`mt-1 inline-block px-3 py-1 rounded-full text-xs font-medium ${
                     booking.paymentMethodType === 'CASH_TO_DRIVER' 
-                      ? 'bg-amber-100 text-amber-800' 
-                      : 'bg-emerald-100 text-emerald-800'
+                      ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                      : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                   }`}>
-                    {booking.paymentMethodType === 'CASH_TO_DRIVER' ? '💵 Cash to Driver' : '💳 Online Payment'}
+                    {booking.paymentMethodType === 'CASH_TO_DRIVER' ? '💵 Cash at Trip End' : '💳 Online Payment'}
                   </span>
+                  {booking.paymentMethodType === 'CASH_TO_DRIVER' && (
+                    <p className="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                      You will pay {booking.currency} {Number(booking.totalAmount).toLocaleString()} to the driver at the end of your trip.
+                    </p>
+                  )}
                 </div>
 
                 {booking.payment && (
@@ -487,6 +492,28 @@ export default function BookingDetailPage() {
                         Method: {booking.payment.paymentMethod}
                       </p>
                     )}
+                  </div>
+                )}
+
+                {/* Prominent Cash Payment Notice for Sidebar */}
+                {booking.paymentMethodType === 'CASH_TO_DRIVER' && booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && (
+                  <div className="col-span-2 pt-2">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="text-3xl">💵</div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-amber-900 dark:text-amber-100 mb-2">
+                            Cash Payment Required
+                          </h4>
+                          <p className="text-sm text-amber-800 dark:text-amber-200 mb-2">
+                            You will pay <strong className="text-base">{booking.currency} {Number(booking.totalAmount).toLocaleString()}</strong> to the driver in cash at the end of your trip.
+                          </p>
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            💡 Please have the exact amount ready for a smooth experience.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
