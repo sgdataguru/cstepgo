@@ -277,6 +277,11 @@ model Trip {
   offeredToDriverId      String?   @map("offered_to_driver_id")
   acceptanceResponseTime Int?      @map("acceptance_response_time") // in seconds
 
+  // Zone & Bundle Fields
+  zone          TripZone? @map("zone") // Zone classification (A/B/C)
+  estimatedDays Int?      @map("estimated_days") // Estimated duration in days
+  distance      Float?    @map("distance") // Distance in kilometers
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
@@ -300,6 +305,8 @@ model Trip {
   @@index([offeredToDriverId])
   @@index([tripType, status])
   @@index([tenantId])
+  @@index([zone])
+  @@index([zone, status])
 }
 
 model Booking {
@@ -354,6 +361,26 @@ model Payment {
   booking            Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([stripeIntentId])
+  @@index([status])
+}
+
+model TripBundle {
+  id               String   @id @default(cuid())
+  userId           String
+  tripIds          String[] // Array of trip IDs in the bundle
+  totalDays        Int      // Total estimated days for the bundle
+  adjustedDays     Int?     // User-adjusted days (if different from estimate)
+  rideType         String   // 'PRIVATE' or 'SHARED'
+  estimatedFare    Decimal  // Estimated total fare
+  farePerSeat      Decimal? // For shared rides
+  currency         String   @default("KZT")
+  metadata         Json?    // Additional bundle details
+  status           String   @default("DRAFT") // DRAFT, PENDING, CONFIRMED, CANCELLED
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([userId])
   @@index([status])
 }
 
@@ -579,6 +606,12 @@ enum DriverStatus {
 enum TripType {
   PRIVATE
   SHARED
+}
+
+enum TripZone {
+  ZONE_A  // Day trips (< 8 hours or < 200 km)
+  ZONE_B  // 1-2 day trips (8-48 hours or 200-600 km)
+  ZONE_C  // Multi-day trips (> 48 hours or > 600 km)
 }
 
 enum TripStatus {
