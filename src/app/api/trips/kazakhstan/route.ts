@@ -6,6 +6,7 @@ import { classifyTrip } from '@/lib/utils/tripZoneClassifier';
  * GET /api/trips/kazakhstan - List Kazakhstan trips with zone filtering
  * 
  * Query params:
+ * - id: Filter by specific trip ID
  * - zone: Filter by zone (ZONE_A, ZONE_B, ZONE_C) - can be multiple
  * - tripType: Filter by trip type (PRIVATE, SHARED)
  * - status: Filter by status (default: PUBLISHED)
@@ -13,6 +14,7 @@ import { classifyTrip } from '@/lib/utils/tripZoneClassifier';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    const id = searchParams.get('id');
     const zones = searchParams.getAll('zone'); // Can have multiple zone filters
     const tripType = searchParams.get('tripType');
     const status = searchParams.get('status') || 'PUBLISHED';
@@ -21,6 +23,11 @@ export async function GET(request: NextRequest) {
     const where: any = {
       status: status as any,
     };
+
+    // Add ID filter if specified (for single trip lookup)
+    if (id) {
+      where.id = id;
+    }
 
     // Add zone filter if specified
     if (zones.length > 0) {
