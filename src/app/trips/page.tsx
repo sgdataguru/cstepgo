@@ -241,16 +241,30 @@ function TripsPageContent() {
         )}
 
         {/* Footer CTA */}
-        <div className="mt-12 text-center">
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Don't see a trip you like?
-          </p>
-          <a
-            href="/trips/create"
-            className="inline-block bg-primary-peranakan text-white px-8 py-3 rounded-lg font-semibold hover:shadow-xl transition-all duration-200"
-          >
-            Create Your Own Trip
-          </a>
+        <div className="mt-12 space-y-6">
+          <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Explore trips by zone in Kazakhstan
+            </p>
+            <a
+              href="/trips/kazakhstan"
+              className="inline-block bg-gradient-to-r from-primary-modernSg to-primary-peranakan text-white px-8 py-3 rounded-lg font-semibold hover:shadow-xl transition-all duration-200 mb-4"
+            >
+              🇰🇿 Browse Kazakhstan Trips by Zone
+            </a>
+          </div>
+          
+          <div className="text-center">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Don't see a trip you like?
+            </p>
+            <a
+              href="/trips/create"
+              className="inline-block bg-primary-peranakan text-white px-8 py-3 rounded-lg font-semibold hover:shadow-xl transition-all duration-200"
+            >
+              Create Your Own Trip
+            </a>
+          </div>
         </div>
       </div>
     </div>
