@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform notifications to include read status
-    const transformedNotifications = notifications.map(notif => ({
+    const transformedNotifications = notifications.map((notif: any) => ({
       id: notif.id,
       type: notif.type,
       title: notif.subject || 'Notification',
