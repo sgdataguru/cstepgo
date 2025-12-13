@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 // GET /api/trips - List all trips with optional filters
 export async function GET(request: NextRequest) {
@@ -347,6 +348,28 @@ export async function POST(request: NextRequest) {
       message = 'Shared ride created and published! It is now visible in the trips listing.';
     } else if (!driverProfile) {
       message = 'Trip created. Driver assignment pending.';
+    }
+
+    // Auto-broadcast private trip offers to eligible drivers in realtime
+    // Only broadcast if: trip is PRIVATE, PUBLISHED, and has no driver assigned
+    if (validTripType === 'PRIVATE' && trip.status === 'PUBLISHED' && !trip.driverId) {
+      try {
+        const broadcastResult = await realtimeBroadcastService.broadcastTripOffer(trip.id);
+        console.log(`Private trip ${trip.id} broadcast to ${broadcastResult.sent} drivers`);
+        
+        // Update trip status to OFFERED after successful broadcast
+        await prisma.trip.update({
+          where: { id: trip.id },
+          data: { status: 'OFFERED' },
+        });
+        
+        message = `${message} Broadcast to ${broadcastResult.sent} nearby drivers.`;
+      } catch (broadcastError) {
+        // Log error but don't fail the trip creation
+        console.error('Failed to broadcast private trip offer:', broadcastError);
+        // Still inform user that trip was created even if broadcast failed
+        message = `${message} Note: Driver notification is in progress.`;
+      }
     }
 
     return NextResponse.json({

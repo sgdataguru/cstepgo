@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 /**
  * POST /api/bookings
@@ -205,6 +206,9 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
             departureTime: true,
             originName: true,
             destName: true,
+            tripType: true,
+            status: true,
+            driverId: true,
           },
         },
         payment: true,
@@ -218,6 +222,25 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
         },
       },
     });
+
+    // Auto-broadcast private trip offers to eligible drivers in realtime
+    // Only broadcast if: trip is PRIVATE, PUBLISHED (or becomes PUBLISHED), and has no driver assigned
+    if (completeBooking && completeBooking.trip.tripType === 'PRIVATE' && 
+        completeBooking.trip.status === 'PUBLISHED' && !completeBooking.trip.driverId) {
+      try {
+        const broadcastResult = await realtimeBroadcastService.broadcastTripOffer(completeBooking.trip.id);
+        console.log(`Private trip ${completeBooking.trip.id} broadcast to ${broadcastResult.sent} drivers after booking`);
+        
+        // Update trip status to OFFERED after successful broadcast
+        await prisma.trip.update({
+          where: { id: completeBooking.trip.id },
+          data: { status: 'OFFERED' },
+        });
+      } catch (broadcastError) {
+        // Log error but don't fail the booking
+        console.error('Failed to broadcast private trip offer after booking:', broadcastError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
