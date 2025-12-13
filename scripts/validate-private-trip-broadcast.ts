@@ -165,10 +165,10 @@ async function validatePrivateTripBroadcast() {
         },
       });
       
-      if (trip !== null || true) { // Even if no trips exist, the schema should be valid
-        log('  ✓ Trip model has required fields (tripType, status, driverId)', 'green');
-        testsPassed++;
-      }
+      // Schema validation passes if query executes without error
+      // Even if no trips exist, the schema is valid
+      log('  ✓ Trip model has required fields (tripType, status, driverId)', 'green');
+      testsPassed++;
     } catch (error) {
       // Database connection error is acceptable in CI/CD without DB
       const errorMessage = String(error);

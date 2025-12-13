@@ -262,6 +262,12 @@ export async function POST(request: NextRequest) {
     // Calculate platform fee (10% of base price)
     const platformFee = Number(defaultPrice) * 0.1;
 
+    // Determine if trip should be published immediately
+    // Private trips: always publish immediately to enable driver matching
+    // Shared trips: only if publishImmediately flag is set
+    const shouldPublishImmediately = validTripType === 'PRIVATE' || 
+                                     (validTripType === 'SHARED' && publishImmediately);
+
     // Create trip
     const trip = await prisma.trip.create({
       data: {
@@ -323,10 +329,9 @@ export async function POST(request: NextRequest) {
             },
           ],
         },
-        // For private trips: always publish immediately to trigger driver broadcast
-        // For shared trips with publishImmediately flag: publish immediately
-        status: (validTripType === 'PRIVATE' || (validTripType === 'SHARED' && publishImmediately)) ? 'PUBLISHED' : 'DRAFT',
-        publishedAt: (validTripType === 'PRIVATE' || (validTripType === 'SHARED' && publishImmediately)) ? new Date() : null,
+        // Auto-publish based on trip type
+        status: shouldPublishImmediately ? 'PUBLISHED' : 'DRAFT',
+        publishedAt: shouldPublishImmediately ? new Date() : null,
         metadata: {
           vehicleType: vehicleType || 'sedan',
           createdVia: 'booking-flow',
