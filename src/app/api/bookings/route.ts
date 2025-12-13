@@ -3,21 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
-
-/**
- * Helper function to determine if a trip should be broadcast to drivers
- * @param trip Trip object with tripType, status, and driverId
- * @returns true if trip should be broadcast
- */
-function shouldBroadcastTrip(trip: { 
-  tripType: string; 
-  status: string; 
-  driverId: string | null;
-}): boolean {
-  return trip.tripType === 'PRIVATE' && 
-         trip.status === 'PUBLISHED' && 
-         trip.driverId === null;
-}
+import { shouldBroadcastTrip } from '@/lib/utils/tripBroadcastUtils';
 
 /**
  * POST /api/bookings
@@ -243,7 +229,7 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
     // 1. Trip was created in DRAFT and manually published later
     // 2. Broadcast failed during trip creation
     // 3. Trip needs re-broadcasting for any reason
-    if (completeBooking && shouldBroadcastTrip(completeBooking.trip)) {
+    if (completeBooking?.trip && shouldBroadcastTrip(completeBooking.trip)) {
       try {
         const broadcastResult = await realtimeBroadcastService.broadcastTripOffer(completeBooking.trip.id);
         console.log(`Private trip ${completeBooking.trip.id} broadcast to ${broadcastResult.sent} drivers after booking`);

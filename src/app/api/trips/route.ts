@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
+import { shouldBroadcastTrip, shouldPublishImmediately } from '@/lib/utils/tripBroadcastUtils';
 
 // GET /api/trips - List all trips with optional filters
 export async function GET(request: NextRequest) {
@@ -262,12 +263,6 @@ export async function POST(request: NextRequest) {
     // Calculate platform fee (10% of base price)
     const platformFee = Number(defaultPrice) * 0.1;
 
-    // Determine if trip should be published immediately
-    // Private trips: always publish immediately to enable driver matching
-    // Shared trips: only if publishImmediately flag is set
-    const shouldPublishImmediately = validTripType === 'PRIVATE' || 
-                                     (validTripType === 'SHARED' && publishImmediately);
-
     // Create trip
     const trip = await prisma.trip.create({
       data: {
@@ -329,9 +324,9 @@ export async function POST(request: NextRequest) {
             },
           ],
         },
-        // Auto-publish based on trip type
-        status: shouldPublishImmediately ? 'PUBLISHED' : 'DRAFT',
-        publishedAt: shouldPublishImmediately ? new Date() : null,
+        // Auto-publish private trips immediately; shared trips only if flag set
+        status: shouldPublishImmediately(validTripType, publishImmediately) ? 'PUBLISHED' : 'DRAFT',
+        publishedAt: shouldPublishImmediately(validTripType, publishImmediately) ? new Date() : null,
         metadata: {
           vehicleType: vehicleType || 'sedan',
           createdVia: 'booking-flow',
@@ -358,7 +353,7 @@ export async function POST(request: NextRequest) {
 
     // Auto-broadcast private trip offers to eligible drivers in realtime
     // Only broadcast if: trip is PRIVATE, PUBLISHED, and has no driver assigned
-    if (validTripType === 'PRIVATE' && trip.status === 'PUBLISHED' && !trip.driverId) {
+    if (shouldBroadcastTrip(trip)) {
       try {
         const broadcastResult = await realtimeBroadcastService.broadcastTripOffer(trip.id);
         console.log(`Private trip ${trip.id} broadcast to ${broadcastResult.sent} drivers`);
