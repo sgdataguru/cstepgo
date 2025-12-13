@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { generateDriverCredentials, hashPassword } from '@/lib/auth/credentials';
 import { getCredentialMessage } from '@/lib/messaging/templates';
 import { sendWhatsAppMessage, sendSMS } from '@/lib/messaging/twilio';
 import { sendEmail } from '@/lib/messaging/email';
 import { requireAdmin } from '@/lib/auth/adminMiddleware';
 
-const prisma = new PrismaClient();
 
 /**
  * POST /api/admin/drivers

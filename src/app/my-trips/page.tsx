@@ -105,15 +105,15 @@ export default function MyTripsPage() {
   const getStatusBadgeColor = (status: string) => {
     switch (status.toUpperCase()) {
       case 'CONFIRMED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/30';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#ff6600]/20 text-[#ff6600] border border-[#ff6600]/30';
       case 'CANCELLED':
-        return 'bg-red-100 text-red-800';
+        return 'bg-[#ff0055]/20 text-[#ff0055] border border-[#ff0055]/30';
       case 'COMPLETED':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-[#0099ff]/20 text-[#0099ff] border border-[#0099ff]/30';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#666666]/20 text-[#808080] border border-[#666666]/30';
     }
   };
 
@@ -121,10 +121,10 @@ export default function MyTripsPage() {
     if (!status) return null;
     
     const color = status === 'SUCCEEDED' 
-      ? 'bg-green-100 text-green-800'
+      ? 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/30'
       : status === 'PENDING'
-      ? 'bg-yellow-100 text-yellow-800'
-      : 'bg-red-100 text-red-800';
+      ? 'bg-[#ff6600]/20 text-[#ff6600] border border-[#ff6600]/30'
+      : 'bg-[#ff0055]/20 text-[#ff0055] border border-[#ff0055]/30';
 
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
@@ -137,7 +137,7 @@ export default function MyTripsPage() {
     const isShared = tripType === 'SHARED';
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-        isShared ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+        isShared ? 'bg-[#cc00ff]/20 text-[#cc00ff] border border-[#cc00ff]/30' : 'bg-[#00f0ff]/20 text-[#00f0ff] border border-[#00f0ff]/30'
       }`}>
         {isShared ? '👥 Shared' : '🚗 Private'}
       </span>
@@ -148,7 +148,7 @@ export default function MyTripsPage() {
     const isCash = method === 'CASH_TO_DRIVER';
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-        isCash ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+        isCash ? 'bg-[#ff9500]/20 text-[#ff9500] border border-[#ff9500]/30' : 'bg-[#00ff88]/20 text-[#00ff88] border border-[#00ff88]/30'
       }`}>
         {isCash ? '💵 Cash' : '💳 Online'}
       </span>
@@ -161,22 +161,22 @@ export default function MyTripsPage() {
 
   if (loading && bookings.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your trips...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00f0ff] mx-auto"></div>
+          <p className="mt-4 text-[#808080]">Loading your trips...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-[#111111] border-b border-[#00f0ff]/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">My Trips</h1>
-          <p className="mt-2 text-gray-600">View and manage your upcoming and past bookings</p>
+          <h1 className="text-3xl font-bold text-white">My <span className="text-[#00f0ff] drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Trips</span></h1>
+          <p className="mt-2 text-[#b3b3b3]">View and manage your upcoming and past bookings</p>
         </div>
       </div>
 
@@ -184,36 +184,36 @@ export default function MyTripsPage() {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="card">
-              <div className="text-caption">Total Bookings</div>
-              <div className="mt-2 text-display-md font-bold text-gray-900">{stats.total}</div>
+            <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-xl p-6">
+              <div className="text-[#808080] text-sm">Total Bookings</div>
+              <div className="mt-2 text-3xl font-bold text-white">{stats.total}</div>
             </div>
-            <div className="card">
-              <div className="text-caption">Upcoming</div>
-              <div className="mt-2 text-display-md font-bold text-info">{stats.upcoming}</div>
+            <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-xl p-6">
+              <div className="text-[#808080] text-sm">Upcoming</div>
+              <div className="mt-2 text-3xl font-bold text-[#00f0ff]">{stats.upcoming}</div>
             </div>
-            <div className="card">
-              <div className="text-caption">Completed</div>
-              <div className="mt-2 text-display-md font-bold text-success">{stats.completed}</div>
+            <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00ff88]/20 rounded-xl p-6">
+              <div className="text-[#808080] text-sm">Completed</div>
+              <div className="mt-2 text-3xl font-bold text-[#00ff88]">{stats.completed}</div>
             </div>
-            <div className="card">
-              <div className="text-caption">Cancelled</div>
-              <div className="mt-2 text-display-md font-bold text-error">{stats.cancelled}</div>
+            <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#ff0055]/20 rounded-xl p-6">
+              <div className="text-[#808080] text-sm">Cancelled</div>
+              <div className="mt-2 text-3xl font-bold text-[#ff0055]">{stats.cancelled}</div>
             </div>
           </div>
         )}
 
         {/* Filter Tabs */}
-        <div className="card mb-6">
-          <div className="border-b border-gray-200 -mx-6 -mt-6 px-6">
-            <nav className="-mb-px flex" aria-label="Tabs">
+        <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-xl mb-6">
+          <div className="border-b border-[#252525]">
+            <nav className="flex" aria-label="Tabs">
               <button
                 onClick={() => setFilter('upcoming')}
                 className={`${
                   filter === 'upcoming'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                    ? 'border-[#00f0ff] text-[#00f0ff]'
+                    : 'border-transparent text-[#808080] hover:text-white hover:border-[#252525]'
+                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-all`}
               >
                 Upcoming
               </button>
@@ -221,9 +221,9 @@ export default function MyTripsPage() {
                 onClick={() => setFilter('past')}
                 className={`${
                   filter === 'past'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                    ? 'border-[#00f0ff] text-[#00f0ff]'
+                    : 'border-transparent text-[#808080] hover:text-white hover:border-[#252525]'
+                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-all`}
               >
                 Past
               </button>
@@ -231,9 +231,9 @@ export default function MyTripsPage() {
                 onClick={() => setFilter('all')}
                 className={`${
                   filter === 'all'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm`}
+                    ? 'border-[#00f0ff] text-[#00f0ff]'
+                    : 'border-transparent text-[#808080] hover:text-white hover:border-[#252525]'
+                } w-1/3 py-4 px-1 text-center border-b-2 font-medium text-sm transition-all`}
               >
                 All
               </button>
@@ -243,16 +243,16 @@ export default function MyTripsPage() {
 
         {/* Error State */}
         {error && (
-          <div className="card !bg-error-light !border-error p-4 mb-6">
-            <p className="text-error-dark">{error}</p>
+          <div className="bg-[#ff0055]/10 border border-[#ff0055]/30 rounded-xl p-4 mb-6">
+            <p className="text-[#ff0055]">{error}</p>
           </div>
         )}
 
         {/* Bookings List */}
         {bookings.length === 0 ? (
-          <div className="card p-12 text-center">
+          <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-xl p-12 text-center">
             <svg
-              className="mx-auto h-12 w-12 text-gray-400"
+              className="mx-auto h-12 w-12 text-[#666666]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -264,8 +264,8 @@ export default function MyTripsPage() {
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
               />
             </svg>
-            <h3 className="mt-2 text-heading-4 text-gray-900">No bookings found</h3>
-            <p className="mt-1 text-body-small text-gray-500">
+            <h3 className="mt-2 text-lg font-semibold text-white">No bookings found</h3>
+            <p className="mt-1 text-sm text-[#808080]">
               {filter === 'upcoming'
                 ? "You don't have any upcoming trips."
                 : filter === 'past'
@@ -275,7 +275,7 @@ export default function MyTripsPage() {
             <div className="mt-6">
               <Link
                 href="/"
-                className="btn-primary inline-flex items-center"
+                className="inline-flex items-center bg-[#00f0ff] text-[#0a0a0a] px-6 py-3 rounded-lg font-semibold hover:shadow-[0_0_20px_rgba(0,240,255,0.5)] transition-all"
               >
                 Browse Trips
               </Link>
@@ -287,17 +287,17 @@ export default function MyTripsPage() {
               <Link
                 key={booking.id}
                 href={`/my-trips/${booking.id}`}
-                className="card-interactive block"
+                className="block bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-xl hover:border-[#00f0ff]/50 hover:shadow-[0_0_20px_rgba(0,240,255,0.2)] transition-all"
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-white">
                         {booking.trip.title}
                       </h3>
-                      <div className="mt-2 flex items-center text-sm text-gray-600">
+                      <div className="mt-2 flex items-center text-sm text-[#b3b3b3]">
                         <svg
-                          className="h-5 w-5 mr-2 text-gray-400"
+                          className="h-5 w-5 mr-2 text-[#00f0ff]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -319,9 +319,9 @@ export default function MyTripsPage() {
                           {booking.trip.originName} → {booking.trip.destName}
                         </span>
                       </div>
-                      <div className="mt-1 flex items-center text-sm text-gray-600">
+                      <div className="mt-1 flex items-center text-sm text-[#b3b3b3]">
                         <svg
-                          className="h-5 w-5 mr-2 text-gray-400"
+                          className="h-5 w-5 mr-2 text-[#cc00ff]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -349,7 +349,7 @@ export default function MyTripsPage() {
                         {getPaymentMethodBadge(booking.paymentMethodType)}
                         {getPaymentStatusBadge(booking.paymentStatus)}
                         {booking.trip.driverId && (
-                          <span className="text-xs text-gray-500 flex items-center">
+                          <span className="text-xs text-[#00ff88] flex items-center">
                             <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                             </svg>
@@ -359,14 +359,14 @@ export default function MyTripsPage() {
                       </div>
                     </div>
                     <div className="ml-6 text-right">
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-white">
                         {formatCurrency(booking.totalAmount, booking.currency)}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-[#808080]">
                         {booking.seatsBooked} {booking.seatsBooked === 1 ? 'seat' : 'seats'}
                       </div>
                       {booking.trip.tripType === 'SHARED' && booking.trip.pricePerSeat && (
-                        <div className="text-xs text-gray-400 mt-1">
+                        <div className="text-xs text-[#666666] mt-1">
                           {formatCurrency(booking.trip.pricePerSeat, booking.currency)} per seat
                         </div>
                       )}

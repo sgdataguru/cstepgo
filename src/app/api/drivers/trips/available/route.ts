@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { PrismaClient, TripType } from '@prisma/client';
 import { getDriverEarningsRate } from '@/lib/services/platformSettingsService';
 
-const prisma = new PrismaClient();
 
 // Validation schema for trip discovery filters
 const tripDiscoveryFiltersSchema = z.object({

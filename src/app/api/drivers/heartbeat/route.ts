@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { DRIVER_ACTIVITY_TYPES, DEFAULT_AUTO_OFFLINE_MINUTES } from '@/lib/constants/driver';
 
-const prisma = new PrismaClient();
 
 /**
  * Heartbeat API endpoint for browser-based driver activity tracking.

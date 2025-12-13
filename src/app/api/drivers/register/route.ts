@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { generateDriverCredentials, hashPassword } from '@/lib/auth/credentials';
 
-const prisma = new PrismaClient();
 
 // Validation schema for driver registration
 const driverRegistrationSchema = z.object({

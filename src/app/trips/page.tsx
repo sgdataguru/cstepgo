@@ -95,16 +95,16 @@ function TripsPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <div className="container mx-auto px-4 py-8">
-        {/* Success Banner for newly created shared trips */}
+        {/* Success Banner for newly created shared trips - Neon Green */}
         {successMessage && (
-          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3">
+          <div className="mb-6 bg-[#00ff88]/10 border border-[#00ff88]/30 rounded-xl p-4 flex items-center gap-3">
             <span className="text-2xl">✅</span>
-            <p className="text-green-800 dark:text-green-200 font-medium">{successMessage}</p>
+            <p className="text-[#00ff88] font-medium">{successMessage}</p>
             <button 
               onClick={() => setSuccessMessage(null)}
-              className="ml-auto text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+              className="ml-auto text-[#00ff88]/70 hover:text-[#00ff88]"
             >
               ✕
             </button>
@@ -113,19 +113,19 @@ function TripsPageContent() {
         
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">
-            Browse Trips
+          <h1 className="text-4xl font-display font-bold text-white mb-2">
+            Browse <span className="text-[#00f0ff] drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Trips</span>
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-lg text-[#b3b3b3]">
             Find your perfect ride across Kazakhstan and Kyrgyzstan
           </p>
         </div>
 
-        {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-8">
+        {/* Filters - Gaming Card Style */}
+        <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-xl shadow-sm p-6 mb-8">
           <div className="grid md:grid-cols-5 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#b3b3b3] mb-2">
                 From
               </label>
               <input
@@ -133,11 +133,11 @@ function TripsPageContent() {
                 placeholder="Origin city"
                 value={originFilter}
                 onChange={(e) => setOriginFilter(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#111111] text-white placeholder-[#666666] focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#b3b3b3] mb-2">
                 To
               </label>
               <input
@@ -145,28 +145,28 @@ function TripsPageContent() {
                 placeholder="Destination city"
                 value={destFilter}
                 onChange={(e) => setDestFilter(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#111111] text-white placeholder-[#666666] focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#b3b3b3] mb-2">
                 Date
               </label>
               <input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#111111] text-white focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-[#b3b3b3] mb-2">
                 Ride Type
               </label>
               <select
                 value={tripTypeFilter}
                 onChange={(e) => setTripTypeFilter(e.target.value as 'all' | 'PRIVATE' | 'SHARED')}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#111111] text-white focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
               >
                 <option value="all">All Types</option>
                 <option value="PRIVATE">👑 Private</option>
@@ -176,7 +176,7 @@ function TripsPageContent() {
             <div className="flex items-end">
               <button 
                 onClick={handleSearch}
-                className="w-full bg-primary-modernSg text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-modernSg/90 transition-colors"
+                className="w-full bg-[#00f0ff] text-[#0a0a0a] px-6 py-2 rounded-lg font-semibold hover:shadow-[0_0_20px_rgba(0,240,255,0.5)] transition-all duration-300"
               >
                 Search
               </button>
@@ -184,21 +184,21 @@ function TripsPageContent() {
           </div>
         </div>
 
-        {/* Loading State */}
+        {/* Loading State - Neon Style */}
         {loading && (
           <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-modernSg mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading trips...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00f0ff] mx-auto mb-4"></div>
+            <p className="text-[#808080]">Loading trips...</p>
           </div>
         )}
 
-        {/* Error State */}
+        {/* Error State - Neon Red */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 mb-8">
-            <p className="text-red-800 dark:text-red-200">{error}</p>
+          <div className="bg-[#ff0055]/10 border border-[#ff0055]/30 rounded-xl p-6 mb-8">
+            <p className="text-[#ff0055]">{error}</p>
             <button
               onClick={() => fetchTrips()}
-              className="mt-4 text-red-600 dark:text-red-400 hover:underline"
+              className="mt-4 text-[#ff0055] hover:text-[#ff3366] hover:underline transition-colors"
             >
               Try again
             </button>
@@ -209,7 +209,7 @@ function TripsPageContent() {
         {!loading && !error && (
           trips.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">
+              <p className="text-[#808080] text-lg mb-4">
                 No trips available at the moment. Check back soon!
               </p>
               {(originFilter || destFilter || dateFilter) && (
@@ -220,7 +220,7 @@ function TripsPageContent() {
                     setDateFilter('');
                     fetchTrips();
                   }}
-                  className="text-primary-modernSg hover:underline"
+                  className="text-[#00f0ff] hover:text-[#0099ff] hover:underline transition-colors"
                 >
                   Clear filters
                 </button>
@@ -240,27 +240,27 @@ function TripsPageContent() {
           )
         )}
 
-        {/* Footer CTA */}
+        {/* Footer CTA - Neon Gradient */}
         <div className="mt-12 space-y-6">
           <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-[#b3b3b3] mb-4">
               Explore trips by zone in Kazakhstan
             </p>
             <a
               href="/trips/kazakhstan"
-              className="inline-block bg-gradient-to-r from-primary-modernSg to-primary-peranakan text-white px-8 py-3 rounded-lg font-semibold hover:shadow-xl transition-all duration-200 mb-4"
+              className="inline-block bg-gradient-to-r from-[#00f0ff] to-[#cc00ff] text-[#0a0a0a] px-8 py-3 rounded-lg font-semibold hover:shadow-[0_0_30px_rgba(0,240,255,0.4)] transition-all duration-300 mb-4"
             >
               🇰🇿 Browse Kazakhstan Trips by Zone
             </a>
           </div>
           
           <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-[#b3b3b3] mb-4">
               Don't see a trip you like?
             </p>
             <a
               href="/trips/create"
-              className="inline-block bg-primary-peranakan text-white px-8 py-3 rounded-lg font-semibold hover:shadow-xl transition-all duration-200"
+              className="inline-block bg-[#cc00ff] text-white px-8 py-3 rounded-lg font-semibold hover:shadow-[0_0_20px_rgba(204,0,255,0.5)] transition-all duration-300"
             >
               Create Your Own Trip
             </a>
@@ -277,10 +277,10 @@ function TripsPageContent() {
 export default function TripsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-modernSg mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading trips...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#00f0ff] mx-auto mb-4"></div>
+          <p className="text-[#808080]">Loading trips...</p>
         </div>
       </div>
     }>

@@ -3,10 +3,10 @@
  * Handles receipt generation for completed bookings
  */
 
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { BUSINESS_CONFIG } from '@/config/business';
 
-const prisma = new PrismaClient();
 
 export interface ReceiptData {
   bookingId: string;

@@ -1,10 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { 
   DEFAULT_AUTO_OFFLINE_MINUTES,
   AUTO_OFFLINE_REASON 
 } from '../constants/driver';
 
-const prisma = new PrismaClient();
 
 /**
  * Service to handle automatic offline status for inactive drivers

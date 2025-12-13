@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient, Prisma } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 // Validation schema for schedule creation
 const scheduleCreateSchema = z.object({

@@ -3,10 +3,10 @@
  * Handles all booking-related business logic for passengers
  */
 
-import { PrismaClient, Booking, BookingStatus, TripStatus, Prisma } from '@prisma/client';
+import { Booking, BookingStatus, TripStatus, Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
-const prisma = new PrismaClient();
 
 export interface BookingWithDetails extends Booking {
   trip: {

@@ -212,32 +212,32 @@ export default function BookingForm({
     }
   };
 
-  // Style classes based on variant
+  // Style classes based on variant - Gaming Dark Theme
   const containerClasses = isHero
-    ? 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md'
-    : 'bg-white dark:bg-gray-800';
+    ? 'bg-[#111111]/95 backdrop-blur-md border border-[#00f0ff]/20'
+    : 'bg-[#1a1a1a] border border-[#00f0ff]/20';
   
-  const headingClasses = 'text-gray-900 dark:text-white';
+  const headingClasses = 'text-white';
 
   const textMutedClasses = isHero
-    ? 'text-gray-600 dark:text-gray-300'
-    : 'text-gray-600 dark:text-gray-400';
+    ? 'text-[#b3b3b3]'
+    : 'text-[#808080]';
 
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className={`max-w-3xl mx-auto ${containerClasses} rounded-2xl shadow-2xl p-6 md:p-8`}>
         <div className="space-y-6">
-          {/* Error Display */}
+          {/* Error Display - Neon Red */}
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <p className="text-red-800 dark:text-red-200">{error}</p>
+            <div className="bg-[#ff0055]/10 border border-[#ff0055]/30 rounded-lg p-4">
+              <p className="text-[#ff0055]">{error}</p>
             </div>
           )}
 
-          {/* Validation Error Display */}
+          {/* Validation Error Display - Neon Orange */}
           {validationError && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-yellow-800 dark:text-yellow-200">{validationError}</p>
+            <div className="bg-[#ff6600]/10 border border-[#ff6600]/30 rounded-lg p-4">
+              <p className="text-[#ff6600]">{validationError}</p>
             </div>
           )}
 
@@ -268,7 +268,7 @@ export default function BookingForm({
             </div>
           </div>
 
-          {/* Ride Type Section */}
+          {/* Ride Type Section - Gaming Style */}
           <div className="space-y-3">
             <h2 className={`text-xl font-semibold ${headingClasses}`}>
               Choose Ride Type
@@ -278,10 +278,10 @@ export default function BookingForm({
               <button
                 type="button"
                 onClick={() => setRideType('PRIVATE')}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                className={`p-4 rounded-xl border-2 transition-all duration-300 text-left ${
                   rideType === 'PRIVATE'
-                    ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                    ? 'border-[#cc00ff] bg-[#cc00ff]/10 shadow-[0_0_20px_rgba(204,0,255,0.2)]'
+                    : 'border-[#333333] hover:border-[#cc00ff]/50 bg-[#1a1a1a]/50'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -289,12 +289,12 @@ export default function BookingForm({
                   <div className="flex-1">
                     <div className={`font-semibold ${headingClasses} flex items-center gap-2`}>
                       Private Cab
-                      {rideType === 'PRIVATE' && <span className="text-purple-500">✓</span>}
+                      {rideType === 'PRIVATE' && <span className="text-[#cc00ff]">✓</span>}
                     </div>
                     <div className={`text-sm ${textMutedClasses} mt-1`}>
                       Exclusive ride for you and your group
                     </div>
-                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1 font-medium">
+                    <div className="text-xs text-[#cc00ff] mt-1 font-medium">
                       Departs immediately • No sharing
                     </div>
                   </div>
@@ -304,10 +304,10 @@ export default function BookingForm({
               <button
                 type="button"
                 onClick={() => setRideType('SHARED')}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${
+                className={`p-4 rounded-xl border-2 transition-all duration-300 text-left ${
                   rideType === 'SHARED'
-                    ? 'border-primary-modernSg bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-gray-400'
+                    ? 'border-[#00f0ff] bg-[#00f0ff]/10 shadow-[0_0_20px_rgba(0,240,255,0.2)]'
+                    : 'border-[#333333] hover:border-[#00f0ff]/50 bg-[#1a1a1a]/50'
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -315,12 +315,12 @@ export default function BookingForm({
                   <div className="flex-1">
                     <div className={`font-semibold ${headingClasses} flex items-center gap-2`}>
                       Shared Ride
-                      {rideType === 'SHARED' && <span className="text-primary-modernSg">✓</span>}
+                      {rideType === 'SHARED' && <span className="text-[#00f0ff]">✓</span>}
                     </div>
                     <div className={`text-sm ${textMutedClasses} mt-1`}>
                       Share with other passengers
                     </div>
-                    <div className="text-xs text-primary-modernSg mt-1 font-medium">
+                    <div className="text-xs text-[#00f0ff] mt-1 font-medium">
                       Schedule ahead • Lower cost
                     </div>
                   </div>
@@ -349,7 +349,7 @@ export default function BookingForm({
                     value={departureDate}
                     onChange={(e) => setDepartureDate(e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                    className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#1a1a1a] text-white focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
                     required
                   />
                 </div>
@@ -362,7 +362,7 @@ export default function BookingForm({
                     type="time"
                     value={departureTime}
                     onChange={(e) => setDepartureTime(e.target.value)}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+                    className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#1a1a1a] text-white focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
                     required
                   />
                 </div>
@@ -379,7 +379,7 @@ export default function BookingForm({
             <select
               value={vehicleType}
               onChange={(e) => setVehicleType(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-primary-modernSg"
+              className="w-full px-4 py-2 rounded-lg border border-[#00f0ff]/30 bg-[#1a1a1a] text-white focus:ring-2 focus:ring-[#00f0ff] focus:border-[#00f0ff] transition-all duration-300"
               required
             >
               <option value="sedan">Sedan (Default)</option>
@@ -392,16 +392,20 @@ export default function BookingForm({
             </p>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Button - Neon Gradient */}
           <div className="pt-4">
             <button
               type="submit"
               disabled={loading || !origin || !destination}
-              className="w-full bg-primary-peranakan text-white px-8 py-4 rounded-xl font-semibold hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg"
+              className={`w-full px-8 py-4 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-lg ${
+                rideType === 'PRIVATE'
+                  ? 'bg-[#cc00ff] text-white hover:shadow-[0_0_30px_rgba(204,0,255,0.5)]'
+                  : 'bg-[#00f0ff] text-[#0a0a0a] hover:shadow-[0_0_30px_rgba(0,240,255,0.5)]'
+              }`}
             >
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-current"></div>
                   {rideType === 'SHARED' ? 'Creating Shared Ride...' : 'Processing...'}
                 </>
               ) : rideType === 'PRIVATE' ? (
@@ -426,9 +430,9 @@ export default function BookingForm({
         </div>
       </div>
 
-      {/* Trip Summary Preview with Fare Estimate */}
+      {/* Trip Summary Preview with Fare Estimate - Gaming Style */}
       {(origin || destination) && (
-        <div className={`max-w-3xl mx-auto mt-6 ${containerClasses} rounded-lg p-6 shadow-sm border-2 ${rideType === 'PRIVATE' ? 'border-purple-200 dark:border-purple-800' : 'border-primary-modernSg/30 dark:border-primary-modernSg/50'}`}>
+        <div className={`max-w-3xl mx-auto mt-6 ${containerClasses} rounded-lg p-6 shadow-sm border-2 ${rideType === 'PRIVATE' ? 'border-[#cc00ff]/30' : 'border-[#00f0ff]/30'}`}>
           <h3 className={`font-semibold ${headingClasses} mb-4`}>Trip Summary</h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
@@ -481,9 +485,9 @@ export default function BookingForm({
             )}
           </div>
           
-          {/* Fare Estimate Section */}
+          {/* Fare Estimate Section - Neon Colors */}
           {fareEstimate && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-4 pt-4 border-t border-[#333333]">
               <div className="flex items-center justify-between">
                 <div>
                   <span className={`text-sm ${textMutedClasses}`}>Estimated Distance:</span>
@@ -500,7 +504,7 @@ export default function BookingForm({
                   <div className={`text-sm ${textMutedClasses}`}>
                     {rideType === 'PRIVATE' ? 'Estimated Fare' : 'Per Seat'}
                   </div>
-                  <div className={`text-2xl font-bold ${rideType === 'PRIVATE' ? 'text-purple-600 dark:text-purple-400' : 'text-primary-modernSg'}`}>
+                  <div className={`text-2xl font-bold ${rideType === 'PRIVATE' ? 'text-[#cc00ff] drop-shadow-[0_0_10px_rgba(204,0,255,0.5)]' : 'text-[#00ff88] drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]'}`}>
                     {rideType === 'PRIVATE' 
                       ? formatCurrency(fareEstimate.totalFare)
                       : formatCurrency(fareEstimate.pricePerSeat || 0)

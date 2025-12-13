@@ -8,6 +8,36 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // 🎮 Gaming Dark Theme Background Colors
+        gaming: {
+          bg: {
+            primary: '#0a0a0a',
+            secondary: '#111111',
+            tertiary: '#1a1a1a',
+            elevated: '#252525',
+            card: 'rgba(31, 31, 31, 0.8)',
+          },
+          // Neon Accent Colors
+          neon: {
+            cyan: '#00f0ff',
+            'cyan-glow': '#0099ff',
+            purple: '#cc00ff',
+            'purple-glow': '#ff00ff',
+            green: '#00ff88',
+            'green-glow': '#39ff14',
+            orange: '#ff6600',
+            'orange-glow': '#ff9500',
+            red: '#ff0055',
+            'red-glow': '#ff3366',
+            gold: '#FFD700',
+          },
+          // Text Colors
+          text: {
+            primary: '#ffffff',
+            secondary: '#b3b3b3',
+            muted: '#666666',
+          },
+        },
         // Brand Colors (using CSS variables for tokenization)
         primary: {
           DEFAULT: 'var(--color-primary)',
@@ -53,10 +83,10 @@ module.exports = {
         },
         // Urgency Colors
         urgency: {
-          teal: '#14b8a6',
-          amber: '#f59e0b',
-          red: '#ef4444',
-          gray: '#6b7280',
+          teal: '#00f0ff',
+          amber: '#ff6600',
+          red: '#ff0055',
+          gray: '#666666',
         },
         // WhatsApp
         whatsapp: {
@@ -110,6 +140,15 @@ module.exports = {
         'modal': 'var(--shadow-modal)',
         'button': 'var(--shadow-button)',
         'button-hover': 'var(--shadow-button-hover)',
+        // 🎮 Gaming Neon Glow Shadows
+        'neon-cyan': '0 0 10px rgba(0, 240, 255, 0.3), 0 0 20px rgba(0, 240, 255, 0.2)',
+        'neon-cyan-lg': '0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.2)',
+        'neon-purple': '0 0 10px rgba(204, 0, 255, 0.3), 0 0 20px rgba(204, 0, 255, 0.2)',
+        'neon-purple-lg': '0 0 20px rgba(204, 0, 255, 0.4), 0 0 40px rgba(204, 0, 255, 0.2)',
+        'neon-green': '0 0 10px rgba(0, 255, 136, 0.3), 0 0 20px rgba(0, 255, 136, 0.2)',
+        'neon-green-lg': '0 0 20px rgba(0, 255, 136, 0.4), 0 0 40px rgba(0, 255, 136, 0.2)',
+        'neon-red': '0 0 10px rgba(255, 0, 85, 0.3), 0 0 20px rgba(255, 0, 85, 0.2)',
+        'neon-orange': '0 0 10px rgba(255, 102, 0, 0.3), 0 0 20px rgba(255, 102, 0, 0.2)',
       },
       spacing: {
         // Card Padding Tokens
@@ -127,10 +166,35 @@ module.exports = {
           '25%': { transform: 'translateX(-5px)' },
           '75%': { transform: 'translateX(5px)' },
         },
+        // 🎮 Gaming Neon Animations
+        'neon-pulse': {
+          '0%, 100%': { 
+            boxShadow: '0 0 5px rgba(0, 240, 255, 0.5), 0 0 10px rgba(0, 240, 255, 0.3)' 
+          },
+          '50%': { 
+            boxShadow: '0 0 10px rgba(0, 240, 255, 0.8), 0 0 20px rgba(0, 240, 255, 0.5), 0 0 30px rgba(0, 240, 255, 0.3)' 
+          },
+        },
+        'neon-flicker': {
+          '0%, 100%': { opacity: 1 },
+          '41%': { opacity: 1 },
+          '42%': { opacity: 0.8 },
+          '43%': { opacity: 1 },
+          '45%': { opacity: 0.3 },
+          '46%': { opacity: 1 },
+        },
+        'gradient-shift': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
       },
       animation: {
         shimmer: 'shimmer 3s ease-in-out infinite',
         shake: 'shake 0.3s ease-in-out',
+        'neon-pulse': 'neon-pulse 2s ease-in-out infinite',
+        'neon-flicker': 'neon-flicker 3s linear infinite',
+        'gradient-shift': 'gradient-shift 8s ease infinite',
       },
     },
   },

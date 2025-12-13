@@ -147,6 +147,8 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
 
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [availableTrips, setAvailableTrips] = useState<any[]>([]);
+  const [loadingTrips, setLoadingTrips] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'rides' | 'earnings' | 'notifications'>('overview');
   
@@ -154,17 +156,37 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
   const platformFeeRate = dashboardData?.platformFeeRate ?? DEFAULT_PLATFORM_FEE_RATE;
   const driverEarningsRate = dashboardData?.driverEarningsRate ?? DEFAULT_DRIVER_EARNINGS_RATE;
 
-  // Poll for active trip offers
+  // Load available trips for drivers to accept
+  const loadAvailableTrips = useCallback(async () => {
+    try {
+      setLoadingTrips(true);
+      const response = await fetch(`/api/drivers/trips/discover?driverId=${driverId}&limit=10`);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          setAvailableTrips(result.data.trips || []);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading available trips:', error);
+    } finally {
+      setLoadingTrips(false);
+    }
+  }, [driverId]);
+
+  // Poll for active trip offers and load available trips
   useEffect(() => {
     const pollInterval = setInterval(() => {
       checkActiveOffers(driverId);
+      loadAvailableTrips();
     }, POLL_INTERVAL_MS);
 
     // Initial check
     checkActiveOffers(driverId);
+    loadAvailableTrips();
 
     return () => clearInterval(pollInterval);
-  }, [driverId, checkActiveOffers]);
+  }, [driverId, checkActiveOffers, loadAvailableTrips]);
 
   const loadNotifications = useCallback(() => {
     // Demo notifications for development
@@ -544,27 +566,116 @@ export const DriverDashboard: React.FC<DriverDashboardProps> = ({
 
             {/* Trip Offers Status */}
             <div className="card">
-              <div className="px-6 py-4 border-b -mx-6 -mt-6">
-                <h2 className="text-heading-4 text-gray-900">Trip Offers</h2>
+              <div className="px-6 py-4 border-b -mx-6 -mt-6 flex justify-between items-center">
+                <h2 className="text-heading-4 text-white">Available Trip Offers</h2>
+                <span className="text-sm text-[#00f0ff]">{availableTrips.length} trips available</span>
               </div>
               <div className="pt-6">
                 {activeOffer ? (
-                  <div className="card !bg-warning-light !border-warning p-4">
+                  <div className="bg-[#1a1a1a] border border-[#ff6600]/30 rounded-xl p-4 mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-warning rounded-full animate-pulse"></div>
+                      <div className="w-3 h-3 bg-[#ff6600] rounded-full animate-pulse"></div>
                       <div>
-                        <p className="font-medium text-warning-dark">Active Trip Offer</p>
-                        <p className="text-body-small text-warning-dark">
+                        <p className="font-medium text-[#ff6600]">Active Trip Offer - Respond Now!</p>
+                        <p className="text-sm text-gray-400">
                           You have {activeOffer.timeRemainingSeconds} seconds to respond to a trip request
                         </p>
                       </div>
                     </div>
                   </div>
+                ) : null}
+                
+                {loadingTrips ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00f0ff] mx-auto"></div>
+                    <p className="mt-2 text-gray-400">Loading trips...</p>
+                  </div>
+                ) : availableTrips.length > 0 ? (
+                  <div className="space-y-4">
+                    {availableTrips.slice(0, 5).map((trip) => (
+                      <div 
+                        key={trip.id} 
+                        className="bg-[#1a1a1a] border border-[#00f0ff]/20 rounded-xl p-4 hover:border-[#00f0ff]/50 hover:shadow-[0_0_20px_rgba(0,240,255,0.1)] transition-all cursor-pointer"
+                        onClick={() => router.push(`/driver/trips/${trip.id}`)}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="font-semibold text-white">{trip.title}</h3>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                trip.urgency === 'critical' ? 'bg-[#ff0055]/20 text-[#ff0055]' :
+                                trip.urgency === 'high' ? 'bg-[#ff6600]/20 text-[#ff6600]' :
+                                trip.urgency === 'medium' ? 'bg-[#FFD700]/20 text-[#FFD700]' :
+                                'bg-[#00ff88]/20 text-[#00ff88]'
+                              }`}>
+                                {trip.urgency === 'critical' ? '🔥 Urgent' :
+                                 trip.urgency === 'high' ? '⚡ Soon' :
+                                 trip.urgency === 'medium' ? '📅 Today' : '🗓️ Later'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-gray-400">
+                              <MapPin className="w-4 h-4 text-[#00f0ff]" />
+                              {trip.origin.name} → {trip.destination.name}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-[#00ff88]">
+                              ₸{trip.pricing.estimatedEarnings.toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-500">your earnings</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {new Date(trip.departureTime).toLocaleDateString('en-US', { 
+                              month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                            })}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            {trip.availableSeats}/{trip.totalSeats} seats
+                          </div>
+                          {trip.organizer && (
+                            <div className="flex items-center gap-1">
+                              <UserCircle className="w-4 h-4" />
+                              {trip.organizer.name}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-gray-800 flex justify-between items-center">
+                          <span className="text-xs text-gray-500">
+                            {trip.hoursUntilDeparture < 1 
+                              ? `${Math.round(trip.hoursUntilDeparture * 60)} mins until departure`
+                              : `${trip.hoursUntilDeparture} hours until departure`
+                            }
+                          </span>
+                          <button 
+                            className="px-4 py-1.5 bg-gradient-to-r from-[#00f0ff] to-[#0099ff] text-black text-sm font-semibold rounded-lg hover:shadow-[0_0_15px_rgba(0,240,255,0.5)] transition-all"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/driver/trips/${trip.id}/accept`);
+                            }}
+                          >
+                            Accept Trip
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {availableTrips.length > 5 && (
+                      <button 
+                        className="w-full py-3 text-[#00f0ff] hover:bg-[#00f0ff]/10 rounded-lg transition-all text-sm font-medium"
+                        onClick={() => router.push('/driver/trips/available')}
+                      >
+                        View All {availableTrips.length} Available Trips →
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    <Clock className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-heading-4 mb-2">No active trip offers</p>
-                    <p className="text-body-small">{TEXT.NO_TRIPS}</p>
+                    <Clock className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+                    <p className="text-lg font-medium text-gray-300 mb-2">No trips available right now</p>
+                    <p className="text-sm text-gray-500">{TEXT.NO_TRIPS}</p>
                   </div>
                 )}
               </div>

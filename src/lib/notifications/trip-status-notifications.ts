@@ -3,11 +3,11 @@
  * Sends notifications to passengers when trip status changes
  */
 
-import { PrismaClient, TripStatus } from '@prisma/client';
+import { TripStatus } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { sendEmail } from '../messaging/email';
 import { EmailTemplate } from '../messaging/templates';
 
-const prisma = new PrismaClient();
 
 export interface TripStatusNotificationContext {
   tripId: string;

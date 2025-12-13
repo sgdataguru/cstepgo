@@ -7,7 +7,6 @@ import {
 import { rateLimit, RATE_LIMIT_CONFIGS, getClientIp } from '@/lib/utils/rate-limit';
 import { broadcastStatusUpdate } from '@/lib/realtime/broadcast';
 
-const prisma = new PrismaClient();
 
 // Get driver from session 
 async function getDriverFromRequest(request: NextRequest) {

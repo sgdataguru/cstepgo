@@ -4,14 +4,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import {
   addConnection,
   removeConnection,
   broadcastStatusUpdate as broadcastUpdate,
 } from '@/lib/realtime/broadcast';
 
-const prisma = new PrismaClient();
 
 /**
  * GET /api/realtime/trip-status/[tripId] - Subscribe to trip status updates

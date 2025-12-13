@@ -274,11 +274,11 @@ export default function KazakhstanTripsPage() {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 mb-8">
-            <p className="text-red-800 dark:text-red-200">{error}</p>
+          <div className="bg-[#1a1a1a] border border-[#ff0055]/30 rounded-xl p-6 mb-8 shadow-[0_0_15px_rgba(255,0,85,0.2)]">
+            <p className="text-[#ff3366]">{error}</p>
             <button
               onClick={fetchTrips}
-              className="mt-4 text-red-600 dark:text-red-400 hover:underline"
+              className="mt-4 px-4 py-2 bg-[#ff0055]/10 border border-[#ff0055]/50 rounded-lg text-[#ff0055] hover:bg-[#ff0055]/20 hover:shadow-[0_0_10px_rgba(255,0,85,0.3)] transition-all duration-300"
             >
               Try again
             </button>

@@ -270,50 +270,50 @@ export default function ModuleOverviewDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+    <div className="min-h-screen bg-[#0a0a0a] p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🎯 StepperGO - Module Overview Dashboard
+          <h1 className="text-4xl font-bold text-white mb-4">
+            🎯 StepperGO - <span className="text-[#00f0ff] drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Module Overview</span> Dashboard
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl text-[#b3b3b3] mb-8">
             Complete implementation status of all platform modules
           </p>
           
-          {/* Overall Progress */}
-          <div className="card-lg mb-8">
+          {/* Overall Progress - Gaming Card */}
+          <div className="bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 rounded-2xl p-8 mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-heading-3 text-gray-800">Overall Progress</h2>
-              <span className="text-display-md font-bold text-success">100%</span>
+              <h2 className="text-heading-3 text-white">Overall Progress</h2>
+              <span className="text-display-md font-bold text-[#00ff88] drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]">100%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-4 mb-4">
-              <div className="bg-gradient-to-r from-emerald-400 to-emerald-600 h-4 rounded-full w-full transition-all duration-1000"></div>
+            <div className="w-full bg-[#252525] rounded-full h-4 mb-4">
+              <div className="bg-gradient-to-r from-[#00f0ff] to-[#00ff88] h-4 rounded-full w-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,255,136,0.5)]"></div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
-                <div className="text-heading-3 text-success">{modules.length}</div>
-                <div className="text-body-small text-gray-600">Modules Complete</div>
+                <div className="text-heading-3 text-[#00ff88]">{modules.length}</div>
+                <div className="text-body-small text-[#808080]">Modules Complete</div>
               </div>
               <div>
-                <div className="text-heading-3 text-info">
+                <div className="text-heading-3 text-[#00f0ff]">
                   {modules.reduce((acc, module) => acc + module.features.length, 0)}
                 </div>
-                <div className="text-body-small text-gray-600">Features Built</div>
+                <div className="text-body-small text-[#808080]">Features Built</div>
               </div>
               <div>
-                <div className="text-heading-3 text-purple-600">200+</div>
-                <div className="text-body-small text-gray-600">Components</div>
+                <div className="text-heading-3 text-[#cc00ff]">200+</div>
+                <div className="text-body-small text-[#808080]">Components</div>
               </div>
               <div>
-                <div className="text-heading-3 text-warning">50+</div>
-                <div className="text-body-small text-gray-600">Routes</div>
+                <div className="text-heading-3 text-[#ff6600]">50+</div>
+                <div className="text-body-small text-[#808080]">Routes</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Modules Grid */}
+        {/* Modules Grid - Gaming Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {modules.map((module) => {
             const IconComponent = module.icon;
@@ -322,40 +322,41 @@ export default function ModuleOverviewDashboard() {
                 key={module.id}
                 onClick={() => setSelectedModule(module)}
                 className={`
-                  p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105
-                  ${getModuleColorClasses(module.color)}
-                  ${selectedModule?.id === module.id ? 'ring-4 ring-blue-300' : ''}
+                  p-6 rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105
+                  bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20
+                  hover:border-[#00f0ff]/60 hover:shadow-[0_0_30px_rgba(0,240,255,0.2)]
+                  ${selectedModule?.id === module.id ? 'ring-2 ring-[#00f0ff] shadow-[0_0_30px_rgba(0,240,255,0.3)]' : ''}
                 `}
               >
                 <div className="flex items-center mb-4">
-                  <IconComponent className={`h-8 w-8 text-${module.color}-600 mr-3`} />
-                  <h3 className="text-lg font-semibold text-gray-800">{module.name}</h3>
+                  <IconComponent className="h-8 w-8 text-[#00f0ff] mr-3" />
+                  <h3 className="text-lg font-semibold text-white">{module.name}</h3>
                 </div>
                 
-                <p className="text-gray-600 text-sm mb-4">{module.description}</p>
+                <p className="text-[#808080] text-sm mb-4">{module.description}</p>
                 
-                {/* Status Badge */}
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(module.status)}`}>
+                {/* Status Badge - Neon Green */}
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border border-[#00ff88]/30 bg-[#00ff88]/10 text-[#00ff88]">
                   <CheckCircle className="h-4 w-4 mr-1" />
                   {module.status === 'complete' ? 'Complete' : module.status}
                 </div>
                 
                 {/* Progress Bar */}
                 <div className="mt-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <div className="flex justify-between text-sm text-[#808080] mb-1">
                     <span>Progress</span>
                     <span>{module.progress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-[#252525] rounded-full h-2">
                     <div 
-                      className={`bg-${module.color}-500 h-2 rounded-full transition-all duration-500`}
+                      className="bg-gradient-to-r from-[#00f0ff] to-[#cc00ff] h-2 rounded-full transition-all duration-500 shadow-[0_0_5px_rgba(0,240,255,0.5)]"
                       style={{ width: `${module.progress}%` }}
                     ></div>
                   </div>
                 </div>
 
                 {/* Feature Count */}
-                <div className="mt-4 text-sm text-gray-500">
+                <div className="mt-4 text-sm text-[#666666]">
                   {module.features.length} features implemented
                 </div>
               </div>
@@ -363,20 +364,20 @@ export default function ModuleOverviewDashboard() {
           })}
         </div>
 
-        {/* Selected Module Detail */}
+        {/* Selected Module Detail - Gaming Style */}
         {selectedModule && (
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="bg-[#1a1a1a]/90 backdrop-blur-sm border border-[#00f0ff]/20 rounded-2xl shadow-xl p-8">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center">
-                <selectedModule.icon className={`h-10 w-10 text-${selectedModule.color}-600 mr-4`} />
+                <selectedModule.icon className="h-10 w-10 text-[#00f0ff] mr-4" />
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900">{selectedModule.name}</h2>
-                  <p className="text-gray-600">{selectedModule.description}</p>
+                  <h2 className="text-3xl font-bold text-white">{selectedModule.name}</h2>
+                  <p className="text-[#b3b3b3]">{selectedModule.description}</p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedModule(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-[#666666] hover:text-[#00f0ff] text-2xl transition-colors"
               >
                 ×
               </button>
@@ -384,38 +385,38 @@ export default function ModuleOverviewDashboard() {
 
             {/* Features */}
             <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Features & Components</h3>
+              <h3 className="text-xl font-semibold text-white mb-4">Features & Components</h3>
               {selectedModule.features.map((feature, index) => (
                 <div
                   key={index}
-                  className="border border-gray-200 rounded-lg overflow-hidden"
+                  className="border border-[#333333] rounded-lg overflow-hidden"
                 >
                   <div
                     onClick={() => setExpandedFeature(expandedFeature === `${selectedModule.id}-${index}` ? null : `${selectedModule.id}-${index}`)}
-                    className="p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors flex items-center justify-between"
+                    className="p-4 bg-[#252525] cursor-pointer hover:bg-[#333333] transition-colors flex items-center justify-between"
                   >
                     <div>
-                      <h4 className="font-semibold text-gray-800">{feature.name}</h4>
-                      <p className="text-gray-600 text-sm">{feature.description}</p>
+                      <h4 className="font-semibold text-white">{feature.name}</h4>
+                      <p className="text-[#808080] text-sm">{feature.description}</p>
                     </div>
                     <ChevronRight 
-                      className={`h-5 w-5 text-gray-400 transition-transform ${
+                      className={`h-5 w-5 text-[#00f0ff] transition-transform ${
                         expandedFeature === `${selectedModule.id}-${index}` ? 'rotate-90' : ''
                       }`} 
                     />
                   </div>
                   
                   {expandedFeature === `${selectedModule.id}-${index}` && (
-                    <div className="p-4 bg-white border-t">
+                    <div className="p-4 bg-[#1a1a1a] border-t border-[#333333]">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Components */}
                         <div>
-                          <h5 className="font-medium text-gray-800 mb-2">Components Built</h5>
+                          <h5 className="font-medium text-white mb-2">Components Built</h5>
                           <div className="space-y-1">
                             {feature.components.map((component, idx) => (
                               <div key={idx} className="flex items-center text-sm">
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></div>
-                                <code className="text-gray-700 bg-gray-100 px-2 py-1 rounded text-xs">
+                                <div className="w-2 h-2 bg-[#00ff88] rounded-full mr-2"></div>
+                                <code className="text-[#b3b3b3] bg-[#252525] px-2 py-1 rounded text-xs">
                                   {component}
                                 </code>
                               </div>
@@ -425,12 +426,12 @@ export default function ModuleOverviewDashboard() {
                         
                         {/* Routes */}
                         <div>
-                          <h5 className="font-medium text-gray-800 mb-2">Routes Available</h5>
+                          <h5 className="font-medium text-white mb-2">Routes Available</h5>
                           <div className="space-y-1">
                             {feature.routes.map((route, idx) => (
                               <div key={idx} className="flex items-center text-sm">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                                <code className="text-gray-700 bg-blue-100 px-2 py-1 rounded text-xs">
+                                <div className="w-2 h-2 bg-[#00f0ff] rounded-full mr-2"></div>
+                                <code className="text-[#b3b3b3] bg-[#00f0ff]/10 px-2 py-1 rounded text-xs">
                                   {route}
                                 </code>
                               </div>
@@ -444,52 +445,52 @@ export default function ModuleOverviewDashboard() {
               ))}
             </div>
 
-            {/* Implementation Stats */}
+            {/* Implementation Stats - Neon Cards */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-emerald-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-emerald-800">Components</h4>
-                <div className="text-2xl font-bold text-emerald-600">
+              <div className="bg-[#00ff88]/10 border border-[#00ff88]/30 p-4 rounded-lg">
+                <h4 className="font-semibold text-[#00ff88]">Components</h4>
+                <div className="text-2xl font-bold text-[#00ff88] drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]">
                   {selectedModule.features.reduce((acc, feature) => acc + feature.components.length, 0)}
                 </div>
-                <div className="text-emerald-700 text-sm">UI Components Built</div>
+                <div className="text-[#808080] text-sm">UI Components Built</div>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-800">Routes</h4>
-                <div className="text-2xl font-bold text-blue-600">
+              <div className="bg-[#00f0ff]/10 border border-[#00f0ff]/30 p-4 rounded-lg">
+                <h4 className="font-semibold text-[#00f0ff]">Routes</h4>
+                <div className="text-2xl font-bold text-[#00f0ff] drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">
                   {selectedModule.features.reduce((acc, feature) => acc + feature.routes.length, 0)}
                 </div>
-                <div className="text-blue-700 text-sm">Pages & Endpoints</div>
+                <div className="text-[#808080] text-sm">Pages & Endpoints</div>
               </div>
               
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-purple-800">Completion</h4>
-                <div className="text-2xl font-bold text-purple-600">{selectedModule.progress}%</div>
-                <div className="text-purple-700 text-sm">Implementation Complete</div>
+              <div className="bg-[#cc00ff]/10 border border-[#cc00ff]/30 p-4 rounded-lg">
+                <h4 className="font-semibold text-[#cc00ff]">Completion</h4>
+                <div className="text-2xl font-bold text-[#cc00ff] drop-shadow-[0_0_10px_rgba(204,0,255,0.5)]">{selectedModule.progress}%</div>
+                <div className="text-[#808080] text-sm">Implementation Complete</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Integration Status */}
-        <div className="mt-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl text-white p-8">
+        {/* Integration Status - Neon Gradient Banner */}
+        <div className="mt-12 bg-gradient-to-r from-[#00f0ff]/20 via-[#cc00ff]/20 to-[#00ff88]/20 border border-[#00f0ff]/30 rounded-2xl text-white p-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-4">🎉 Ready for Integration!</h2>
-            <p className="text-xl mb-6">
+            <h2 className="text-3xl font-bold mb-4">🎉 Ready for <span className="text-[#00ff88] drop-shadow-[0_0_10px_rgba(0,255,136,0.5)]">Integration!</span></h2>
+            <p className="text-xl text-[#b3b3b3] mb-6">
               All modules are complete and ready to be integrated into a unified platform
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
               <div>
-                <div className="text-3xl font-bold">15+</div>
-                <div>Features Complete</div>
+                <div className="text-3xl font-bold text-[#00f0ff]">15+</div>
+                <div className="text-[#808080]">Features Complete</div>
               </div>
               <div>
-                <div className="text-3xl font-bold">200+</div>
-                <div>Components Built</div>
+                <div className="text-3xl font-bold text-[#cc00ff]">200+</div>
+                <div className="text-[#808080]">Components Built</div>
               </div>
               <div>
-                <div className="text-3xl font-bold">5 weeks</div>
-                <div>To Full Integration</div>
+                <div className="text-3xl font-bold text-[#00ff88]">5 weeks</div>
+                <div className="text-[#808080]">To Full Integration</div>
               </div>
             </div>
           </div>

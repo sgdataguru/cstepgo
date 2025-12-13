@@ -3,16 +3,17 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 /**
- * Card Component - Standardized card styles using design tokens
+ * 🎮 Gaming Card Component - Dark Theme with Neon Accents
  * 
- * Uses CSS variables for consistent shadows, radii, and spacing:
- * - --radius-card, --radius-card-sm, --radius-card-lg
- * - --shadow-card, --shadow-card-hover, --shadow-card-elevated
- * - --spacing-card, --spacing-card-sm, --spacing-card-lg
+ * Uses gaming aesthetics design tokens:
+ * - Dark backgrounds (#1a1a1a, #1f1f1f)
+ * - Neon cyan borders and glows
+ * - Glass morphism effects
+ * - Hover glow animations
  */
 
 const cardVariants = cva(
-  "bg-white dark:bg-gray-800 transition-all duration-200",
+  "backdrop-blur-sm transition-all duration-300",
   {
     variants: {
       variant: {
@@ -22,6 +23,10 @@ const cardVariants = cva(
         elevated: "card-elevated",
         interactive: "card-interactive",
         ghost: "bg-transparent border-0 shadow-none p-0",
+        neonCyan: "bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00f0ff]/20 hover:border-[#00f0ff]/60 hover:shadow-[0_0_30px_rgba(0,240,255,0.2)]",
+        neonPurple: "bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#cc00ff]/20 hover:border-[#cc00ff]/60 hover:shadow-[0_0_30px_rgba(204,0,255,0.2)]",
+        neonGreen: "bg-[#1a1a1a]/80 backdrop-blur-sm border border-[#00ff88]/20 hover:border-[#00ff88]/60 hover:shadow-[0_0_30px_rgba(0,255,136,0.2)]",
+        glass: "bg-[#111111]/70 backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_20px_40px_rgba(0,0,0,0.5)]",
       },
       padding: {
         none: "!p-0",
@@ -71,7 +76,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-heading-4 text-gray-900 dark:text-white",
+      "text-heading-4 text-white",
       className
     )}
     {...props}
@@ -85,7 +90,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-body-small text-gray-500 dark:text-gray-400", className)}
+    className={cn("text-body-small text-[#b3b3b3]", className)}
     {...props}
   />
 ))

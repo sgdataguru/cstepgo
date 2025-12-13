@@ -143,12 +143,12 @@ function BundlePageContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6 max-w-md">
-          <p className="text-red-800 dark:text-red-200 mb-4">{error}</p>
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+        <div className="bg-[#1a1a1a] border border-[#ff0055]/30 rounded-xl p-6 max-w-md shadow-[0_0_15px_rgba(255,0,85,0.2)]">
+          <p className="text-[#ff3366] mb-4">{error}</p>
           <button
             onClick={() => router.push('/trips/kazakhstan')}
-            className="text-red-600 dark:text-red-400 hover:underline"
+            className="px-4 py-2 bg-[#ff0055]/10 border border-[#ff0055]/50 rounded-lg text-[#ff0055] hover:bg-[#ff0055]/20 hover:shadow-[0_0_10px_rgba(255,0,85,0.3)] transition-all duration-300"
           >
             ← Back to trips
           </button>
@@ -158,20 +158,20 @@ function BundlePageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <div className="mb-8">
           <button
             onClick={() => router.push('/trips/kazakhstan')}
-            className="text-primary-modernSg hover:underline mb-4 flex items-center gap-2"
+            className="text-[#00f0ff] hover:text-[#00f0ff]/80 mb-4 flex items-center gap-2 transition-colors\"
           >
             ← Back to trips
           </button>
-          <h1 className="text-4xl font-display font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-display font-bold text-white mb-2">
             Configure Your Trip Bundle
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-lg text-[#b3b3b3]">
             Customize your multi-trip itinerary and choose your ride preference
           </p>
         </div>

@@ -1,34 +1,75 @@
+'use client';
+
 import { DriverDashboard } from '@/components/driver/DriverDashboard';
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export default async function DriverDashboardPage() {
-  // In a real app, you would get the driver ID from the session/auth
-  // For now, we'll check cookies for a driver session
-  const cookieStore = cookies();
-  const driverSession = cookieStore.get('driver-session');
-  
-  // Mock driver ID - in production this would come from authenticated session
-  const driverId = driverSession?.value || 'mock-driver-id';
-  const mockDriverName = "Alex Johnson";
+interface DriverData {
+  id: string;
+  driverId: string;
+  fullName?: string;
+  status: string;
+}
 
-  // You could also verify authentication here
-  if (!driverId || driverId === 'mock-driver-id') {
-    // In production, redirect to login if no valid session
-    // redirect('/driver/login');
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export default function DriverDashboardPage() {
+  const router = useRouter();
+  const [driverId, setDriverId] = useState<string | null>(null);
+  const [driverName, setDriverName] = useState<string>('Driver');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check for driver session in localStorage
+    const sessionToken = localStorage.getItem('driver_session');
+    const driverDataStr = localStorage.getItem('driver_data');
+    const userDataStr = localStorage.getItem('user_data');
+
+    if (!sessionToken || !driverDataStr) {
+      // No session, redirect to login
+      router.push('/driver/login');
+      return;
+    }
+
+    try {
+      const driverData: DriverData = JSON.parse(driverDataStr);
+      const userData: UserData = userDataStr ? JSON.parse(userDataStr) : null;
+
+      // Use the driver's internal ID for API calls
+      setDriverId(driverData.id);
+      setDriverName(driverData.fullName || userData?.name || 'Driver');
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error parsing driver session:', error);
+      router.push('/driver/login');
+    }
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00f0ff] mx-auto mb-4"></div>
+          <p className="text-[#b3b3b3]">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!driverId) {
+    return null; // Will redirect to login
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <DriverDashboard 
         driverId={driverId}
-        driverName={mockDriverName}
+        driverName={driverName}
       />
     </div>
   );
 }
-
-export const metadata = {
-  title: 'Driver Dashboard - StepperGO',
-  description: 'Manage your trips and earnings as a StepperGO driver',
-};

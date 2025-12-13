@@ -4,20 +4,33 @@ import { nanoid } from 'nanoid';
 
 /**
  * POST /api/payments/mock-success
- * 
+ *
  * Mock payment endpoint for POC that always returns successful transaction
  * This simulates the payment flow without actual payment processing
- * 
+ *
+ * SECURITY: Only available in development mode
+ *
  * Request body:
  * {
  *   bookingId: string,
  *   amount: number,
  *   currency?: string
  * }
- * 
+ *
  * Returns mock payment transaction details
  */
 export async function POST(request: NextRequest) {
+  // SECURITY: Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Mock payment endpoint is disabled in production',
+      },
+      { status: 403 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { bookingId, amount, currency = 'KZT' } = body;
@@ -140,10 +153,22 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/payments/mock-success
- * 
+ *
  * Returns information about the mock payment API
+ * SECURITY: Only available in development mode
  */
 export async function GET() {
+  // SECURITY: Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Mock payment endpoint is disabled in production',
+      },
+      { status: 403 }
+    );
+  }
+
   return NextResponse.json({
     success: true,
     data: {

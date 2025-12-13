@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
-const prisma = new PrismaClient();
 
 // Get driver from session 
 async function getDriverFromRequest(request: NextRequest) {

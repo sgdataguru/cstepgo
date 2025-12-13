@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
-const prisma = new PrismaClient();
 
 // In a production environment, you would use a proper WebSocket server
 // For now, we'll use Server-Sent Events (SSE) for real-time updates

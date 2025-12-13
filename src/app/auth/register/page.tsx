@@ -20,11 +20,18 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-modernSg to-primary-peranakan flex items-center justify-center p-4">
-      <RegistrationFlow 
-        onComplete={handleComplete} 
-        onCancel={handleCancel}
-      />
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Gaming background effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#00f0ff]/10 via-transparent to-[#cc00ff]/10"></div>
+      <div className="absolute top-20 left-10 w-64 h-64 bg-[#00f0ff]/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#cc00ff]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      
+      <div className="relative z-10">
+        <RegistrationFlow 
+          onComplete={handleComplete} 
+          onCancel={handleCancel}
+        />
+      </div>
     </div>
   );
 }

@@ -55,6 +55,525 @@ applyTo: '**'
 - Implement rate limiting
 - Secure API endpoints
 
+### 🎮 Gaming Aesthetics Design System
+
+StepperGO uses a modern gaming-inspired UI with dark themes, neon accents, and immersive visual effects. This creates an engaging, premium experience for users.
+
+#### Core Design Philosophy
+- **Dark-first approach**: Deep blacks and dark grays as primary backgrounds
+- **Neon highlights**: Vibrant accent colors that pop against dark backgrounds
+- **Glass morphism**: Frosted glass effects for depth and modern feel
+- **Responsive animations**: Smooth micro-interactions and transitions
+- **Immersive gradients**: Dynamic color flows inspired by gaming interfaces
+
+#### Gaming Color Palette
+```typescript
+// Gaming Aesthetics Color System
+export const gamingColors = {
+  // Dark Theme Backgrounds
+  background: {
+    primary: '#0a0a0a',      // Deep black
+    secondary: '#111111',    // Soft black
+    tertiary: '#1a1a1a',     // Dark gray
+    elevated: '#252525',     // Elevated surfaces
+    card: '#1f1f1f',         // Card backgrounds
+  },
+  
+  // Neon Accent Colors
+  neon: {
+    cyan: '#00f0ff',         // Primary neon - Electric cyan
+    cyanGlow: '#0099ff',     // Cyan variant for glows
+    purple: '#cc00ff',       // Secondary neon - Magenta
+    purpleGlow: '#ff00ff',   // Purple variant for glows
+    green: '#00ff88',        // Success/CTA - Neon green
+    greenGlow: '#39ff14',    // Green variant for glows
+    orange: '#ff6600',       // Warning - Neon orange
+    orangeGlow: '#ff9500',   // Orange variant for glows
+    red: '#ff0055',          // Error - Neon red
+    redGlow: '#ff3366',      // Red variant for glows
+    gold: '#FFD700',         // Premium/Accent - Gold
+  },
+  
+  // Text Colors on Dark
+  text: {
+    primary: '#ffffff',      // Main headings
+    secondary: '#b3b3b3',    // Body text
+    muted: '#666666',        // Hints and disabled
+    accent: '#00f0ff',       // Links and highlights
+  },
+  
+  // Gradient Presets
+  gradients: {
+    neonCyan: 'linear-gradient(135deg, #00f0ff 0%, #0099ff 100%)',
+    neonPurple: 'linear-gradient(135deg, #cc00ff 0%, #ff00ff 100%)',
+    neonDual: 'linear-gradient(135deg, #00f0ff 0%, #cc00ff 100%)',
+    darkFade: 'linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%)',
+    cardGlow: 'linear-gradient(145deg, rgba(0,240,255,0.1) 0%, rgba(204,0,255,0.1) 100%)',
+  }
+};
+```
+
+#### Dark Theme Implementation
+```css
+/* CSS Variables for Dark Gaming Theme */
+:root {
+  /* Background Layers */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
+  --bg-elevated: #252525;
+  --bg-card: rgba(31, 31, 31, 0.8);
+  
+  /* Neon Accents */
+  --neon-cyan: #00f0ff;
+  --neon-purple: #cc00ff;
+  --neon-green: #00ff88;
+  --neon-orange: #ff6600;
+  --neon-red: #ff0055;
+  
+  /* Glow Effects */
+  --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.5);
+  --glow-purple: 0 0 20px rgba(204, 0, 255, 0.5);
+  --glow-green: 0 0 20px rgba(0, 255, 136, 0.5);
+  
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #666666;
+}
+```
+
+#### Neon Glow Effects
+```typescript
+// Neon Glow Animation System
+export const neonGlowEffects = {
+  // Static glow
+  staticGlow: (color: string) => `
+    box-shadow: 
+      0 0 5px ${color},
+      0 0 10px ${color},
+      0 0 20px ${color};
+  `,
+  
+  // Animated pulsing glow
+  pulsingGlow: `
+    @keyframes neonPulse {
+      0%, 100% { 
+        box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan);
+      }
+      50% { 
+        box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+      }
+    }
+  `,
+  
+  // Text glow
+  textGlow: (color: string) => `
+    text-shadow: 
+      0 0 5px ${color},
+      0 0 10px ${color},
+      0 0 20px ${color},
+      0 0 40px ${color};
+  `,
+  
+  // Border glow on hover
+  borderGlow: `
+    transition: all 0.3s ease;
+    &:hover {
+      border-color: var(--neon-cyan);
+      box-shadow: 
+        0 0 5px var(--neon-cyan),
+        0 0 10px var(--neon-cyan),
+        inset 0 0 5px rgba(0, 240, 255, 0.1);
+    }
+  `
+};
+```
+
+#### Gaming UI Components
+
+##### Cards with Neon Borders
+```tsx
+// Gaming Card Component
+const GamingCard = styled.div`
+  background: rgba(17, 17, 17, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  
+  /* Subtle gradient overlay */
+  background-image: linear-gradient(
+    145deg,
+    rgba(0, 240, 255, 0.05) 0%,
+    rgba(204, 0, 255, 0.05) 100%
+  );
+  
+  /* Hover glow effect */
+  transition: all 0.3s ease;
+  &:hover {
+    border-color: var(--neon-cyan);
+    box-shadow: 
+      0 0 20px rgba(0, 240, 255, 0.3),
+      inset 0 0 20px rgba(0, 240, 255, 0.05);
+    transform: translateY(-4px);
+  }
+`;
+```
+
+##### Neon Buttons
+```tsx
+// Primary Neon Button
+const NeonButton = styled.button<{ variant?: 'cyan' | 'purple' | 'green' }>`
+  background: ${({ variant = 'cyan' }) => 
+    variant === 'cyan' ? 'var(--neon-cyan)' :
+    variant === 'purple' ? 'var(--neon-purple)' :
+    'var(--neon-green)'
+  };
+  color: #0a0a0a;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  
+  /* Glow effect */
+  box-shadow: 0 0 10px currentColor;
+  
+  /* Transitions */
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 
+      0 0 20px currentColor,
+      0 0 40px currentColor;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+// Outlined Neon Button
+const NeonButtonOutline = styled.button`
+  background: transparent;
+  color: var(--neon-cyan);
+  border: 2px solid var(--neon-cyan);
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(0, 240, 255, 0.1);
+    box-shadow: 
+      0 0 10px var(--neon-cyan),
+      inset 0 0 10px rgba(0, 240, 255, 0.1);
+  }
+`;
+```
+
+##### Gaming Input Fields
+```tsx
+// Neon Input Field
+const GamingInput = styled.input`
+  background: rgba(17, 17, 17, 0.9);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-size: 16px;
+  
+  /* Placeholder styling */
+  &::placeholder {
+    color: var(--text-muted);
+  }
+  
+  /* Focus state with glow */
+  &:focus {
+    outline: none;
+    border-color: var(--neon-cyan);
+    box-shadow: 
+      0 0 10px rgba(0, 240, 255, 0.3),
+      inset 0 0 5px rgba(0, 240, 255, 0.1);
+  }
+  
+  /* Error state */
+  &.error {
+    border-color: var(--neon-red);
+    &:focus {
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+    }
+  }
+`;
+```
+
+#### Glass Morphism Effects
+```tsx
+// Glass Panel Component
+const GlassPanel = styled.div`
+  background: rgba(17, 17, 17, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  
+  /* Subtle light reflection */
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+`;
+
+// Frosted Overlay
+const FrostedOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 50;
+`;
+```
+
+#### Responsive Design System
+
+##### Breakpoints
+```typescript
+// Gaming UI Breakpoints
+export const breakpoints = {
+  mobile: '320px',      // Small phones
+  mobileLg: '480px',    // Large phones
+  tablet: '768px',      // Tablets
+  laptop: '1024px',     // Laptops
+  desktop: '1280px',    // Desktops
+  ultrawide: '1536px',  // Ultra-wide monitors
+  gaming: '1920px',     // Gaming monitors (1080p)
+  gaming4k: '2560px',   // 4K displays
+};
+
+// Tailwind Media Query Shortcuts
+export const media = {
+  sm: '@media (min-width: 640px)',
+  md: '@media (min-width: 768px)',
+  lg: '@media (min-width: 1024px)',
+  xl: '@media (min-width: 1280px)',
+  '2xl': '@media (min-width: 1536px)',
+};
+```
+
+##### Mobile-First Responsive Patterns
+```tsx
+// Responsive Gaming Container
+const ResponsiveContainer = styled.div`
+  /* Mobile First - Base styles */
+  width: 100%;
+  padding: 16px;
+  
+  /* Tablet and up */
+  @media (min-width: 768px) {
+    padding: 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  
+  /* Desktop */
+  @media (min-width: 1024px) {
+    padding: 32px;
+    max-width: 960px;
+  }
+  
+  /* Large Desktop / Gaming */
+  @media (min-width: 1280px) {
+    max-width: 1200px;
+  }
+  
+  /* Ultra-wide */
+  @media (min-width: 1536px) {
+    max-width: 1400px;
+  }
+`;
+
+// Responsive Grid for Gaming Cards
+const GamingGrid = styled.div`
+  display: grid;
+  gap: 16px;
+  
+  /* Single column on mobile */
+  grid-template-columns: 1fr;
+  
+  /* Two columns on tablet */
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  /* Three columns on desktop */
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+  
+  /* Four columns on large screens */
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+`;
+```
+
+##### Touch-Friendly Mobile Design
+```typescript
+// Mobile Gaming UI Guidelines
+export const mobileGuidelines = {
+  // Minimum touch targets
+  touchTarget: {
+    min: '44px',        // Minimum iOS/Android recommendation
+    comfortable: '48px', // Comfortable touch size
+  },
+  
+  // Spacing for thumbs
+  thumbZone: {
+    bottom: '0-300px',   // Easy reach
+    middle: '300-500px', // Comfortable
+    top: '500px+',       // Hard to reach
+  },
+  
+  // Swipe gestures
+  swipeThreshold: '50px',
+  
+  // Safe areas for notch/rounded corners
+  safeArea: {
+    top: 'env(safe-area-inset-top)',
+    bottom: 'env(safe-area-inset-bottom)',
+    left: 'env(safe-area-inset-left)',
+    right: 'env(safe-area-inset-right)',
+  }
+};
+```
+
+#### Animation & Motion Design
+```typescript
+// Gaming Animation Presets
+export const gamingAnimations = {
+  // Entrance animations
+  fadeInUp: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1.0] }
+  },
+  
+  // Neon flicker effect
+  neonFlicker: `
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      41% { opacity: 1; }
+      42% { opacity: 0.8; }
+      43% { opacity: 1; }
+      45% { opacity: 0.3; }
+      46% { opacity: 1; }
+    }
+  `,
+  
+  // Scanning line effect (retro gaming)
+  scanLine: `
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+  `,
+  
+  // Hover scale with glow
+  hoverGlow: {
+    scale: 1.05,
+    transition: { type: 'spring', stiffness: 400, damping: 10 }
+  },
+  
+  // Loading pulse
+  loadingPulse: `
+    @keyframes pulse {
+      0%, 100% { 
+        opacity: 1;
+        box-shadow: 0 0 10px var(--neon-cyan);
+      }
+      50% { 
+        opacity: 0.5;
+        box-shadow: 0 0 20px var(--neon-cyan);
+      }
+    }
+  `
+};
+
+// Reduced motion support
+export const reducedMotion = `
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+    transition: none !important;
+  }
+`;
+```
+
+#### Typography for Gaming UI
+```typescript
+// Gaming Typography System
+export const gamingTypography = {
+  fonts: {
+    display: '"Orbitron", "Space Grotesk", sans-serif',  // Futuristic headings
+    body: '"Inter", "Rajdhani", sans-serif',             // Clean body text
+    mono: '"JetBrains Mono", monospace',                 // Code/stats
+  },
+  
+  // Heading styles with neon effect
+  headingStyles: {
+    h1: `
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      text-shadow: 0 0 10px var(--neon-cyan);
+    `,
+    h2: `
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      font-weight: 600;
+      color: var(--text-primary);
+    `
+  }
+};
+```
+
+#### Accessibility on Dark Theme
+```typescript
+// Gaming Accessibility Guidelines
+export const gamingA11y = {
+  // Ensure WCAG AA contrast on dark backgrounds
+  contrastRatios: {
+    primaryText: '15:1',     // White on #0a0a0a
+    secondaryText: '7:1',    // #b3b3b3 on #0a0a0a
+    neonAccent: '4.5:1',     // Neon colors meet minimum
+  },
+  
+  // Focus states must be visible
+  focusRing: `
+    &:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 2px;
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+  `,
+  
+  // High contrast mode support
+  highContrast: `
+    @media (prefers-contrast: high) {
+      border-color: white !important;
+      --neon-cyan: #00ffff;
+      --text-secondary: #ffffff;
+    }
+  `
+};
+```
+
 ### Modern UI Design Guidelines
 
 #### Singaporean & Gen Z Design Elements
