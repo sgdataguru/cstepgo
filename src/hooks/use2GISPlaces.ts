@@ -1,4 +1,3 @@
-/// <reference types="@types/google.maps" />
 import { useState, useEffect, useCallback } from 'react';
 import { TwoGISService, TwoGISCoordinates, TwoGISSuggestion, TwoGISPlace } from '@/lib/maps/2gis-adapter';
 

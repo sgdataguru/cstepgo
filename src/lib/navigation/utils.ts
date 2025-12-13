@@ -188,6 +188,11 @@ export function parseDirectionsResponse(response: any): NavigationRoute | null {
         const nextIndex = index < route.maneuvers.length - 1 ? route.maneuvers[index + 1].outgoing_path_index : points.length - 1;
         const stepPoints = points.slice(maneuver.outgoing_path_index, nextIndex + 1);
         
+        // Ensure stepPoints has at least one point before accessing
+        if (stepPoints.length === 0) {
+          return;
+        }
+        
         steps.push({
           distance: maneuver.length || 0,
           duration: maneuver.time || 0,
@@ -204,6 +209,11 @@ export function parseDirectionsResponse(response: any): NavigationRoute | null {
           polyline: JSON.stringify(stepPoints),
         });
       });
+    }
+    
+    // Guard against empty points array
+    if (points.length === 0) {
+      return null;
     }
     
     return {
