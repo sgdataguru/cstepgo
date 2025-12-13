@@ -27,7 +27,7 @@ const mockTrip = {
   id: 'test-trip-id',
   title: 'Almaty to Astana',
   tripType: 'PRIVATE',
-  status: 'DRAFT',
+  status: 'PUBLISHED', // Private trips are now published immediately
   organizerId: 'test-user-id',
   driverId: null,
   organizer: mockUser,

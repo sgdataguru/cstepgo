@@ -323,9 +323,10 @@ export async function POST(request: NextRequest) {
             },
           ],
         },
-        // For shared trips with publishImmediately flag, publish immediately
-        status: (validTripType === 'SHARED' && publishImmediately) ? 'PUBLISHED' : 'DRAFT',
-        publishedAt: (validTripType === 'SHARED' && publishImmediately) ? new Date() : null,
+        // For private trips: always publish immediately to trigger driver broadcast
+        // For shared trips with publishImmediately flag: publish immediately
+        status: (validTripType === 'PRIVATE' || (validTripType === 'SHARED' && publishImmediately)) ? 'PUBLISHED' : 'DRAFT',
+        publishedAt: (validTripType === 'PRIVATE' || (validTripType === 'SHARED' && publishImmediately)) ? new Date() : null,
         metadata: {
           vehicleType: vehicleType || 'sedan',
           createdVia: 'booking-flow',

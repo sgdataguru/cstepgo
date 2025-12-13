@@ -224,7 +224,11 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
     });
 
     // Auto-broadcast private trip offers to eligible drivers in realtime
-    // Only broadcast if: trip is PRIVATE, PUBLISHED (or becomes PUBLISHED), and has no driver assigned
+    // This handles cases where:
+    // 1. Trip was created in DRAFT and manually published later
+    // 2. Broadcast failed during trip creation
+    // 3. Trip needs re-broadcasting for any reason
+    // Only broadcast if: trip is PRIVATE, PUBLISHED (not OFFERED yet), and has no driver assigned
     if (completeBooking && completeBooking.trip.tripType === 'PRIVATE' && 
         completeBooking.trip.status === 'PUBLISHED' && !completeBooking.trip.driverId) {
       try {
