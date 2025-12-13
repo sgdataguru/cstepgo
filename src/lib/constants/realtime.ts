@@ -76,3 +76,8 @@ export const SUBSCRIPTION_CLEANUP_INTERVAL = 300000; // 5 minutes
 
 // Event retention (for debugging)
 export const EVENT_LOG_RETENTION = 86400000; // 24 hours in milliseconds
+
+// Location replay settings
+export const LOCATION_REPLAY_ENABLED = true; // Enable location replay for new passengers
+export const LOCATION_REPLAY_MAX_AGE = 300000; // Only replay if less than 5 minutes old (milliseconds)
+export const LOCATION_REPLAY_COUNT = 1; // Number of recent location updates to replay (currently only last one)

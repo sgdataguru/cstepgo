@@ -11,9 +11,128 @@ import {
   REALTIME_EVENTS,
   DriverSubscription,
   PassengerSubscription,
+  DriverLocationUpdateEvent,
 } from '@/types/realtime-events';
-import { WEBSOCKET_HEARTBEAT_INTERVAL } from '@/lib/constants/realtime';
+import { 
+  WEBSOCKET_HEARTBEAT_INTERVAL,
+  LOCATION_REPLAY_ENABLED,
+  LOCATION_REPLAY_MAX_AGE,
+} from '@/lib/constants/realtime';
 import { calculateETA } from '@/lib/utils/location';
+
+/**
+ * Helper function to fetch and replay last known driver location for a trip
+ */
+async function replayDriverLocation(
+  socket: Socket,
+  tripId: string
+): Promise<boolean> {
+  try {
+    if (!LOCATION_REPLAY_ENABLED) {
+      return false;
+    }
+
+    // Fetch trip with driver location
+    const trip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: {
+        id: true,
+        driverId: true,
+        status: true,
+        originLat: true,
+        originLng: true,
+        destLat: true,
+        destLng: true,
+        driver: {
+          select: {
+            id: true,
+            userId: true,
+            user: {
+              select: {
+                driverLocation: {
+                  select: {
+                    latitude: true,
+                    longitude: true,
+                    heading: true,
+                    speed: true,
+                    accuracy: true,
+                    lastUpdated: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Check if trip has driver and location data
+    if (!trip || !trip.driverId || !trip.driver?.user?.driverLocation) {
+      return false;
+    }
+
+    const driverLocation = trip.driver.user.driverLocation;
+    const locationAge = Date.now() - driverLocation.lastUpdated.getTime();
+
+    // Only replay if location is recent (within LOCATION_REPLAY_MAX_AGE)
+    if (locationAge > LOCATION_REPLAY_MAX_AGE) {
+      console.log(
+        `Skipping location replay for trip ${tripId}: location too old (${Math.round(locationAge / 1000)}s)`
+      );
+      return false;
+    }
+
+    // Calculate ETA to pickup and destination
+    const currentLat = Number(driverLocation.latitude);
+    const currentLng = Number(driverLocation.longitude);
+    const currentSpeed = driverLocation.speed ? Number(driverLocation.speed) : 0;
+
+    const etaToPickup = calculateETA(
+      currentLat,
+      currentLng,
+      trip.originLat,
+      trip.originLng,
+      currentSpeed
+    );
+
+    const etaToDestination = calculateETA(
+      currentLat,
+      currentLng,
+      trip.destLat,
+      trip.destLng,
+      currentSpeed
+    );
+
+    // Create location event
+    const locationEvent: DriverLocationUpdateEvent = {
+      type: 'driver.location.updated',
+      tripId: trip.id,
+      driverId: trip.driver.userId,
+      latitude: currentLat,
+      longitude: currentLng,
+      heading: driverLocation.heading ? Number(driverLocation.heading) : undefined,
+      speed: currentSpeed || undefined,
+      accuracy: driverLocation.accuracy ? Number(driverLocation.accuracy) : undefined,
+      eta: {
+        pickupMinutes: etaToPickup.pickupMinutes,
+        destinationMinutes: etaToDestination.pickupMinutes,
+      },
+      timestamp: driverLocation.lastUpdated.toISOString(),
+    };
+
+    // Send replayed location directly to this socket only
+    socket.emit(REALTIME_EVENTS.DRIVER_LOCATION_UPDATED, locationEvent);
+
+    console.log(
+      `Replayed driver location for trip ${tripId} to passenger (age: ${Math.round(locationAge / 1000)}s)`
+    );
+
+    return true;
+  } catch (error) {
+    console.error(`Error replaying driver location for trip ${tripId}:`, error);
+    return false;
+  }
+}
 
 /**
  * Setup real-time event handlers for a socket connection
@@ -141,12 +260,24 @@ export function setupRealtimeHandlers(socket: Socket, io: SocketIOServer): void 
 
       await realtimeBroadcastService.subscribePassenger(subscription);
 
+      // Replay last known driver location for each accessible trip
+      let replayedCount = 0;
+      for (const tripId of accessibleTripIds) {
+        const replayed = await replayDriverLocation(socket, tripId);
+        if (replayed) {
+          replayedCount++;
+        }
+      }
+
       socket.emit('passenger:subscribed', {
         message: 'Successfully subscribed to trip updates',
         tripIds: accessibleTripIds,
+        locationsReplayed: replayedCount,
       });
 
-      console.log(`User ${userId} subscribed to ${accessibleTripIds.length} trips`);
+      console.log(
+        `User ${userId} subscribed to ${accessibleTripIds.length} trips, replayed ${replayedCount} driver locations`
+      );
     } catch (error) {
       console.error('Error subscribing passenger:', error);
       socket.emit('error', { message: 'Failed to subscribe to trip updates' });
