@@ -45,7 +45,14 @@ jest.mock('@/lib/prisma', () => ({
     },
     trip: {
       create: jest.fn(),
+      update: jest.fn(),
     },
+  },
+}));
+
+jest.mock('@/lib/services/realtimeBroadcastService', () => ({
+  realtimeBroadcastService: {
+    broadcastTripOffer: jest.fn().mockResolvedValue({ sent: 0, eligible: 0 }),
   },
 }));
 
@@ -175,6 +182,102 @@ describe('Trip Creation API', () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+    });
+
+    it('should NOT broadcast private cab if status is DRAFT', async () => {
+      const now = new Date();
+      const departureDate = now.toISOString().split('T')[0];
+      const departureTime = now.toTimeString().slice(0, 5);
+
+      const { realtimeBroadcastService } = await import('@/lib/services/realtimeBroadcastService');
+      const broadcastSpy = jest.spyOn(realtimeBroadcastService, 'broadcastTripOffer');
+
+      // Mock database calls - trip is DRAFT (not PUBLISHED)
+      (mockedPrisma.user.findFirst as jest.Mock).mockResolvedValueOnce(mockUser);
+      (mockedPrisma.driver.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (mockedPrisma.trip.create as jest.Mock).mockResolvedValueOnce({
+        ...mockTrip,
+        status: 'DRAFT', // DRAFT status
+        driverId: null,
+      });
+
+      const requestBody = {
+        title: 'Test Private Cab',
+        origin: { name: 'Almaty', coordinates: { lat: 43.238949, lng: 76.945465 } },
+        destination: { name: 'Astana', coordinates: { lat: 51.1694, lng: 71.4491 } },
+        departureDate,
+        departureTime,
+        tripType: 'PRIVATE',
+        vehicleType: 'sedan',
+      };
+
+      const POST = await getPostHandler();
+      
+      const request = new NextRequest('http://localhost:3000/api/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      await POST(request);
+
+      // Should NOT broadcast because status is DRAFT
+      expect(broadcastSpy).not.toHaveBeenCalled();
+    });
+
+    it('should broadcast private cab if status is PUBLISHED and no driver', async () => {
+      const now = new Date();
+      const departureDate = now.toISOString().split('T')[0];
+      const departureTime = now.toTimeString().slice(0, 5);
+
+      const { realtimeBroadcastService } = await import('@/lib/services/realtimeBroadcastService');
+      const broadcastSpy = jest.spyOn(realtimeBroadcastService, 'broadcastTripOffer')
+        .mockResolvedValueOnce({ sent: 5, eligible: 10 });
+
+      // Mock database calls - trip is PUBLISHED with no driver
+      (mockedPrisma.user.findFirst as jest.Mock).mockResolvedValueOnce(mockUser);
+      (mockedPrisma.driver.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (mockedPrisma.trip.create as jest.Mock).mockResolvedValueOnce({
+        ...mockTrip,
+        status: 'PUBLISHED', // PUBLISHED status
+        driverId: null, // No driver
+      });
+      (mockedPrisma.trip.update as jest.Mock).mockResolvedValueOnce({
+        ...mockTrip,
+        status: 'OFFERED',
+      });
+
+      const requestBody = {
+        title: 'Test Private Cab',
+        origin: { name: 'Almaty', coordinates: { lat: 43.238949, lng: 76.945465 } },
+        destination: { name: 'Astana', coordinates: { lat: 51.1694, lng: 71.4491 } },
+        departureDate,
+        departureTime,
+        tripType: 'PRIVATE',
+        vehicleType: 'sedan',
+      };
+
+      const POST = await getPostHandler();
+      
+      const request = new NextRequest('http://localhost:3000/api/trips', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      // Should broadcast because status is PUBLISHED and no driver
+      expect(broadcastSpy).toHaveBeenCalledWith(mockTrip.id);
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      
+      // Should update trip status to OFFERED
+      expect(mockedPrisma.trip.update).toHaveBeenCalledWith({
+        where: { id: mockTrip.id },
+        data: { status: 'OFFERED' },
+      });
     });
   });
 
