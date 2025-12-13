@@ -87,6 +87,9 @@ async function replayDriverLocation(
     const currentLng = Number(driverLocation.longitude);
     const currentSpeed = driverLocation.speed ? Number(driverLocation.speed) : 0;
 
+    // Calculate ETA to pickup and destination
+    // Note: calculateETA returns 'pickupMinutes' as the field name generically,
+    // so we use it for both pickup and destination calculations
     const etaToPickup = calculateETA(
       currentLat,
       currentLng,
@@ -115,7 +118,7 @@ async function replayDriverLocation(
       accuracy: driverLocation.accuracy ? Number(driverLocation.accuracy) : undefined,
       eta: {
         pickupMinutes: etaToPickup.pickupMinutes,
-        destinationMinutes: etaToDestination.pickupMinutes,
+        destinationMinutes: etaToDestination.pickupMinutes, // pickupMinutes is the generic field from calculateETA
       },
       timestamp: driverLocation.lastUpdated.toISOString(),
     };
