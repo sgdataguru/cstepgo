@@ -1,33 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
-
-
-// Get driver from session 
-async function getDriverFromRequest(request: NextRequest) {
-  const driverId = request.headers.get('x-driver-id');
-  
-  if (!driverId) {
-    throw new Error('Driver not authenticated');
-  }
-  
-  const driver = await prisma.driver.findUnique({
-    where: { id: driverId },
-    include: { 
-      user: true
-    }
-  });
-  
-  if (!driver || driver.user.role !== 'DRIVER') {
-    throw new Error('Driver not found');
-  }
-  
-  if (driver.status !== 'APPROVED') {
-    throw new Error('Driver not approved');
-  }
-  
-  return driver;
-}
+import { authenticateDriver, verifyTripAvailableForAcceptance } from '@/lib/auth/driverAuth';
 
 // POST /api/drivers/trips/accept/[tripId] - Accept a trip
 export async function POST(
@@ -44,8 +18,11 @@ export async function POST(
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
+    
+    // Verify trip is available for acceptance
+    await verifyTripAvailableForAcceptance(tripId);
     
     // Check if driver is available
     if (driver.availability !== 'AVAILABLE') {
@@ -89,6 +66,7 @@ export async function POST(
         throw new Error('Trip not found');
       }
       
+      // Double-check trip availability (redundant check for safety)
       if (trip.status !== 'PUBLISHED') {
         throw new Error('Trip is not available for booking');
       }
@@ -295,8 +273,8 @@ export async function DELETE(
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Use database transaction
     const result = await prisma.$transaction(async (tx: any) => {
@@ -412,8 +390,8 @@ export async function GET(
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Get trip details
     const trip = await prisma.trip.findUnique({

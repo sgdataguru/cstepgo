@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authenticateDriver, verifyTripAvailableForAcceptance } from '@/lib/auth/driverAuth';
 
 
 // Simulated Redis for distributed locking (in production, use actual Redis)
@@ -58,28 +59,6 @@ class DistributedLock {
     
     return true;
   }
-}
-
-// Get driver from session 
-async function getDriverFromRequest(request: NextRequest) {
-  const driverId = request.headers.get('x-driver-id');
-  
-  if (!driverId) {
-    throw new Error('Driver not authenticated');
-  }
-  
-  const driver = await prisma.driver.findUnique({
-    where: { id: driverId },
-    include: { 
-      user: true
-    }
-  });
-  
-  if (!driver || driver.user.role !== 'DRIVER') {
-    throw new Error('Driver not found');
-  }
-  
-  return driver;
 }
 
 // POST /api/drivers/trips/acceptance/offer - Offer trip to specific driver
@@ -300,8 +279,8 @@ async function handleTripOfferTimeout(tripId: string, driverId: string) {
 // GET /api/drivers/trips/acceptance/offer - Get current trip offer status
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Find active trip offer for this driver
     const activeOffer = await prisma.trip.findFirst({
