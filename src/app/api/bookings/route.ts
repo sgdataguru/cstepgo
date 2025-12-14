@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 import { shouldBroadcastTrip } from '@/lib/utils/tripBroadcastUtils';
+import { emitBookingConfirmed } from '@/lib/realtime/unifiedEventEmitter';
 
 /**
  * POST /api/bookings
@@ -77,87 +78,72 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
       );
     }
 
-    // Fetch trip details
-    const trip = await prisma.trip.findUnique({
-      where: { id: tripId },
-      include: {
-        bookings: {
-          where: {
-            status: {
-              in: ['PENDING', 'CONFIRMED'],
-            },
+    // Create booking with transaction using row-level locking to prevent race conditions
+    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 1. Fetch trip with FOR UPDATE lock to prevent concurrent modifications
+      // This ensures no other transaction can modify the trip until this transaction completes
+      const trip = await tx.$queryRaw<Array<{
+        id: string;
+        title: string;
+        status: string;
+        availableSeats: number;
+        totalSeats: number;
+        basePrice: any;
+        currency: string;
+        platformFee: any;
+        tripType: string;
+        version: number;
+      }>>`
+        SELECT id, title, status, "availableSeats", "totalSeats", "basePrice", 
+               currency, "platformFee", "trip_type" as "tripType", version
+        FROM "Trip"
+        WHERE id = ${tripId}
+        FOR UPDATE
+      `;
+
+      if (!trip || trip.length === 0) {
+        throw new Error('Trip not found');
+      }
+
+      const tripData = trip[0];
+
+      // 2. Validate trip is published and available
+      if (tripData.status !== 'PUBLISHED') {
+        throw new Error('Trip is not available for booking');
+      }
+
+      // 3. Check if enough seats are available (race-safe check inside transaction)
+      if (tripData.availableSeats < seatsBooked) {
+        throw new Error(`Not enough seats available. Only ${tripData.availableSeats} seats remaining.`);
+      }
+
+      // 4. Check if user already has a booking for this trip
+      const existingBooking = await tx.booking.findFirst({
+        where: {
+          tripId,
+          userId: user.id,
+          status: {
+            in: ['PENDING', 'CONFIRMED'],
           },
         },
-      },
-    });
+      });
 
-    if (!trip) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Trip not found',
-        },
-        { status: 404 }
-      );
-    }
+      if (existingBooking) {
+        throw new Error('You already have an active booking for this trip');
+      }
 
-    // Check if trip is published and available
-    if (trip.status !== 'PUBLISHED') {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Trip is not available for booking',
-        },
-        { status: 400 }
-      );
-    }
+      // 5. Calculate total amount
+      const pricePerSeat = Number(tripData.basePrice);
+      const totalAmount = pricePerSeat * seatsBooked;
 
-    // Check if enough seats are available
-    if (trip.availableSeats < seatsBooked) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Not enough seats available. Only ${trip.availableSeats} seats remaining.`,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if user already has a booking for this trip
-    const existingBooking = await prisma.booking.findFirst({
-      where: {
-        tripId,
-        userId: user.id,
-        status: {
-          in: ['PENDING', 'CONFIRMED'],
-        },
-      },
-    });
-
-    if (existingBooking) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'You already have an active booking for this trip',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Calculate total amount
-    const pricePerSeat = Number(trip.basePrice);
-    const totalAmount = pricePerSeat * seatsBooked;
-
-    // Create booking with transaction
-    const booking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Create the booking
+      // 6. Create the booking
       const newBooking = await tx.booking.create({
         data: {
           tripId,
           userId: user.id,
           seatsBooked,
           totalAmount,
-          currency: trip.currency,
+          currency: tripData.currency,
           passengers,
           notes,
           paymentMethodType,
@@ -166,23 +152,32 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
         },
       });
 
-      // Update trip available seats
-      await tx.trip.update({
-        where: { id: tripId },
-        data: {
-          availableSeats: {
-            decrement: seatsBooked,
-          },
-        },
-      });
+      // 7. Update trip available seats with optimistic locking
+      // This uses version increment to prevent race conditions
+      const updateResult = await tx.$executeRaw`
+        UPDATE "Trip"
+        SET "availableSeats" = "availableSeats" - ${seatsBooked},
+            version = version + 1,
+            status = CASE 
+              WHEN "availableSeats" - ${seatsBooked} = 0 THEN 'FULL'::text
+              ELSE status::text
+            END
+        WHERE id = ${tripId}
+          AND version = ${tripData.version}
+      `;
 
-      // If cash payment, create a payment record with pending cash status
+      // Check if update was successful (optimistic lock check)
+      if (updateResult === 0) {
+        throw new Error('Booking failed due to concurrent modification. Please try again.');
+      }
+
+      // 8. If cash payment, create a payment record with pending cash status
       if (paymentMethodType === 'CASH_TO_DRIVER') {
         await tx.payment.create({
           data: {
             bookingId: newBooking.id,
             amount: totalAmount,
-            currency: trip.currency,
+            currency: tripData.currency,
             status: 'PENDING',
             paymentMethod: 'cash',
             metadata: {
@@ -210,6 +205,8 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
             tripType: true,
             status: true,
             driverId: true,
+            availableSeats: true,
+            totalSeats: true,
           },
         },
         payment: true,
@@ -223,6 +220,19 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
         },
       },
     });
+
+    // Broadcast seat availability update to all connected clients
+    try {
+      await realtimeBroadcastService.broadcastSeatAvailability({
+        tripId: completeBooking.trip.id,
+        availableSeats: completeBooking.trip.availableSeats,
+        totalSeats: completeBooking.trip.totalSeats,
+        status: completeBooking.trip.status,
+      });
+    } catch (broadcastError) {
+      // Log error but don't fail the booking
+      console.error('Failed to broadcast seat availability update:', broadcastError);
+    }
 
     // Auto-broadcast private trip offers to eligible drivers in realtime
     // This handles cases where:
@@ -242,6 +252,32 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
       } catch (broadcastError) {
         // Log error but don't fail the booking
         console.error('Failed to broadcast private trip offer after booking:', broadcastError);
+      }
+    }
+
+    // Emit booking confirmation event to realtime channels
+    if (completeBooking?.trip) {
+      try {
+        // Fetch updated trip to get accurate available seats
+        const updatedTrip = await prisma.trip.findUnique({
+          where: { id: completeBooking.trip.id },
+          select: { availableSeats: true, totalSeats: true, tenantId: true },
+        });
+
+        await emitBookingConfirmed({
+          tripId: completeBooking.trip.id,
+          tripType: completeBooking.trip.tripType as 'PRIVATE' | 'SHARED',
+          bookingId: completeBooking.id,
+          passengerId: user.id,
+          passengerName: user.name || 'Guest',
+          seatsBooked: seatsBooked,
+          availableSeats: updatedTrip?.availableSeats || 0,
+          totalSeats: updatedTrip?.totalSeats || 0,
+          tenantId: updatedTrip?.tenantId || undefined,
+        });
+      } catch (emitError) {
+        // Log error but don't fail the booking
+        console.error('Failed to emit booking confirmed event:', emitError);
       }
     }
 

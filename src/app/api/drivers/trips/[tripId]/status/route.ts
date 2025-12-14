@@ -315,9 +315,10 @@ export async function PUT(
       }
     }
     
-    // Broadcast status update to real-time listeners
+    // Broadcast status update to real-time listeners (both SSE and Socket.IO)
     try {
-      broadcastStatusUpdate(result.trip.id, {
+      await emitTripStatusUpdate({
+        tripId: result.trip.id,
         tripTitle: result.trip.title,
         previousStatus: result.previousStatus,
         newStatus: status as TripStatus,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { withAuth, TokenPayload } from '@/lib/auth/middleware';
 
 // Define enums locally (matches Prisma schema)
 enum TripType {
@@ -17,9 +18,9 @@ enum BookingStatus {
 }
 
 // Validation schema for shared ride booking
+// NOTE: userId is NOT in the schema - it's derived from authenticated session
 const sharedBookingSchema = z.object({
   tripId: z.string().cuid(),
-  userId: z.string().cuid(),
   seatsBooked: z.number().int().min(1).max(8),
   passengers: z.array(z.object({
     name: z.string().min(1),
@@ -45,6 +46,11 @@ function calculateSharedRidePrice(
 /**
  * POST /api/bookings/shared - Create a new shared ride booking
  * 
+ * Security: 
+ * - Requires JWT authentication via withAuth middleware
+ * - User identity is derived from JWT token, not request body
+ * - Prevents booking forgery by enforcing authenticated user context
+ * 
  * Features:
  * - Atomic seat reservation to prevent double-booking
  * - Per-seat pricing calculation
@@ -52,37 +58,51 @@ function calculateSharedRidePrice(
  * - Multi-tenant support
  * - Real-time availability updates
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, user: TokenPayload) => {
   try {
     const body = await request.json();
     
-    // Validate input
+    // Validate input - Note: userId is NOT accepted from request body
     const validatedData = sharedBookingSchema.parse(body);
+    
+    // Use authenticated user's ID from JWT token (security critical)
+    const userId = user.userId;
     
     // Use Prisma transaction for atomic operations
     const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Get trip details with lock to prevent race conditions
-      const trip = await tx.trip.findUnique({
-        where: { 
-          id: validatedData.tripId 
-        },
-        include: {
-          bookings: {
-            where: {
-              status: {
-                in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
-              }
-            },
-            select: {
-              seatsBooked: true
-            }
-          }
-        }
-      });
+      // 1. Get trip details with FOR UPDATE lock to prevent race conditions
+      // This ensures no other transaction can modify the trip until this transaction completes
+      const tripRaw = await tx.$queryRaw<Array<{
+        id: string;
+        title: string;
+        status: string;
+        tripType: string;
+        totalSeats: number;
+        availableSeats: number;
+        basePrice: any;
+        pricePerSeat: any;
+        currency: string;
+        platformFee: any;
+        tenantId: string | null;
+        departureTime: Date;
+        originName: string;
+        destName: string;
+        version: number;
+      }>>`
+        SELECT id, title, status, "trip_type" as "tripType", "totalSeats", 
+               "availableSeats", "basePrice", "price_per_seat" as "pricePerSeat",
+               currency, "platformFee", "tenant_id" as "tenantId",
+               "departureTime", "originName", "destName", version
+        FROM "Trip"
+        WHERE id = ${validatedData.tripId}
+        FOR UPDATE
+      `;
 
-      if (!trip) {
+      if (!tripRaw || tripRaw.length === 0) {
         throw new Error('Trip not found');
       }
+
+      const trip = tripRaw[0];
 
       // 2. Validate trip type is SHARED
       if (trip.tripType !== TripType.SHARED) {
@@ -94,12 +114,9 @@ export async function POST(request: NextRequest) {
         throw new Error(`Trip is not available for booking. Current status: ${trip.status}`);
       }
 
-      // 4. Calculate actual available seats
-      const totalBookedSeats = trip.bookings.reduce(
-        (sum: number, booking: any) => sum + booking.seatsBooked,
-        0
-      );
-      const actualAvailableSeats = trip.totalSeats - totalBookedSeats;
+      // 4. Calculate actual available seats (race-safe check with locked row)
+      // The availableSeats field should already reflect the current state due to FOR UPDATE lock
+      const actualAvailableSeats = trip.availableSeats;
 
       // 5. Validate seat availability
       if (actualAvailableSeats < validatedData.seatsBooked) {
@@ -139,7 +156,7 @@ export async function POST(request: NextRequest) {
       const booking = await tx.booking.create({
         data: {
           tripId: validatedData.tripId,
-          userId: validatedData.userId,
+          userId, // Use authenticated user ID from JWT (shorthand syntax)
           seatsBooked: validatedData.seatsBooked,
           totalAmount,
           currency: trip.currency,
@@ -171,16 +188,23 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // 10. Update trip available seats
+      // 10. Update trip available seats with optimistic locking
       const newAvailableSeats = actualAvailableSeats - validatedData.seatsBooked;
-      await tx.trip.update({
-        where: { id: validatedData.tripId },
-        data: {
-          availableSeats: newAvailableSeats,
-          // Mark as FULL if no more seats available
-          status: newAvailableSeats === 0 ? 'FULL' : trip.status,
-        }
-      });
+      const newStatus = newAvailableSeats === 0 ? 'FULL' : trip.status;
+      
+      const updateResult = await tx.$executeRaw`
+        UPDATE "Trip"
+        SET "availableSeats" = ${newAvailableSeats},
+            version = version + 1,
+            status = ${newStatus}::text
+        WHERE id = ${validatedData.tripId}
+          AND version = ${trip.version}
+      `;
+
+      // Check if update was successful (optimistic lock check)
+      if (updateResult === 0) {
+        throw new Error('Booking failed due to concurrent modification. Please try again.');
+      }
 
       // 11. If cash payment, create a payment record with pending cash status
       if (paymentMethodType === 'CASH_TO_DRIVER') {
@@ -202,10 +226,26 @@ export async function POST(request: NextRequest) {
       return {
         booking,
         seatsRemaining: newAvailableSeats,
+        tripId: validatedData.tripId,
+        totalSeats: trip.totalSeats,
+        tripStatus: newStatus,
       };
     });
 
-    // 11. Return success response with booking details
+    // Broadcast seat availability update to all connected clients
+    try {
+      await realtimeBroadcastService.broadcastSeatAvailability({
+        tripId: result.tripId,
+        availableSeats: result.seatsRemaining,
+        totalSeats: result.totalSeats,
+        status: result.tripStatus,
+      });
+    } catch (broadcastError) {
+      // Log error but don't fail the booking
+      console.error('Failed to broadcast seat availability update:', broadcastError);
+    }
+
+    // 12. Return success response with booking details
     return NextResponse.json({
       success: true,
       message: 'Shared ride booking created successfully',
@@ -276,25 +316,30 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * GET /api/bookings/shared - List shared ride bookings with filters
  * 
+ * Security:
+ * - Requires JWT authentication
+ * - Users can only view their own bookings
+ * - Admin users can view all bookings with filters
+ * 
  * Query parameters:
- * - userId: Filter by user ID
+ * - userId: Filter by user ID (admin only)
  * - tripId: Filter by trip ID
  * - status: Filter by booking status
  * - tenantId: Filter by tenant ID (multi-tenant)
  * - page: Page number (default: 1)
  * - limit: Items per page (default: 20)
  */
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, user: TokenPayload) => {
   try {
     const { searchParams } = new URL(request.url);
     
     // Parse query parameters
-    const userId = searchParams.get('userId');
+    const requestedUserId = searchParams.get('userId');
     const tripId = searchParams.get('tripId');
     const status = searchParams.get('status');
     const tenantId = searchParams.get('tenantId');
@@ -319,7 +364,15 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    if (userId) where.userId = userId;
+    // Security: Non-admin users can only view their own bookings
+    // Admin users can filter by userId or view all bookings
+    if (user.role === 'ADMIN' && requestedUserId) {
+      where.userId = requestedUserId;
+    } else {
+      // Regular users can only see their own bookings
+      where.userId = user.userId;
+    }
+
     if (tripId) where.tripId = tripId;
     if (status) where.status = status as BookingStatus;
     if (tenantId) where.tenantId = tenantId;
@@ -427,4 +480,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
