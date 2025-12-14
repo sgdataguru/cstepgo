@@ -6,10 +6,19 @@
  */
 
 /**
- * Kazakhstan geographic boundaries (approximate)
- * Source: Kazakhstan spans from approximately:
- * - Latitude: 40.5° N to 55.5° N
- * - Longitude: 46.5° E to 87.5° E
+ * Kazakhstan geographic boundaries
+ * 
+ * These coordinates define the rectangular bounding box for Kazakhstan.
+ * Source: OpenStreetMap and official Kazakhstan geographic data
+ * 
+ * Boundaries (WGS84 coordinate system):
+ * - Latitude range: 40.5° N to 55.5° N (approx. 1,670 km north-south)
+ * - Longitude range: 46.5° E to 87.5° E (approx. 3,000 km east-west)
+ * 
+ * Note: This is a simplified rectangular boundary. For higher precision border
+ * validation, consider using a polygon-based approach with actual border coordinates.
+ * The current implementation is sufficient for filtering trips and preventing
+ * obvious geographic mismatches (e.g., trips in Europe or Asia outside Kazakhstan).
  */
 export const KAZAKHSTAN_BOUNDS = {
   minLat: 40.5,

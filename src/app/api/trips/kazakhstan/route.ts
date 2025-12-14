@@ -13,7 +13,7 @@ const VALID_ZONES = ['ZONE_A', 'ZONE_B', 'ZONE_C'] as const;
  * Validate zone enum value
  */
 function isValidZone(zone: string): boolean {
-  return VALID_ZONES.includes(zone as any);
+  return (VALID_ZONES as readonly string[]).includes(zone);
 }
 
 /**
@@ -118,7 +118,10 @@ export async function GET(request: NextRequest) {
       // Validate coordinates are valid numbers
       if (!areCoordinatesValid(trip.originLat, trip.originLng) || 
           !areCoordinatesValid(trip.destLat, trip.destLng)) {
-        console.warn(`Trip ${trip.id} has invalid coordinates, excluding from Kazakhstan results`);
+        // Only log in development to avoid production noise
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Trip ${trip.id} has invalid coordinates, excluding from Kazakhstan results`);
+        }
         return false;
       }
       
@@ -130,7 +133,7 @@ export async function GET(request: NextRequest) {
         trip.destLng
       );
       
-      if (!isKazakhstanTrip) {
+      if (!isKazakhstanTrip && process.env.NODE_ENV === 'development') {
         console.log(`Trip ${trip.id} (${trip.title}) excluded: Outside Kazakhstan geography`);
       }
       
