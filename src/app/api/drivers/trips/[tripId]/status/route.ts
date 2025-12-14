@@ -488,8 +488,8 @@ export async function GET(
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Get trip details
     const trip = await prisma.trip.findUnique({
