@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 /**
  * GET /api/bookings/[id]
@@ -141,8 +142,28 @@ export const PATCH = withAuth(async (
 
     // Handle cancel action
     if (body.action === 'cancel') {
-      const updatedBooking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        // Update booking status
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        // 1. Get trip with FOR UPDATE lock to prevent race conditions
+        const tripRaw = await tx.$queryRaw<Array<{
+          id: string;
+          availableSeats: number;
+          totalSeats: number;
+          status: string;
+          version: number;
+        }>>`
+          SELECT id, "availableSeats", "totalSeats", status, version
+          FROM "Trip"
+          WHERE id = ${booking.tripId}
+          FOR UPDATE
+        `;
+
+        if (!tripRaw || tripRaw.length === 0) {
+          throw new Error('Trip not found');
+        }
+
+        const trip = tripRaw[0];
+
+        // 2. Update booking status
         const updated = await tx.booking.update({
           where: { id },
           data: {
@@ -151,22 +172,69 @@ export const PATCH = withAuth(async (
           },
         });
 
-        // Restore available seats to trip
-        await tx.trip.update({
-          where: { id: booking.tripId },
-          data: {
-            availableSeats: {
-              increment: booking.seatsBooked,
-            },
-          },
-        });
+        // 3. Restore available seats to trip with optimistic locking
+        const newAvailableSeats = trip.availableSeats + booking.seatsBooked;
+        const newStatus = trip.status === 'FULL' ? 'PUBLISHED' : trip.status;
+        
+        const updateResult = await tx.$executeRaw`
+          UPDATE "Trip"
+          SET "availableSeats" = ${newAvailableSeats},
+              version = version + 1,
+              status = ${newStatus}::text
+          WHERE id = ${booking.tripId}
+            AND version = ${trip.version}
+        `;
 
-        return updated;
+        // Check if update was successful
+        if (updateResult === 0) {
+          throw new Error('Cancellation failed due to concurrent modification. Please try again.');
+        }
+
+        return {
+          booking: updated,
+          tripId: booking.tripId,
+          availableSeats: newAvailableSeats,
+          totalSeats: trip.totalSeats,
+          status: newStatus,
+          seatsReleased: booking.seatsBooked,
+        };
       });
+
+      // Broadcast seat availability update to all connected clients
+      try {
+        const io = realtimeBroadcastService.getIO();
+        if (io) {
+          const tripRoom = `trip:${result.tripId}`;
+          io.to(tripRoom).emit('trip.seats.updated', {
+            tripId: result.tripId,
+            availableSeats: result.availableSeats,
+            totalSeats: result.totalSeats,
+            bookedSeats: result.totalSeats - result.availableSeats,
+            status: result.status,
+            timestamp: new Date().toISOString(),
+          });
+          console.log(`Cancellation seat availability broadcast for trip ${result.tripId}: ${result.availableSeats} seats now available (${result.seatsReleased} seats released)`);
+        }
+
+        // Also broadcast to driver if exists
+        if (booking.trip.driverId) {
+          await realtimeBroadcastService.broadcastBookingCancellation({
+            bookingId: id,
+            tripId: result.tripId,
+            driverId: booking.trip.driverId,
+            userId: user.id,
+            seatsReleased: result.seatsReleased,
+            reason: body.reason || 'Passenger cancelled booking',
+          });
+        }
+      } catch (broadcastError) {
+        // Log error but don't fail the cancellation
+        console.error('Failed to broadcast cancellation:', broadcastError);
+      }
 
       return NextResponse.json({
         success: true,
-        data: updatedBooking,
+        data: result.booking,
         message: 'Booking cancelled successfully',
       });
     }
