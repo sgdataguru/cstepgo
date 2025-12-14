@@ -18,7 +18,11 @@
 import { prisma } from '../src/lib/prisma';
 import { signAccessToken, createTokenPair, generateSessionId } from '../src/lib/auth/jwt';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+// Use TEST_API_URL for testing, fallback to NEXT_PUBLIC_APP_URL for development
+const API_BASE_URL = process.env.TEST_API_URL || 
+                      process.env.API_BASE_URL || 
+                      process.env.NEXT_PUBLIC_APP_URL || 
+                      'http://localhost:3000';
 
 // Color codes for terminal output
 const GREEN = '\x1b[32m';

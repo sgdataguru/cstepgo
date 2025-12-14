@@ -42,6 +42,8 @@ export async function authenticateDriver(request: NextRequest) {
       userRole = payload.role;
 
       // Verify session in database if sessionId is present
+      // TODO: Consider implementing JWT blocklist for revoked tokens instead of
+      // storing full tokens in session table for better performance
       if (payload.sessionId) {
         const session = await prisma.session.findFirst({
           where: {
@@ -103,7 +105,8 @@ export async function authenticateDriver(request: NextRequest) {
 
     return driver;
   } catch (error: any) {
-    console.error('Driver authentication error:', error);
+    // Log error message only to prevent exposing sensitive information
+    console.error('Driver authentication error:', error.message || 'Unknown error');
     throw error;
   }
 }
