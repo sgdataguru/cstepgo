@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 import { shouldBroadcastTrip, shouldPublishImmediately } from '@/lib/utils/tripBroadcastUtils';
+import { emitTripCreated } from '@/lib/realtime/unifiedEventEmitter';
 
 // GET /api/trips - List all trips with optional filters
 export async function GET(request: NextRequest) {
@@ -349,6 +350,20 @@ export async function POST(request: NextRequest) {
       message = 'Shared ride created and published! It is now visible in the trips listing.';
     } else if (!driverProfile) {
       message = 'Trip created. Driver assignment pending.';
+    }
+
+    // Emit trip creation event for monitoring and analytics
+    try {
+      await emitTripCreated({
+        tripId: trip.id,
+        tripType: validTripType,
+        title: trip.title,
+        organizerId: trip.organizerId,
+        status: trip.status,
+      });
+    } catch (emitError) {
+      console.error('Failed to emit trip creation event:', emitError);
+      // Don't fail trip creation if event emission fails
     }
 
     // Auto-broadcast private trip offers to eligible drivers in realtime

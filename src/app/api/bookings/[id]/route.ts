@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
+import { emitBookingCancelled } from '@/lib/realtime/unifiedEventEmitter';
 
 /**
  * GET /api/bookings/[id]
@@ -163,6 +164,36 @@ export const PATCH = withAuth(async (
 
         return updated;
       });
+
+      // Emit booking cancellation event to realtime channels
+      try {
+        // Fetch updated trip to get accurate available seats
+        const updatedTrip = await prisma.trip.findUnique({
+          where: { id: booking.tripId },
+          select: { 
+            availableSeats: true, 
+            totalSeats: true, 
+            tripType: true,
+            tenantId: true,
+          },
+        });
+
+        await emitBookingCancelled({
+          tripId: booking.tripId,
+          tripType: updatedTrip?.tripType as 'PRIVATE' | 'SHARED' || 'PRIVATE',
+          bookingId: id,
+          passengerId: user.id,
+          passengerName: user.name || 'Guest',
+          seatsFreed: booking.seatsBooked,
+          availableSeats: updatedTrip?.availableSeats || 0,
+          totalSeats: updatedTrip?.totalSeats || 0,
+          reason: body.reason,
+          tenantId: updatedTrip?.tenantId || undefined,
+        });
+      } catch (emitError) {
+        // Log error but don't fail the cancellation
+        console.error('Failed to emit booking cancelled event:', emitError);
+      }
 
       return NextResponse.json({
         success: true,
