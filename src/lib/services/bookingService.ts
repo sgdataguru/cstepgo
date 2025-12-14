@@ -364,12 +364,18 @@ export async function cancelBooking(
 
     // Broadcast cancellation to realtime channels (both SSE and Socket.IO)
     try {
+      // Fetch passenger name for better event information
+      const passenger = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+
       await emitBookingCancelled({
         tripId: result.trip.id,
         tripType: result.trip.tripType as 'PRIVATE' | 'SHARED',
         bookingId: result.id,
         passengerId: userId,
-        passengerName: 'Passenger', // Could be enhanced to pass actual name
+        passengerName: passenger?.name || 'Passenger',
         seatsFreed: result.seatsBooked,
         availableSeats: result.trip.availableSeats + result.seatsBooked, // Include incremented value
         totalSeats: result.trip.totalSeats,

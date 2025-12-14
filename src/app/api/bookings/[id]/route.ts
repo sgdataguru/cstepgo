@@ -180,7 +180,7 @@ export const PATCH = withAuth(async (
 
         await emitBookingCancelled({
           tripId: booking.tripId,
-          tripType: updatedTrip?.tripType as 'PRIVATE' | 'SHARED' || 'PRIVATE',
+          tripType: (updatedTrip?.tripType as 'PRIVATE' | 'SHARED') || 'PRIVATE',
           bookingId: id,
           passengerId: user.id,
           passengerName: user.name || 'Guest',

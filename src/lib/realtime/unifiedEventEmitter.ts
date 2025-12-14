@@ -6,7 +6,7 @@
  */
 
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
-import { broadcastStatusUpdate as sseStatusUpdate } from '@/lib/realtime/broadcast';
+import { broadcastStatusUpdate as sseStatusUpdate, getConnectionCount, getActiveTripIds } from '@/lib/realtime/broadcast';
 import {
   RealtimeEvent,
   TripStatusUpdateEvent,
@@ -253,8 +253,6 @@ export function getEmissionStats(): {
     initialized: boolean;
   };
 } {
-  const { getConnectionCount, getActiveTripIds } = require('@/lib/realtime/broadcast');
-  
   return {
     sse: {
       activeConnections: getConnectionCount(),
