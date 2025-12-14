@@ -70,28 +70,39 @@ export const POST = withAuth(async (request: NextRequest, user: TokenPayload) =>
     
     // Use Prisma transaction for atomic operations
     const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Get trip details with lock to prevent race conditions
-      const trip = await tx.trip.findUnique({
-        where: { 
-          id: validatedData.tripId 
-        },
-        include: {
-          bookings: {
-            where: {
-              status: {
-                in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
-              }
-            },
-            select: {
-              seatsBooked: true
-            }
-          }
-        }
-      });
+      // 1. Get trip details with FOR UPDATE lock to prevent race conditions
+      // This ensures no other transaction can modify the trip until this transaction completes
+      const tripRaw = await tx.$queryRaw<Array<{
+        id: string;
+        title: string;
+        status: string;
+        tripType: string;
+        totalSeats: number;
+        availableSeats: number;
+        basePrice: any;
+        pricePerSeat: any;
+        currency: string;
+        platformFee: any;
+        tenantId: string | null;
+        departureTime: Date;
+        originName: string;
+        destName: string;
+        version: number;
+      }>>`
+        SELECT id, title, status, "trip_type" as "tripType", "totalSeats", 
+               "availableSeats", "basePrice", "price_per_seat" as "pricePerSeat",
+               currency, "platformFee", "tenant_id" as "tenantId",
+               "departureTime", "originName", "destName", version
+        FROM "Trip"
+        WHERE id = ${validatedData.tripId}
+        FOR UPDATE
+      `;
 
-      if (!trip) {
+      if (!tripRaw || tripRaw.length === 0) {
         throw new Error('Trip not found');
       }
+
+      const trip = tripRaw[0];
 
       // 2. Validate trip type is SHARED
       if (trip.tripType !== TripType.SHARED) {
@@ -103,12 +114,9 @@ export const POST = withAuth(async (request: NextRequest, user: TokenPayload) =>
         throw new Error(`Trip is not available for booking. Current status: ${trip.status}`);
       }
 
-      // 4. Calculate actual available seats
-      const totalBookedSeats = trip.bookings.reduce(
-        (sum: number, booking: any) => sum + booking.seatsBooked,
-        0
-      );
-      const actualAvailableSeats = trip.totalSeats - totalBookedSeats;
+      // 4. Calculate actual available seats (race-safe check with locked row)
+      // The availableSeats field should already reflect the current state due to FOR UPDATE lock
+      const actualAvailableSeats = trip.availableSeats;
 
       // 5. Validate seat availability
       if (actualAvailableSeats < validatedData.seatsBooked) {
@@ -180,16 +188,23 @@ export const POST = withAuth(async (request: NextRequest, user: TokenPayload) =>
         }
       });
 
-      // 10. Update trip available seats
+      // 10. Update trip available seats with optimistic locking
       const newAvailableSeats = actualAvailableSeats - validatedData.seatsBooked;
-      await tx.trip.update({
-        where: { id: validatedData.tripId },
-        data: {
-          availableSeats: newAvailableSeats,
-          // Mark as FULL if no more seats available
-          status: newAvailableSeats === 0 ? 'FULL' : trip.status,
-        }
-      });
+      const newStatus = newAvailableSeats === 0 ? 'FULL' : trip.status;
+      
+      const updateResult = await tx.$executeRaw`
+        UPDATE "Trip"
+        SET "availableSeats" = ${newAvailableSeats},
+            version = version + 1,
+            status = ${newStatus}::text
+        WHERE id = ${validatedData.tripId}
+          AND version = ${trip.version}
+      `;
+
+      // Check if update was successful (optimistic lock check)
+      if (updateResult === 0) {
+        throw new Error('Booking failed due to concurrent modification. Please try again.');
+      }
 
       // 11. If cash payment, create a payment record with pending cash status
       if (paymentMethodType === 'CASH_TO_DRIVER') {
@@ -211,10 +226,26 @@ export const POST = withAuth(async (request: NextRequest, user: TokenPayload) =>
       return {
         booking,
         seatsRemaining: newAvailableSeats,
+        tripId: validatedData.tripId,
+        totalSeats: trip.totalSeats,
+        tripStatus: newStatus,
       };
     });
 
-    // 11. Return success response with booking details
+    // Broadcast seat availability update to all connected clients
+    try {
+      await realtimeBroadcastService.broadcastSeatAvailability({
+        tripId: result.tripId,
+        availableSeats: result.seatsRemaining,
+        totalSeats: result.totalSeats,
+        status: result.tripStatus,
+      });
+    } catch (broadcastError) {
+      // Log error but don't fail the booking
+      console.error('Failed to broadcast seat availability update:', broadcastError);
+    }
+
+    // 12. Return success response with booking details
     return NextResponse.json({
       success: true,
       message: 'Shared ride booking created successfully',
