@@ -202,19 +202,12 @@ export const PATCH = withAuth(async (
 
       // Broadcast seat availability update to all connected clients
       try {
-        const io = realtimeBroadcastService.getIO();
-        if (io) {
-          const tripRoom = `trip:${result.tripId}`;
-          io.to(tripRoom).emit('trip.seats.updated', {
-            tripId: result.tripId,
-            availableSeats: result.availableSeats,
-            totalSeats: result.totalSeats,
-            bookedSeats: result.totalSeats - result.availableSeats,
-            status: result.status,
-            timestamp: new Date().toISOString(),
-          });
-          console.log(`Cancellation seat availability broadcast for trip ${result.tripId}: ${result.availableSeats} seats now available (${result.seatsReleased} seats released)`);
-        }
+        await realtimeBroadcastService.broadcastSeatAvailability({
+          tripId: result.tripId,
+          availableSeats: result.availableSeats,
+          totalSeats: result.totalSeats,
+          status: result.status,
+        });
 
         // Also broadcast to driver if exists
         if (booking.trip.driverId) {

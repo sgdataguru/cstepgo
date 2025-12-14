@@ -498,6 +498,42 @@ class RealtimeBroadcastService {
       throw error;
     }
   }
+
+  /**
+   * Broadcast seat availability update to all trip subscribers
+   */
+  async broadcastSeatAvailability(data: {
+    tripId: string;
+    availableSeats: number;
+    totalSeats: number;
+    status: string;
+  }): Promise<void> {
+    if (!this.io) {
+      console.warn('Socket.IO not initialized, cannot broadcast seat availability');
+      return;
+    }
+
+    try {
+      const tripRoom = `trip:${data.tripId}`;
+      const bookedSeats = data.totalSeats - data.availableSeats;
+
+      this.io.to(tripRoom).emit('trip.seats.updated', {
+        tripId: data.tripId,
+        availableSeats: data.availableSeats,
+        totalSeats: data.totalSeats,
+        bookedSeats,
+        status: data.status,
+        timestamp: new Date().toISOString(),
+      });
+
+      console.log(
+        `Seat availability broadcast for trip ${data.tripId}: ${data.availableSeats} seats remaining (${bookedSeats}/${data.totalSeats} booked)`
+      );
+    } catch (error) {
+      console.error('Error broadcasting seat availability:', error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

@@ -225,19 +225,12 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
 
     // Broadcast seat availability update to all connected clients
     try {
-      const io = realtimeBroadcastService.getIO();
-      if (io && completeBooking?.trip) {
-        const tripRoom = `trip:${completeBooking.trip.id}`;
-        io.to(tripRoom).emit('trip.seats.updated', {
-          tripId: completeBooking.trip.id,
-          availableSeats: completeBooking.trip.availableSeats,
-          totalSeats: completeBooking.trip.totalSeats,
-          bookedSeats: completeBooking.trip.totalSeats - completeBooking.trip.availableSeats,
-          status: completeBooking.trip.status,
-          timestamp: new Date().toISOString(),
-        });
-        console.log(`Seat availability broadcast for trip ${completeBooking.trip.id}: ${completeBooking.trip.availableSeats} seats remaining`);
-      }
+      await realtimeBroadcastService.broadcastSeatAvailability({
+        tripId: completeBooking.trip.id,
+        availableSeats: completeBooking.trip.availableSeats,
+        totalSeats: completeBooking.trip.totalSeats,
+        status: completeBooking.trip.status,
+      });
     } catch (broadcastError) {
       // Log error but don't fail the booking
       console.error('Failed to broadcast seat availability update:', broadcastError);
