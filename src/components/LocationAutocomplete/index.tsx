@@ -3,7 +3,7 @@
 import { useRef, useEffect } from 'react';
 import { MapPin, X, Loader2, AlertCircle } from 'lucide-react';
 import { useAutocomplete } from '@/hooks/useAutocomplete';
-import type { Location } from '@/hooks/useGooglePlaces';
+import type { Location } from '@/hooks/use2GISPlaces';
 
 interface LocationAutocompleteProps {
   value?: Location | null;
@@ -18,7 +18,8 @@ interface LocationAutocompleteProps {
 }
 
 /**
- * Location Autocomplete Component with Google Places integration
+ * Location Autocomplete Component with 2GIS Maps integration
+ * Optimized for Kazakhstan and Central Asia
  */
 export default function LocationAutocomplete({
   value,
@@ -34,7 +35,7 @@ export default function LocationAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  const apiKey = process.env.NEXT_PUBLIC_2GIS_API_KEY || '';
 
   const {
     query,
@@ -199,7 +200,7 @@ export default function LocationAutocomplete({
       {!isApiLoaded && (
         <div className="mt-2 text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span>Loading Google Maps...</span>
+          <span>Loading 2GIS Maps...</span>
         </div>
       )}
     </div>

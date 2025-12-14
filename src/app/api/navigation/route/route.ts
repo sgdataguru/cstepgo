@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Build Google Directions API URL
+    // Build 2GIS Directions API URL
     const apiUrl = getDirectionsApiUrl(
       origin,
       destination,
@@ -36,18 +36,18 @@ export async function POST(request: NextRequest) {
       preferences as NavigationPreferences
     );
     
-    // Fetch route from Google Maps
+    // Fetch route from 2GIS Maps
     const response = await fetch(apiUrl);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch directions from Google Maps');
+      throw new Error('Failed to fetch directions from 2GIS Maps');
     }
     
     const data = await response.json();
     
-    if (data.status !== 'OK') {
+    if (!data.result || data.result.length === 0) {
       return NextResponse.json(
-        { error: `Directions API error: ${data.status}`, details: data.error_message },
+        { error: 'No routes found', details: data.error_message || 'No routes available' },
         { status: 400 }
       );
     }
@@ -65,8 +65,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       route,
-      alternatives: data.routes.length > 1 
-        ? data.routes.slice(1).map(parseDirectionsResponse).filter((r: any) => r !== null)
+      alternatives: data.result.length > 1 
+        ? data.result.slice(1).map((r: any) => parseDirectionsResponse({ result: [r] })).filter((r: any) => r !== null)
         : [],
     });
     
