@@ -1,9 +1,4 @@
-// Driver profile page - placeholder
+// Placeholder page for driver profile
 export default function DriverProfilePage() {
-  return (
-    <div className="container mx-auto p-6">
-      <h1>Driver Profile</h1>
-      <p>Driver profile page is under construction.</p>
-    </div>
-  );
+  return null;
 }
