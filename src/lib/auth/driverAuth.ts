@@ -27,9 +27,10 @@ export async function authenticateDriver(request: NextRequest) {
       throw new Error('Authentication required');
     }
 
-    // For simple session tokens (non-JWT), validate against database
-    // Check if it's a JWT token or simple session token
-    const isJWT = token.includes('.');
+    // Check if it's a JWT token (contains 2 dots indicating 3 base64-encoded parts)
+    // JWT format: header.payload.signature
+    const jwtParts = token.split('.');
+    const isJWT = jwtParts.length === 3;
     
     let userId: string;
     let userRole: string;
@@ -40,12 +41,12 @@ export async function authenticateDriver(request: NextRequest) {
       userId = payload.userId;
       userRole = payload.role;
 
-      // Optionally verify session in database (for token revocation)
+      // Verify session in database if sessionId is present
       if (payload.sessionId) {
         const session = await prisma.session.findFirst({
           where: {
             userId: payload.userId,
-            token: payload.sessionId,
+            token: token, // Full token match for JWT
             expiresAt: { gt: new Date() },
           },
         });

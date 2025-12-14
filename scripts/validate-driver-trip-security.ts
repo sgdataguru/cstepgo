@@ -16,7 +16,7 @@
  */
 
 import { prisma } from '../src/lib/prisma';
-import { signAccessToken, createTokenPair } from '../src/lib/auth/jwt';
+import { signAccessToken, createTokenPair, generateSessionId } from '../src/lib/auth/jwt';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -157,16 +157,14 @@ async function setupTestData() {
     });
 
     // Create session for valid driver
-    const { accessToken, refreshToken } = createTokenPair({
-      userId: testUser.id,
-      email: testUser.email,
-      role: testUser.role,
-    });
+    // Generate proper session tokens
+    const validSessionToken = generateSessionId();
+    const attackerSessionToken = generateSessionId();
 
     const session = await prisma.session.create({
       data: {
         userId: testUser.id,
-        token: testUser.id, // Simple session for testing
+        token: validSessionToken,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
@@ -175,7 +173,7 @@ async function setupTestData() {
     const attackerSession = await prisma.session.create({
       data: {
         userId: attackerUser.id,
-        token: attackerUser.id, // Simple session for testing
+        token: attackerSessionToken,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       },
     });
@@ -188,7 +186,8 @@ async function setupTestData() {
       attackerDriver,
       attackerUser,
       testTrip,
-      accessToken,
+      validSessionToken,
+      attackerSessionToken,
       session,
       attackerSession,
     };
@@ -456,18 +455,18 @@ async function runSecurityTests() {
     // Test 3: Crafted header with valid token (should ignore header)
     await testCraftedHeaderWithValidToken(
       testData.testTrip.id,
-      testData.session.token,
+      testData.validSessionToken,
       testData.attackerDriver.id
     );
     
     // Test 4: Valid authentication (should succeed)
-    const accepted = await testValidAuthentication(testData.testTrip.id, testData.session.token);
+    const accepted = await testValidAuthentication(testData.testTrip.id, testData.validSessionToken);
     
     // Test 5: Prevent trip hijacking (different driver)
     await testTripHijackAttempt(
       testData.testTrip.id,
       testData.testDriver.id,
-      testData.attackerSession.token
+      testData.attackerSessionToken
     );
     
     // Print summary
