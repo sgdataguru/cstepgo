@@ -5,7 +5,7 @@
 
 import { Booking, BookingStatus, TripStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
+import { emitBookingCancelled } from '@/lib/realtime/unifiedEventEmitter';
 
 
 export interface BookingWithDetails extends Booking {
@@ -362,21 +362,29 @@ export async function cancelBooking(
       return updatedBooking;
     });
 
-    // Broadcast cancellation to driver (if assigned) and update trip discovery
-    if (result.trip.driverId) {
-      try {
-        await realtimeBroadcastService.broadcastBookingCancellation({
-          bookingId: result.id,
-          tripId: result.trip.id,
-          driverId: result.trip.driverId,
-          userId,
-          seatsReleased: result.seatsBooked, // Use result from transaction
-          reason: reason || 'Cancelled by passenger',
-        });
-      } catch (error) {
-        console.error('Error broadcasting cancellation:', error);
-        // Don't fail the cancellation if broadcast fails
-      }
+    // Broadcast cancellation to realtime channels (both SSE and Socket.IO)
+    try {
+      // Fetch passenger name for better event information
+      const passenger = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true },
+      });
+
+      await emitBookingCancelled({
+        tripId: result.trip.id,
+        tripType: result.trip.tripType as 'PRIVATE' | 'SHARED',
+        bookingId: result.id,
+        passengerId: userId,
+        passengerName: passenger?.name || 'Passenger',
+        seatsFreed: result.seatsBooked,
+        availableSeats: result.trip.availableSeats + result.seatsBooked, // Include incremented value
+        totalSeats: result.trip.totalSeats,
+        reason: reason || 'Cancelled by passenger',
+        tenantId: result.trip.tenantId || undefined,
+      });
+    } catch (error) {
+      console.error('Error broadcasting cancellation:', error);
+      // Don't fail the cancellation if broadcast fails
     }
 
     return {
