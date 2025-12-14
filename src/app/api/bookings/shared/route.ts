@@ -148,7 +148,7 @@ export const POST = withAuth(async (request: NextRequest, user: TokenPayload) =>
       const booking = await tx.booking.create({
         data: {
           tripId: validatedData.tripId,
-          userId: userId, // Use authenticated user ID from JWT
+          userId, // Use authenticated user ID from JWT (shorthand syntax)
           seatsBooked: validatedData.seatsBooked,
           totalAmount,
           currency: trip.currency,
