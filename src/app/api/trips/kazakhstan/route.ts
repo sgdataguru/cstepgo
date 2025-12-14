@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { classifyTrip } from '@/lib/utils/tripZoneClassifier';
 import { calculateHaversineDistance } from '@/lib/utils/geoUtils';
+import { isTripWithinKazakhstan, areCoordinatesValid } from '@/lib/utils/kazakhstanGeography';
+
+/**
+ * Valid zone enum values
+ */
+const VALID_ZONES = ['ZONE_A', 'ZONE_B', 'ZONE_C'] as const;
+
+/**
+ * Validate zone enum value
+ */
+function isValidZone(zone: string): boolean {
+  return (VALID_ZONES as readonly string[]).includes(zone);
+}
 
 /**
  * GET /api/trips/kazakhstan - List Kazakhstan trips with zone filtering
@@ -11,6 +24,11 @@ import { calculateHaversineDistance } from '@/lib/utils/geoUtils';
  * - zone: Filter by zone (ZONE_A, ZONE_B, ZONE_C) - can be multiple
  * - tripType: Filter by trip type (PRIVATE, SHARED)
  * - status: Filter by status (default: PUBLISHED)
+ * 
+ * Domain Enforcement:
+ * - All trips MUST have origin and destination within Kazakhstan geographic boundaries
+ * - Zone values MUST be valid TripZone enum values (ZONE_A, ZONE_B, ZONE_C)
+ * - Status values are returned in UPPERCASE for system consistency
  */
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +37,21 @@ export async function GET(request: NextRequest) {
     const zones = searchParams.getAll('zone'); // Can have multiple zone filters
     const tripType = searchParams.get('tripType');
     const status = searchParams.get('status') || 'PUBLISHED';
+
+    // Validate zone enum values if provided
+    if (zones.length > 0) {
+      const invalidZones = zones.filter(zone => !isValidZone(zone));
+      if (invalidZones.length > 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Invalid zone value',
+            message: `Invalid zone(s): ${invalidZones.join(', ')}. Valid zones are: ${VALID_ZONES.join(', ')}`,
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     // Build dynamic where clause
     const where: any = {
@@ -79,8 +112,36 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Filter trips to Kazakhstan geography domain
+    // This is a critical security/domain boundary enforcement
+    const kazakhstanTrips = trips.filter((trip: any) => {
+      // Validate coordinates are valid numbers
+      if (!areCoordinatesValid(trip.originLat, trip.originLng) || 
+          !areCoordinatesValid(trip.destLat, trip.destLng)) {
+        // Only log in development to avoid production noise
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Trip ${trip.id} has invalid coordinates, excluding from Kazakhstan results`);
+        }
+        return false;
+      }
+      
+      // Check if trip is within Kazakhstan boundaries
+      const isKazakhstanTrip = isTripWithinKazakhstan(
+        trip.originLat,
+        trip.originLng,
+        trip.destLat,
+        trip.destLng
+      );
+      
+      if (!isKazakhstanTrip && process.env.NODE_ENV === 'development') {
+        console.log(`Trip ${trip.id} (${trip.title}) excluded: Outside Kazakhstan geography`);
+      }
+      
+      return isKazakhstanTrip;
+    });
+
     // Transform and enrich trips with zone information
-    const transformedTrips = trips.map((trip: any) => {
+    const transformedTrips = kazakhstanTrips.map((trip: any) => {
       // If zone is not set, calculate it dynamically
       let zone = trip.zone;
       let estimatedDays = trip.estimatedDays;
@@ -129,7 +190,7 @@ export async function GET(request: NextRequest) {
         pricePerSeat: trip.pricePerSeat ? Number(trip.pricePerSeat) : null,
         availableSeats: trip.availableSeats,
         totalSeats: trip.totalSeats,
-        status: trip.status.toLowerCase(),
+        status: trip.status, // Keep uppercase for system consistency
         currency: trip.currency,
         organizer: trip.organizer,
         driver: trip.driver,
