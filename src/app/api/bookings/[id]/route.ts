@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
-import { emitBookingCancelled } from '@/lib/realtime/unifiedEventEmitter';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 /**
  * GET /api/bookings/[id]
@@ -142,8 +142,28 @@ export const PATCH = withAuth(async (
 
     // Handle cancel action
     if (body.action === 'cancel') {
-      const updatedBooking = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        // Update booking status
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        // 1. Get trip with FOR UPDATE lock to prevent race conditions
+        const tripRaw = await tx.$queryRaw<Array<{
+          id: string;
+          availableSeats: number;
+          totalSeats: number;
+          status: string;
+          version: number;
+        }>>`
+          SELECT id, "availableSeats", "totalSeats", status, version
+          FROM "Trip"
+          WHERE id = ${booking.tripId}
+          FOR UPDATE
+        `;
+
+        if (!tripRaw || tripRaw.length === 0) {
+          throw new Error('Trip not found');
+        }
+
+        const trip = tripRaw[0];
+
+        // 2. Update booking status
         const updated = await tx.booking.update({
           where: { id },
           data: {
@@ -152,52 +172,62 @@ export const PATCH = withAuth(async (
           },
         });
 
-        // Restore available seats to trip
-        await tx.trip.update({
-          where: { id: booking.tripId },
-          data: {
-            availableSeats: {
-              increment: booking.seatsBooked,
-            },
-          },
-        });
+        // 3. Restore available seats to trip with optimistic locking
+        const newAvailableSeats = trip.availableSeats + booking.seatsBooked;
+        const newStatus = trip.status === 'FULL' ? 'PUBLISHED' : trip.status;
+        
+        const updateResult = await tx.$executeRaw`
+          UPDATE "Trip"
+          SET "availableSeats" = ${newAvailableSeats},
+              version = version + 1,
+              status = ${newStatus}::text
+          WHERE id = ${booking.tripId}
+            AND version = ${trip.version}
+        `;
 
-        return updated;
+        // Check if update was successful
+        if (updateResult === 0) {
+          throw new Error('Cancellation failed due to concurrent modification. Please try again.');
+        }
+
+        return {
+          booking: updated,
+          tripId: booking.tripId,
+          availableSeats: newAvailableSeats,
+          totalSeats: trip.totalSeats,
+          status: newStatus,
+          seatsReleased: booking.seatsBooked,
+        };
       });
 
-      // Emit booking cancellation event to realtime channels
+      // Broadcast seat availability update to all connected clients
       try {
-        // Fetch updated trip to get accurate available seats
-        const updatedTrip = await prisma.trip.findUnique({
-          where: { id: booking.tripId },
-          select: { 
-            availableSeats: true, 
-            totalSeats: true, 
-            tripType: true,
-            tenantId: true,
-          },
+        await realtimeBroadcastService.broadcastSeatAvailability({
+          tripId: result.tripId,
+          availableSeats: result.availableSeats,
+          totalSeats: result.totalSeats,
+          status: result.status,
         });
 
-        await emitBookingCancelled({
-          tripId: booking.tripId,
-          tripType: (updatedTrip?.tripType as 'PRIVATE' | 'SHARED') || 'PRIVATE',
-          bookingId: id,
-          passengerId: user.id,
-          passengerName: user.name || 'Guest',
-          seatsFreed: booking.seatsBooked,
-          availableSeats: updatedTrip?.availableSeats || 0,
-          totalSeats: updatedTrip?.totalSeats || 0,
-          reason: body.reason,
-          tenantId: updatedTrip?.tenantId || undefined,
-        });
-      } catch (emitError) {
+        // Also broadcast to driver if exists
+        if (booking.trip.driverId) {
+          await realtimeBroadcastService.broadcastBookingCancellation({
+            bookingId: id,
+            tripId: result.tripId,
+            driverId: booking.trip.driverId,
+            userId: user.id,
+            seatsReleased: result.seatsReleased,
+            reason: body.reason || 'Passenger cancelled booking',
+          });
+        }
+      } catch (broadcastError) {
         // Log error but don't fail the cancellation
-        console.error('Failed to emit booking cancelled event:', emitError);
+        console.error('Failed to broadcast cancellation:', broadcastError);
       }
 
       return NextResponse.json({
         success: true,
-        data: updatedBooking,
+        data: result.booking,
         message: 'Booking cancelled successfully',
       });
     }
