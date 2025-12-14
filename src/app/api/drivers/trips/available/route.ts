@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { PrismaClient, TripType } from '@prisma/client';
 import { getDriverEarningsRate } from '@/lib/services/platformSettingsService';
+import { prisma } from '@/lib/prisma';
+import { authenticateDriver } from '@/lib/auth/driverAuth';
 
 
 // Validation schema for trip discovery filters
@@ -14,32 +16,6 @@ const tripDiscoveryFiltersSchema = z.object({
   limit: z.number().min(1).max(50).default(20),
   offset: z.number().min(0).default(0)
 });
-
-// Get driver from session 
-async function getDriverFromRequest(request: NextRequest) {
-  const driverId = request.headers.get('x-driver-id');
-  
-  if (!driverId) {
-    throw new Error('Driver not authenticated');
-  }
-  
-  const driver = await prisma.driver.findUnique({
-    where: { id: driverId },
-    include: { 
-      user: true
-    }
-  });
-  
-  if (!driver || driver.user.role !== 'DRIVER') {
-    throw new Error('Driver not found');
-  }
-  
-  if (driver.status !== 'APPROVED') {
-    throw new Error('Driver not approved');
-  }
-  
-  return driver;
-}
 
 // Calculate distance using Haversine formula
 function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -72,8 +48,8 @@ export async function GET(request: NextRequest) {
       offset: searchParams.get('offset') ? Number(searchParams.get('offset')) : 0
     });
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Check driver preferences for trip types
     const driverAcceptsPrivate = driver.acceptsPrivateTrips;

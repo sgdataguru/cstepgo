@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authenticateDriver, verifyTripAvailableForAcceptance } from '@/lib/auth/driverAuth';
 
 
 // Enhanced trip acceptance mechanism with real-time coordination and timeout handling
@@ -117,28 +118,6 @@ class TripAcceptanceLock {
   }
 }
 
-// Get driver from session 
-async function getDriverFromRequest(request: NextRequest) {
-  const driverId = request.headers.get('x-driver-id');
-  
-  if (!driverId) {
-    throw new Error('Driver not authenticated');
-  }
-  
-  const driver = await prisma.driver.findUnique({
-    where: { id: driverId },
-    include: { 
-      user: true
-    }
-  });
-  
-  if (!driver || driver.user.role !== 'DRIVER') {
-    throw new Error('Driver not found');
-  }
-  
-  return driver;
-}
-
 // POST /api/drivers/trips/acceptance/enhanced - Enhanced trip acceptance with real-time coordination
 export async function POST(request: NextRequest) {
   try {
@@ -159,8 +138,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     const startTime = Date.now();
     
     if (action === 'accept') {
@@ -374,8 +353,8 @@ export async function POST(request: NextRequest) {
 // GET /api/drivers/trips/acceptance/enhanced - Get active trip offer status
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Check for active trip offer
     const activeOffer = await TripAcceptanceLock.getActiveOffer(driver.userId);

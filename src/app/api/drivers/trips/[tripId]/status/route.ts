@@ -6,30 +6,9 @@ import {
   shouldNotifyPassengers 
 } from '@/lib/notifications/trip-status-notifications';
 import { rateLimit, RATE_LIMIT_CONFIGS, getClientIp } from '@/lib/utils/rate-limit';
-import { emitTripStatusUpdate } from '@/lib/realtime/unifiedEventEmitter';
+import { broadcastStatusUpdate } from '@/lib/realtime/broadcast';
+import { authenticateDriver, verifyDriverOwnsTrip } from '@/lib/auth/driverAuth';
 
-
-// Get driver from session 
-async function getDriverFromRequest(request: NextRequest) {
-  const driverId = request.headers.get('x-driver-id');
-  
-  if (!driverId) {
-    throw new Error('Driver not authenticated');
-  }
-  
-  const driver = await prisma.driver.findUnique({
-    where: { id: driverId },
-    include: { 
-      user: true
-    }
-  });
-  
-  if (!driver || driver.user.role !== 'DRIVER') {
-    throw new Error('Driver not found');
-  }
-  
-  return driver;
-}
 
 // PUT /api/drivers/trips/[tripId]/status - Update trip status
 export async function PUT(
@@ -41,8 +20,11 @@ export async function PUT(
     const body = await request.json();
     const { status, notes, location } = body;
     
-    // Get authenticated driver first for rate limiting
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
+    
+    // Verify driver owns this trip
+    await verifyDriverOwnsTrip(driver.id, tripId);
     
     // Apply rate limiting per driver
     const rateLimitResult = rateLimit(
@@ -507,8 +489,8 @@ export async function GET(
       );
     }
     
-    // Get authenticated driver
-    const driver = await getDriverFromRequest(request);
+    // Authenticate driver using secure token validation
+    const driver = await authenticateDriver(request);
     
     // Get trip details
     const trip = await prisma.trip.findUnique({
