@@ -6,7 +6,7 @@ The GPS Navigation feature provides real-time navigation, turn-by-turn direction
 
 ## Features
 
-- **Real-time Route Calculation**: Uses Google Maps Directions API to calculate optimal routes
+- **Real-time Route Calculation**: Uses 2GIS Maps Directions API to calculate optimal routes
 - **Turn-by-Turn Navigation**: Step-by-step directions with distance and time estimates
 - **ETA Updates**: Continuous updates of estimated arrival time based on current location
 - **Live Location Tracking**: Driver location updates stored and broadcasted
@@ -145,14 +145,14 @@ Located in `/src/lib/navigation/utils.ts`:
 - `formatDuration(seconds)`: Human-readable duration
 - `formatETA(date)`: Formatted time string
 - `isWithinRadius(center, point, radius)`: Proximity check
-- `getDirectionsApiUrl(...)`: Build Google Maps API URL
+- `getDirectionsApiUrl(...)`: Build 2GIS Maps API URL
 - `parseDirectionsResponse(response)`: Parse Google API response
 
 ### Frontend Components
 
 #### NavigationMap
 
-Interactive Google Maps component with route visualization.
+Interactive 2GIS Maps component with route visualization.
 
 ```tsx
 import { NavigationMap } from '@/components/navigation/NavigationMap';
@@ -263,7 +263,7 @@ Add to `.env.local`:
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
-### Google Maps API Requirements
+### 2GIS Maps API Requirements
 
 Enable the following APIs in Google Cloud Console:
 - Maps JavaScript API
@@ -345,7 +345,7 @@ curl http://localhost:3000/api/navigation/trips/[tripId]/location
 
 ### API Rate Limits
 
-- Google Maps Directions API: Monitor usage
+- 2GIS Maps Directions API: Monitor usage
 - Implement caching for frequently requested routes
 - Use route alternatives sparingly
 
@@ -366,7 +366,7 @@ curl http://localhost:3000/api/navigation/trips/[tripId]/location
 
 ### API Keys
 
-- Restrict Google Maps API key to specific domains
+- Restrict 2GIS Maps API key to specific domains
 - Use environment variables (never commit keys)
 - Implement rate limiting on navigation endpoints
 - Add authentication middleware
@@ -382,7 +382,7 @@ curl http://localhost:3000/api/navigation/trips/[tripId]/location
 
 **Route calculation fails:**
 - Verify coordinates are valid
-- Check Google Maps API quota
+- Check 2GIS Maps API quota
 - Ensure network connectivity
 
 **Location updates not working:**

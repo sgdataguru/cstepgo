@@ -135,7 +135,7 @@ export function isWithinRadius(
 }
 
 /**
- * Get Google Maps Directions API URL
+ * Get 2GIS Directions API URL
  */
 export function getDirectionsApiUrl(
   origin: RoutePoint,
@@ -143,84 +143,95 @@ export function getDirectionsApiUrl(
   waypoints?: RoutePoint[],
   preferences?: NavigationPreferences
 ): string {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-  const baseUrl = 'https://maps.googleapis.com/maps/api/directions/json';
+  const apiKey = process.env.NEXT_PUBLIC_2GIS_API_KEY || '';
+  const baseUrl = 'https://catalog.api.2gis.com/carrouting/6.0.0/global';
   
   const params = new URLSearchParams({
-    origin: `${origin.lat},${origin.lng}`,
-    destination: `${destination.lat},${destination.lng}`,
     key: apiKey,
-    mode: 'driving',
-    alternatives: 'true',
-    departure_time: 'now',
+    type: 'car',
   });
   
+  // Add origin
+  params.append('points', `${origin.lng},${origin.lat}`);
+  
+  // Add waypoints if provided
   if (waypoints && waypoints.length > 0) {
-    const waypointsStr = waypoints
-      .map(wp => `${wp.lat},${wp.lng}`)
-      .join('|');
-    params.append('waypoints', `optimize:true|${waypointsStr}`);
+    waypoints.forEach(wp => {
+      params.append('points', `${wp.lng},${wp.lat}`);
+    });
   }
   
-  const avoid: string[] = [];
-  if (preferences?.avoidTolls) avoid.push('tolls');
-  if (preferences?.avoidHighways) avoid.push('highways');
-  if (preferences?.avoidFerries) avoid.push('ferries');
-  
-  if (avoid.length > 0) {
-    params.append('avoid', avoid.join('|'));
-  }
+  // Add destination
+  params.append('points', `${destination.lng},${destination.lat}`);
   
   return `${baseUrl}?${params.toString()}`;
 }
 
 /**
- * Parse Google Maps Directions API response
+ * Parse 2GIS Directions API response
  */
 export function parseDirectionsResponse(response: any): NavigationRoute | null {
   try {
-    if (!response.routes || response.routes.length === 0) {
+    if (!response.result || response.result.length === 0) {
       return null;
     }
     
-    const route = response.routes[0];
-    const leg = route.legs[0];
+    const route = response.result[0];
     
-    const steps: RouteStep[] = leg.steps.map((step: any) => ({
-      distance: step.distance.value,
-      duration: step.duration.value,
-      // Strip HTML tags from instructions using browser's DOMParser if available
-      instruction: typeof DOMParser !== 'undefined' 
-        ? new DOMParser().parseFromString(step.html_instructions, 'text/html').documentElement.textContent || step.html_instructions
-        : step.html_instructions.replace(/<[^>]*>/g, ''), // Fallback for server-side
-      maneuver: step.maneuver,
-      startLocation: {
-        lat: step.start_location.lat,
-        lng: step.start_location.lng,
-      },
-      endLocation: {
-        lat: step.end_location.lat,
-        lng: step.end_location.lng,
-      },
-      polyline: step.polyline.points,
-    }));
+    // Convert 2GIS geometry format to steps
+    const steps: RouteStep[] = [];
+    const points = route.points || [];
+    
+    // Create steps from maneuvers
+    if (route.maneuvers && route.maneuvers.length > 0) {
+      route.maneuvers.forEach((maneuver: any, index: number) => {
+        const nextIndex = index < route.maneuvers.length - 1 ? route.maneuvers[index + 1].outgoing_path_index : points.length - 1;
+        const stepPoints = points.slice(maneuver.outgoing_path_index, nextIndex + 1);
+        
+        // Ensure stepPoints has at least one point before accessing
+        if (stepPoints.length === 0) {
+          return;
+        }
+        
+        steps.push({
+          distance: maneuver.length || 0,
+          duration: maneuver.time || 0,
+          instruction: maneuver.comment || 'Continue',
+          maneuver: maneuver.type,
+          startLocation: {
+            lat: stepPoints[0][1],
+            lng: stepPoints[0][0],
+          },
+          endLocation: {
+            lat: stepPoints[stepPoints.length - 1][1],
+            lng: stepPoints[stepPoints.length - 1][0],
+          },
+          polyline: JSON.stringify(stepPoints),
+        });
+      });
+    }
+    
+    // Guard against empty points array
+    if (points.length === 0) {
+      return null;
+    }
     
     return {
-      distance: leg.distance.value,
-      duration: leg.duration.value,
-      polyline: route.overview_polyline.points,
+      distance: route.total_distance || 0,
+      duration: route.total_duration || 0,
+      polyline: JSON.stringify(points),
       steps,
       bounds: {
         northeast: {
-          lat: route.bounds.northeast.lat,
-          lng: route.bounds.northeast.lng,
+          lat: Math.max(...points.map((p: [number, number]) => p[1])),
+          lng: Math.max(...points.map((p: [number, number]) => p[0])),
         },
         southwest: {
-          lat: route.bounds.southwest.lat,
-          lng: route.bounds.southwest.lng,
+          lat: Math.min(...points.map((p: [number, number]) => p[1])),
+          lng: Math.min(...points.map((p: [number, number]) => p[0])),
         },
       },
-      overview: `${leg.distance.text} via ${route.summary}`,
+      overview: `${formatDistance(route.total_distance)} via 2GIS route`,
     };
   } catch (error) {
     console.error('Error parsing directions response:', error);

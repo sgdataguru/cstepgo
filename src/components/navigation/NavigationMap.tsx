@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { TwoGISLoader } from '@/lib/maps/2gis-adapter';
 import type { Coordinates, NavigationRoute } from '@/lib/navigation/types';
 
 interface NavigationMapProps {
@@ -10,7 +10,7 @@ interface NavigationMapProps {
   currentLocation?: Coordinates;
   route?: NavigationRoute;
   showTraffic?: boolean;
-  onMapReady?: (map: google.maps.Map) => void;
+  onMapReady?: (map: any) => void;
   className?: string;
 }
 
@@ -24,42 +24,50 @@ export function NavigationMap({
   className = 'w-full h-96',
 }: NavigationMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [map, setMap] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Initialize map
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_2GIS_API_KEY;
     
     if (!apiKey) {
-      setError('Google Maps API key is not configured');
+      setError('2GIS Maps API key is not configured');
       return;
     }
     
     if (!mapRef.current) return;
 
-    const loader = new Loader({
-      apiKey,
-      version: 'weekly',
-      libraries: ['places', 'geometry'],
-    });
+    const loader = TwoGISLoader.getInstance(apiKey);
 
     loader.load().then(() => {
-      const mapInstance = new google.maps.Map(mapRef.current!, {
-        center: origin,
+      if (!mapRef.current || typeof window === 'undefined') return;
+
+      const DG = (window as any).DG;
+      
+      const mapInstance = DG.map(mapRef.current, {
+        center: [origin.lat, origin.lng],
         zoom: 13,
-        mapTypeControl: false,
-        streetViewControl: false,
+        zoomControl: true,
         fullscreenControl: true,
       });
+
+      // Add markers for origin and destination
+      DG.marker([origin.lat, origin.lng])
+        .addTo(mapInstance)
+        .bindPopup('Origin');
+      
+      DG.marker([destination.lat, destination.lng])
+        .addTo(mapInstance)
+        .bindPopup('Destination');
 
       setMap(mapInstance);
       onMapReady?.(mapInstance);
     }).catch((err) => {
-      setError('Failed to load Google Maps');
+      setError('Failed to load 2GIS Maps');
       console.error('Maps loading error:', err);
     });
-  }, [origin, onMapReady]);
+  }, [origin, destination, onMapReady]);
 
   if (error) {
     return (

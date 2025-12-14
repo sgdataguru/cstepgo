@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { useGooglePlaces, PlaceSuggestion, Location } from './useGooglePlaces';
+import { use2GISPlaces, PlaceSuggestion, Location } from './use2GISPlaces';
 
 interface UseAutocompleteOptions {
   apiKey: string;
@@ -12,10 +12,11 @@ interface UseAutocompleteOptions {
 
 /**
  * Hook to manage autocomplete state and interactions
+ * Updated to use 2GIS Maps API for Kazakhstan and Central Asia
  */
 export function useAutocomplete({
   apiKey,
-  countryRestrictions = ['sg', 'my', 'id', 'th'], // Singapore, Malaysia, Indonesia, Thailand
+  countryRestrictions = ['kz', 'kg', 'uz'], // Kazakhstan, Kyrgyzstan, Uzbekistan
   types,
   debounceMs = 300,
   minSearchLength = 3,
@@ -29,7 +30,7 @@ export function useAutocomplete({
   const [error, setError] = useState<string | null>(null);
   
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const { isLoaded, getAutocompletePredictions, getPlaceDetails } = useGooglePlaces(apiKey);
+  const { isLoaded, getAutocompletePredictions, getPlaceDetails } = use2GISPlaces(apiKey);
 
   // Handle query changes with debouncing
   const handleQueryChange = useCallback(

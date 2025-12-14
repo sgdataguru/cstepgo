@@ -8,7 +8,7 @@ A modern ride-sharing and group trip organization platform built with Next.js 14
 1. **View Trip Urgency Status** - Real-time countdown timers with color-coded urgency indicators
 2. **View Trip Itinerary** - Detailed day-by-day trip plans with activities
 3. **Create Trip with Itinerary** - Block-based itinerary builder with drag-and-drop
-4. **Search Locations** - Google Places autocomplete for accurate location selection
+4. **Search Locations** - 2GIS Places autocomplete for accurate location selection in Kazakhstan and Central Asia
 5. **Dynamic Trip Pricing** - Real-time pricing that adjusts based on occupancy
 6. **View Driver Profile** - Comprehensive driver profiles with ratings and verification badges
 7. **Register as Passenger** - Quick phone/email registration with OTP verification
@@ -61,8 +61,8 @@ StepperGO/
 - **File Storage**: AWS S3 / Supabase Storage
 
 ### External Integrations
-- **Maps**: Google Places API + Google Maps Directions API
-- **Navigation**: Real-time GPS tracking with turn-by-turn directions
+- **Maps**: 2GIS Maps API (optimized for Kazakhstan & Central Asia)
+- **Navigation**: Real-time GPS tracking with turn-by-turn directions via 2GIS
 - **Payments**: Stripe + Kaspi Pay
 - **Communication**: WhatsApp API
 - **SMS/Email**: Twilio + Postmark
@@ -72,7 +72,7 @@ StepperGO/
 
 StepperGO includes comprehensive GPS navigation for drivers and passengers:
 
-- **Real-time Route Calculation** - Optimal routes using Google Maps Directions API
+- **Real-time Route Calculation** - Optimal routes using 2GIS Directions API
 - **Turn-by-Turn Directions** - Step-by-step navigation with distance and time
 - **Live ETA Updates** - Continuous arrival time estimates based on traffic
 - **Driver Location Tracking** - Real-time position updates during active trips
