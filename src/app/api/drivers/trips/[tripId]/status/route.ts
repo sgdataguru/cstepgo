@@ -6,7 +6,7 @@ import {
   shouldNotifyPassengers 
 } from '@/lib/notifications/trip-status-notifications';
 import { rateLimit, RATE_LIMIT_CONFIGS, getClientIp } from '@/lib/utils/rate-limit';
-import { broadcastStatusUpdate } from '@/lib/realtime/broadcast';
+import { emitTripStatusUpdate } from '@/lib/realtime/unifiedEventEmitter';
 
 
 // Get driver from session 
@@ -333,9 +333,10 @@ export async function PUT(
       }
     }
     
-    // Broadcast status update to real-time listeners
+    // Broadcast status update to real-time listeners (both SSE and Socket.IO)
     try {
-      broadcastStatusUpdate(result.trip.id, {
+      await emitTripStatusUpdate({
+        tripId: result.trip.id,
         tripTitle: result.trip.title,
         previousStatus: result.previousStatus,
         newStatus: status as TripStatus,

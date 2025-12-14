@@ -4,6 +4,7 @@ import { withAuth } from '@/lib/auth/middleware';
 import { Prisma } from '@prisma/client';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 import { shouldBroadcastTrip } from '@/lib/utils/tripBroadcastUtils';
+import { emitBookingConfirmed } from '@/lib/realtime/unifiedEventEmitter';
 
 /**
  * POST /api/bookings
@@ -251,6 +252,32 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
       } catch (broadcastError) {
         // Log error but don't fail the booking
         console.error('Failed to broadcast private trip offer after booking:', broadcastError);
+      }
+    }
+
+    // Emit booking confirmation event to realtime channels
+    if (completeBooking?.trip) {
+      try {
+        // Fetch updated trip to get accurate available seats
+        const updatedTrip = await prisma.trip.findUnique({
+          where: { id: completeBooking.trip.id },
+          select: { availableSeats: true, totalSeats: true, tenantId: true },
+        });
+
+        await emitBookingConfirmed({
+          tripId: completeBooking.trip.id,
+          tripType: completeBooking.trip.tripType as 'PRIVATE' | 'SHARED',
+          bookingId: completeBooking.id,
+          passengerId: user.id,
+          passengerName: user.name || 'Guest',
+          seatsBooked: seatsBooked,
+          availableSeats: updatedTrip?.availableSeats || 0,
+          totalSeats: updatedTrip?.totalSeats || 0,
+          tenantId: updatedTrip?.tenantId || undefined,
+        });
+      } catch (emitError) {
+        // Log error but don't fail the booking
+        console.error('Failed to emit booking confirmed event:', emitError);
       }
     }
 
