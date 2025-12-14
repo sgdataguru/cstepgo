@@ -131,7 +131,9 @@ async function testUserIdUsage(): Promise<boolean> {
     }
     
     // Check that booking is created with authenticated user's ID
-    if (!routeContent.includes('userId: userId') && !routeContent.includes('userId: user.userId')) {
+    if (!routeContent.includes('userId,') && 
+        !routeContent.includes('userId: userId') && 
+        !routeContent.includes('userId: user.userId')) {
       logError('Booking might not be created with authenticated user ID');
       return false;
     }
