@@ -134,9 +134,6 @@ export const POST = withAuth(async (request: NextRequest, context: any) => {
       // 5. Calculate total amount
       const pricePerSeat = Number(tripData.basePrice);
       const totalAmount = pricePerSeat * seatsBooked;
-      // 5. Calculate total amount
-      const pricePerSeat = Number(tripData.basePrice);
-      const totalAmount = pricePerSeat * seatsBooked;
 
       // 6. Create the booking
       const newBooking = await tx.booking.create({

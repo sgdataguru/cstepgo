@@ -96,8 +96,6 @@ export async function POST(request: NextRequest) {
 
       const trip = tripRaw[0];
 
-      const trip = tripRaw[0];
-
       // 2. Validate trip type is SHARED
       if (trip.tripType !== TripType.SHARED) {
         throw new Error('This endpoint is only for shared ride bookings. Use /api/bookings/private for private trips.');

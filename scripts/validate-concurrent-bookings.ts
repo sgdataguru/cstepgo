@@ -393,7 +393,7 @@ async function cleanupTestData(tripId: string): Promise<void> {
  */
 async function main() {
   console.log('\n🚀 Starting Concurrent Booking Validation Tests\n');
-  console.log('=' .repeat(60));
+  console.log('='.repeat(60));
 
   try {
     // Test 1: Version field
