@@ -130,15 +130,15 @@ export async function POST(request: NextRequest) {
           
           // Service Preferences
           serviceRadiusKm: validatedData.serviceRadiusKm || 10,
-          willingToTravel: validatedData.willingToTravel || [],
+          willingToTravel: (validatedData.willingToTravel || []) as any,
           
           // Profile
           bio: validatedData.bio || null,
           yearsExperience: validatedData.yearsExperience || 0,
-          languages: validatedData.languages || [],
+          languages: (validatedData.languages || []) as any,
           
           // Document placeholder
-          documentsUrl: {},
+          documentsUrl: {} as any,
         }
       });
       

@@ -106,10 +106,10 @@ export async function POST(request: NextRequest) {
           luggageCapacity: Math.floor((seatCapacity || 4) / 2),
           licenseNumber: nationalId, // Use nationalId as placeholder
           licenseExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
-          documentsUrl: documents || {},
+          documentsUrl: (documents || {}) as any,
           homeCity: homeCity || '',
           serviceRadiusKm,
-          willingToTravel: willingToTravel || [],
+          willingToTravel: (willingToTravel || []) as any,
           status: 'PENDING',
           registeredBy: 'admin', // TODO: Get actual admin user ID
         },
