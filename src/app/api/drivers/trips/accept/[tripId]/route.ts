@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 import { authenticateDriver, verifyTripAvailableForAcceptance } from '@/lib/auth/driverAuth';
+import { emitTripStatusUpdate } from '@/lib/realtime/unifiedEventEmitter';
 
 // POST /api/drivers/trips/accept/[tripId] - Accept a trip
 export async function POST(

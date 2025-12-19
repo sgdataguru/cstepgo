@@ -8,6 +8,7 @@ import {
 import { rateLimit, RATE_LIMIT_CONFIGS, getClientIp } from '@/lib/utils/rate-limit';
 import { broadcastStatusUpdate } from '@/lib/realtime/broadcast';
 import { authenticateDriver, verifyDriverOwnsTrip } from '@/lib/auth/driverAuth';
+import { emitTripStatusUpdate } from '@/lib/realtime/unifiedEventEmitter';
 
 
 // PUT /api/drivers/trips/[tripId]/status - Update trip status

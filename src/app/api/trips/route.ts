@@ -340,7 +340,7 @@ export async function POST(request: NextRequest) {
     let message = 'Trip created successfully';
     if (validTripType === 'SHARED' && publishImmediately) {
       message = 'Shared ride created and published! It is now visible in the trips listing.';
-    } else if (!driverProfile) {
+    } else if (!trip.driverId) {
       message = 'Trip created. Driver assignment pending.';
     }
 
