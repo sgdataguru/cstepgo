@@ -76,7 +76,7 @@ async function main() {
       documentsUrl: JSON.stringify([
         '/documents/license.pdf',
         '/documents/vehicle-registration.pdf',
-      ]),
+      ]) as any,
       rating: 4.8,
       completedTrips: 25,
       approvedAt: new Date(),

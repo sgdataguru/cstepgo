@@ -61,7 +61,7 @@ async function seedDriverData() {
           // License
           licenseNumber: 'KZ1234567',
           licenseExpiry: new Date('2026-12-31'),
-          documentsUrl: { documents: [] },
+          documentsUrl: { documents: [] } as any,
           
           // Profile information
           bio: 'Experienced professional driver with 8 years of service in Kazakhstan. Specializing in comfortable long-distance trips across Central Asia. Fluent in multiple languages and committed to passenger safety and comfort.',
@@ -73,7 +73,7 @@ async function seedDriverData() {
             { code: 'en', name: 'English', proficiency: 'FLUENT' },
             { code: 'ru', name: 'Russian', proficiency: 'NATIVE' },
             { code: 'kk', name: 'Kazakh', proficiency: 'NATIVE' }
-          ],
+          ] as any,
           
           // Verification
           verificationBadges: [
@@ -100,7 +100,7 @@ async function seedDriverData() {
               status: 'VERIFIED', 
               verifiedDate: new Date('2024-01-10')
             }
-          ],
+          ] as any,
           verificationLevel: 'PREMIUM',
           isVerified: true,
           

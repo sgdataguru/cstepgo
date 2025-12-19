@@ -75,6 +75,7 @@ async function setupTestData() {
       },
       create: {
         userId: testUser.id,
+        driverId: `DRV-TEST-${Date.now()}`,
         status: 'APPROVED',
         availability: 'AVAILABLE',
         vehicleType: 'Sedan',
@@ -84,7 +85,7 @@ async function setupTestData() {
         licensePlate: 'TEST-001',
         licenseNumber: 'DL123456',
         licenseExpiry: new Date('2025-12-31'),
-        documentsUrl: {},
+        documentsUrl: {} as any,
       },
     });
 
@@ -109,6 +110,7 @@ async function setupTestData() {
       },
       create: {
         userId: attackerUser.id,
+        driverId: `DRV-HACK-${Date.now()}`,
         status: 'APPROVED',
         availability: 'AVAILABLE',
         vehicleType: 'SUV',
@@ -118,7 +120,7 @@ async function setupTestData() {
         licensePlate: 'HACK-666',
         licenseNumber: 'DL666666',
         licenseExpiry: new Date('2025-12-31'),
-        documentsUrl: {},
+        documentsUrl: {} as any,
       },
     });
 
@@ -154,6 +156,8 @@ async function setupTestData() {
         tripType: 'PRIVATE',
         status: 'PUBLISHED',
         totalSeats: 4,
+        availableSeats: 4,
+        itinerary: [] as any,
         basePrice: 10000,
         platformFee: 1500,
         currency: 'KZT',
@@ -372,6 +376,8 @@ async function testTripHijackAttempt(tripId: string, legitimateDriverId: string,
         tripType: 'PRIVATE',
         status: 'IN_PROGRESS',
         totalSeats: 4,
+        availableSeats: 4,
+        itinerary: [] as any,
         basePrice: 10000,
         platformFee: 1500,
         currency: 'KZT',

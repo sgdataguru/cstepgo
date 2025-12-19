@@ -70,7 +70,7 @@ async function validateLocationReplayFeature() {
     const tripsWithDrivers = await prisma.trip.findMany({
       where: {
         driverId: { not: null },
-        status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+        status: { in: ['IN_PROGRESS', 'DEPARTED', 'EN_ROUTE'] },
       },
       include: {
         driver: {

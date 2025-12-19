@@ -72,7 +72,7 @@ async function createTestDriver() {
           // License
           licenseNumber: 'KZ7654321',
           licenseExpiry: new Date('2027-12-31'),
-          documentsUrl: { documents: [] },
+          documentsUrl: { documents: [] } as any,
           
           // Profile
           bio: 'Professional test driver for StepperGO platform testing. Available for all trip types.',
@@ -84,7 +84,7 @@ async function createTestDriver() {
           languages: [
             { code: 'en', name: 'English', proficiency: 'FLUENT' },
             { code: 'ru', name: 'Russian', proficiency: 'FLUENT' }
-          ],
+          ] as any,
           
           // Verification
           verificationLevel: 'STANDARD',
@@ -92,7 +92,7 @@ async function createTestDriver() {
           verificationBadges: [
             { type: 'IDENTITY', status: 'VERIFIED', verifiedDate: new Date() },
             { type: 'LICENSE', status: 'VERIFIED', verifiedDate: new Date() }
-          ],
+          ] as any,
           
           // Stats
           rating: 4.8,
