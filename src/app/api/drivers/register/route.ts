@@ -84,6 +84,12 @@ export async function POST(request: NextRequest) {
     const credentials = generateDriverCredentials();
     const hashedPassword = await hashPassword(credentials.tempPassword);
     
+    // Generate unique driver ID (DRV-YYYYMMDD-XXXXX format)
+    const today = new Date();
+    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+    const randomStr = Math.random().toString(36).substring(2, 7).toUpperCase();
+    const driverId = `DRV-${dateStr}-${randomStr}`;
+    
     // Create user and driver profile in a transaction
     const result = await prisma.$transaction(async (tx: any) => {
       // Create user account
@@ -99,11 +105,14 @@ export async function POST(request: NextRequest) {
         }
       });
       
-      // Create driver profile with minimal required fields
+      // Create driver profile with all required fields
       const driver = await tx.driver.create({
         data: {
           userId: user.id,
+          driverId: driverId, // Required unique field
           status: 'PENDING',
+          fullName: validatedData.name,
+          homeCity: validatedData.willingToTravel?.[0] || 'Almaty',
           
           // Vehicle Information (required fields)
           vehicleType: 'SEDAN',
@@ -111,11 +120,22 @@ export async function POST(request: NextRequest) {
           vehicleModel: validatedData.vehicleModel,
           vehicleYear: validatedData.vehicleYear,
           licensePlate: validatedData.licensePlate,
+          vehicleColor: validatedData.vehicleColor || null,
           passengerCapacity: validatedData.passengerCapacity,
+          luggageCapacity: 2,
           
           // License Information
           licenseNumber: validatedData.licenseNumber,
           licenseExpiry: new Date(validatedData.licenseExpiry),
+          
+          // Service Preferences
+          serviceRadiusKm: validatedData.serviceRadiusKm || 10,
+          willingToTravel: validatedData.willingToTravel || [],
+          
+          // Profile
+          bio: validatedData.bio || null,
+          yearsExperience: validatedData.yearsExperience || 0,
+          languages: validatedData.languages || [],
           
           // Document placeholder
           documentsUrl: {},

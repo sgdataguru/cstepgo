@@ -215,41 +215,33 @@ export async function POST(request: NextRequest) {
     // Try to find a driver user, but don't fail if not found
     // For now, use the first user from database as organizer
     // TODO: Replace with authenticated user from session
-    let firstUser = await prisma.user.findFirst({
-      where: { role: 'DRIVER' },
+    let organizerUser = await prisma.user.findFirst({
+      where: { role: 'PASSENGER' }, // Try to find a passenger first for shared trips
     });
 
-    // If no driver found, create a pending trip without driver assignment
-    // In production, this would trigger driver discovery/matching flow
-    if (!firstUser) {
-      console.warn('No driver user found in database. Creating trip without driver assignment.');
-      
-      // Try to find any user to use as organizer (for dev/test purposes)
-      firstUser = await prisma.user.findFirst();
-      
-      if (!firstUser) {
-        // Still no user? Create a system user for dev purposes only
-        // In production, this should trigger proper driver matching/assignment flow
-        console.warn('No users found in database. Creating dev system user.');
-        const devPassword = process.env.DEV_SYSTEM_USER_PASSWORD || `dev-${Date.now()}-${Math.random()}`;
-        firstUser = await prisma.user.create({
-          data: {
-            email: `system-${Date.now()}@steppergo.local`,
-            name: 'System User (Dev)',
-            passwordHash: devPassword, // In real scenario, this would be properly hashed
-            role: 'PASSENGER',
-          },
-        });
-      }
+    // If no passenger found, use any available user
+    if (!organizerUser) {
+      organizerUser = await prisma.user.findFirst();
     }
 
-    // Get driver profile if user is a driver
-    let driverProfile = null;
-    if (firstUser.role === 'DRIVER') {
-      driverProfile = await prisma.driver.findUnique({
-        where: { userId: firstUser.id },
+    // If still no user, create a system user for dev purposes
+    if (!organizerUser) {
+      console.warn('No users found in database. Creating dev system user.');
+      const devPassword = process.env.DEV_SYSTEM_USER_PASSWORD || `dev-${Date.now()}-${Math.random()}`;
+      organizerUser = await prisma.user.create({
+        data: {
+          email: `system-${Date.now()}@steppergo.local`,
+          name: 'System User (Dev)',
+          passwordHash: devPassword,
+          role: 'PASSENGER',
+        },
       });
     }
+
+    // IMPORTANT: For SHARED trips created by passengers, DO NOT auto-assign a driver!
+    // The trip should remain without a driver so drivers can discover and accept it.
+    // For PRIVATE trips, we also leave driver as null - the driver will be matched/assigned later.
+    // Driver assignment should ONLY happen when a driver explicitly accepts the trip.
 
     // Combine date and time
     const departureDateTime = new Date(`${departureDate}T${departureTime}`);
@@ -264,13 +256,13 @@ export async function POST(request: NextRequest) {
     // Calculate platform fee (10% of base price)
     const platformFee = Number(defaultPrice) * 0.1;
 
-    // Create trip
+    // Create trip WITHOUT driver assignment - drivers will discover and accept
     const trip = await prisma.trip.create({
       data: {
         title,
         description: description || `${title} - Comfortable ride`,
-        organizerId: firstUser.id,
-        driverId: driverProfile?.id || null, // Allow null driver for pending trips
+        organizerId: organizerUser.id,
+        driverId: null, // CRITICAL: Leave null so drivers can discover and accept the trip
         tripType: validTripType,
         departureTime: departureDateTime,
         returnTime: returnDateTime,

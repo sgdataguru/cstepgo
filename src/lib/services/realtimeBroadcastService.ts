@@ -176,12 +176,16 @@ class RealtimeBroadcastService {
       difficulty = 'difficult';
     }
 
-    // Find eligible drivers
+    // Determine trip type (default to PRIVATE if not specified)
+    const tripType: 'PRIVATE' | 'SHARED' = (trip.tripType === 'SHARED') ? 'SHARED' : 'PRIVATE';
+
+    // Find eligible drivers - now filtered by trip type preference
     const eligibleDrivers = await this.findEligibleDrivers(
       trip.originLat,
       trip.originLng,
       trip.driverDiscoveryRadius || DEFAULT_DISCOVERY_RADIUS,
-      estimatedEarnings
+      estimatedEarnings,
+      tripType
     );
 
     let sentCount = 0;
@@ -392,18 +396,30 @@ class RealtimeBroadcastService {
 
   /**
    * Find eligible drivers within radius
+   * @param originLat - Trip origin latitude
+   * @param originLng - Trip origin longitude
+   * @param radius - Maximum distance from origin in km
+   * @param minEarnings - Minimum earnings threshold for filtering
+   * @param tripType - Trip type for filtering drivers by preference (PRIVATE or SHARED)
    */
   private async findEligibleDrivers(
     originLat: number,
     originLng: number,
     radius: number,
-    minEarnings: number
+    minEarnings: number,
+    tripType: 'PRIVATE' | 'SHARED' = 'PRIVATE'
   ): Promise<Array<{ driverId: string; userId: string; latitude: number; longitude: number }>> {
     // Get all available drivers with location data
+    // Also filter by trip type preferences from Driver model
     const drivers = await prisma.driver.findMany({
       where: {
         availability: 'AVAILABLE',
         status: 'APPROVED',
+        // Filter by driver's trip type preferences stored in database
+        ...(tripType === 'PRIVATE' 
+          ? { accepts_private_trips: true }
+          : { accepts_shared_trips: true }
+        ),
       },
       include: {
         user: {
@@ -430,13 +446,24 @@ class RealtimeBroadcastService {
         // Check distance constraint
         if (distance > radius) return false;
 
-        // Check subscription preferences if exists
+        // Check subscription preferences if exists (real-time filter preferences)
         const subscription = this.driverSubscriptions.get(driver.id);
         if (subscription?.filters) {
           const filters = subscription.filters;
           
+          // Check max distance preference
           if (filters.maxDistance && distance > filters.maxDistance) return false;
+          
+          // Check minimum earnings preference
           if (filters.minEarnings && minEarnings < filters.minEarnings) return false;
+          
+          // Check trip type preference from subscription
+          // If driver has specified tripTypes filter, ensure current trip type is included
+          if (filters.tripTypes && filters.tripTypes.length > 0) {
+            if (!filters.tripTypes.includes(tripType)) {
+              return false;
+            }
+          }
         }
 
         return true;

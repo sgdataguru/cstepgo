@@ -53,21 +53,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Build dynamic where clause
+    // Build dynamic where clause with Kazakhstan-specific constraints
     const where: any = {
       status: status as any,
+      // Enforce zone must exist (Kazakhstan trips should have zone assigned)
+      // This ensures we only return properly classified trips
+      zone: zones.length > 0 
+        ? { in: zones }
+        : { in: VALID_ZONES as unknown as string[] }, // Default: all valid zones (excludes null)
+      // Geographic boundary enforcement at database level
+      // Latitude: 40.5° N to 55.5° N
+      originLat: { gte: 40.5, lte: 55.5 },
+      destLat: { gte: 40.5, lte: 55.5 },
+      // Longitude: 46.5° E to 87.5° E  
+      originLng: { gte: 46.5, lte: 87.5 },
+      destLng: { gte: 46.5, lte: 87.5 },
     };
 
     // Add ID filter if specified (for single trip lookup)
     if (id) {
       where.id = id;
-    }
-
-    // Add zone filter if specified
-    if (zones.length > 0) {
-      where.zone = {
-        in: zones,
-      };
     }
 
     // Add trip type filter if specified
@@ -112,20 +117,27 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Filter trips to Kazakhstan geography domain
-    // This is a critical security/domain boundary enforcement
-    const kazakhstanTrips = trips.filter((trip: any) => {
-      // Validate coordinates are valid numbers
+    // Secondary validation filter (defense in depth)
+    // Database query already filters by geography, but validate data integrity
+    const validatedTrips = trips.filter((trip: any) => {
+      // Ensure coordinates are valid numbers
       if (!areCoordinatesValid(trip.originLat, trip.originLng) || 
           !areCoordinatesValid(trip.destLat, trip.destLng)) {
-        // Only log in development to avoid production noise
         if (process.env.NODE_ENV === 'development') {
-          console.warn(`Trip ${trip.id} has invalid coordinates, excluding from Kazakhstan results`);
+          console.warn(`Trip ${trip.id} has invalid coordinates, excluding`);
         }
         return false;
       }
       
-      // Check if trip is within Kazakhstan boundaries
+      // Verify trip has a valid zone assigned
+      if (!trip.zone || !isValidZone(trip.zone)) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(`Trip ${trip.id} has invalid zone: ${trip.zone}, excluding`);
+        }
+        return false;
+      }
+      
+      // Double-check Kazakhstan boundaries (defense in depth)
       const isKazakhstanTrip = isTripWithinKazakhstan(
         trip.originLat,
         trip.originLng,
@@ -141,13 +153,14 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform and enrich trips with zone information
-    const transformedTrips = kazakhstanTrips.map((trip: any) => {
-      // If zone is not set, calculate it dynamically
-      let zone = trip.zone;
+    const transformedTrips = validatedTrips.map((trip: any) => {
+      // Zone is already validated, use directly
+      // Calculate estimatedDays and distance if not set
+      let zone = trip.zone; // Already validated as ZONE_A, ZONE_B, or ZONE_C
       let estimatedDays = trip.estimatedDays;
       let distance = trip.distance;
 
-      if (!zone || !estimatedDays || !distance) {
+      if (!estimatedDays || !distance) {
         const classification = classifyTrip(
           trip.departureTime,
           trip.returnTime,
@@ -158,8 +171,8 @@ export async function GET(request: NextRequest) {
           trip.distance
         );
         
-        zone = classification.zone;
-        estimatedDays = classification.estimatedDays;
+        // Keep existing zone (already validated), only calculate missing fields
+        estimatedDays = estimatedDays || classification.estimatedDays;
         
         // Calculate distance if not provided
         if (!distance) {

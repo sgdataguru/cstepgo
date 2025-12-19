@@ -137,6 +137,45 @@ export function isWithinRadius(
 /**
  * Get 2GIS Directions API URL
  */
+/**
+ * Build 2GIS Routing API request body
+ */
+export function getDirectionsApiRequest(
+  origin: RoutePoint,
+  destination: RoutePoint,
+  waypoints?: RoutePoint[],
+  preferences?: NavigationPreferences
+): { url: string; body: object } {
+  const apiKey = process.env.NEXT_PUBLIC_2GIS_API_KEY || '';
+  const baseUrl = 'https://routing.api.2gis.com/routing/7.0.0/global';
+  
+  // Build points array
+  const points: { lat: number; lon: number }[] = [
+    { lat: origin.lat, lon: origin.lng }
+  ];
+  
+  // Add waypoints if provided
+  if (waypoints && waypoints.length > 0) {
+    waypoints.forEach(wp => {
+      points.push({ lat: wp.lat, lon: wp.lng });
+    });
+  }
+  
+  // Add destination
+  points.push({ lat: destination.lat, lon: destination.lng });
+  
+  return {
+    url: `${baseUrl}?key=${apiKey}`,
+    body: {
+      type: 'car',
+      points,
+    }
+  };
+}
+
+/**
+ * Legacy: Build 2GIS Directions API URL (GET request) - deprecated
+ */
 export function getDirectionsApiUrl(
   origin: RoutePoint,
   destination: RoutePoint,
@@ -144,7 +183,7 @@ export function getDirectionsApiUrl(
   preferences?: NavigationPreferences
 ): string {
   const apiKey = process.env.NEXT_PUBLIC_2GIS_API_KEY || '';
-  const baseUrl = 'https://catalog.api.2gis.com/carrouting/6.0.0/global';
+  const baseUrl = 'https://routing.api.2gis.com/routing/7.0.0/global';
   
   const params = new URLSearchParams({
     key: apiKey,
@@ -168,7 +207,7 @@ export function getDirectionsApiUrl(
 }
 
 /**
- * Parse 2GIS Directions API response
+ * Parse 2GIS Directions API response (v7)
  */
 export function parseDirectionsResponse(response: any): NavigationRoute | null {
   try {
@@ -178,60 +217,80 @@ export function parseDirectionsResponse(response: any): NavigationRoute | null {
     
     const route = response.result[0];
     
-    // Convert 2GIS geometry format to steps
+    // Convert 2GIS v7 maneuvers to steps
     const steps: RouteStep[] = [];
-    const points = route.points || [];
+    const allPoints: [number, number][] = [];
     
-    // Create steps from maneuvers
+    // Parse maneuvers
     if (route.maneuvers && route.maneuvers.length > 0) {
-      route.maneuvers.forEach((maneuver: any, index: number) => {
-        const nextIndex = index < route.maneuvers.length - 1 ? route.maneuvers[index + 1].outgoing_path_index : points.length - 1;
-        const stepPoints = points.slice(maneuver.outgoing_path_index, nextIndex + 1);
+      route.maneuvers.forEach((maneuver: any) => {
+        const outPath = maneuver.outcoming_path;
+        if (!outPath) return;
         
-        // Ensure stepPoints has at least one point before accessing
-        if (stepPoints.length === 0) {
-          return;
+        // Parse LINESTRING geometry
+        let startLat = 0, startLng = 0, endLat = 0, endLng = 0;
+        if (outPath.geometry && outPath.geometry.length > 0) {
+          const geomString = outPath.geometry[0].selection || '';
+          // Parse LINESTRING(lon lat, lon lat, ...)
+          const match = geomString.match(/LINESTRING\(([^)]+)\)/);
+          if (match) {
+            const coords = match[1].split(',').map((c: string) => {
+              const [lon, lat] = c.trim().split(' ').map(Number);
+              return [lon, lat] as [number, number];
+            });
+            if (coords.length > 0) {
+              startLng = coords[0][0];
+              startLat = coords[0][1];
+              endLng = coords[coords.length - 1][0];
+              endLat = coords[coords.length - 1][1];
+              allPoints.push(...coords);
+            }
+          }
         }
         
         steps.push({
-          distance: maneuver.length || 0,
-          duration: maneuver.time || 0,
-          instruction: maneuver.comment || 'Continue',
-          maneuver: maneuver.type,
-          startLocation: {
-            lat: stepPoints[0][1],
-            lng: stepPoints[0][0],
-          },
-          endLocation: {
-            lat: stepPoints[stepPoints.length - 1][1],
-            lng: stepPoints[stepPoints.length - 1][0],
-          },
-          polyline: JSON.stringify(stepPoints),
+          distance: outPath.distance || 0,
+          duration: outPath.duration || 0,
+          instruction: maneuver.outcoming_path_comment || maneuver.comment || 'Continue',
+          maneuver: maneuver.icon || maneuver.type || 'straight',
+          startLocation: { lat: startLat, lng: startLng },
+          endLocation: { lat: endLat, lng: endLng },
+          polyline: outPath.geometry?.[0]?.selection || '',
         });
       });
     }
     
-    // Guard against empty points array
-    if (points.length === 0) {
-      return null;
+    // Get bounds from waypoints
+    const waypoints = route.waypoints || [];
+    let northeast = { lat: -90, lng: -180 };
+    let southwest = { lat: 90, lng: 180 };
+    
+    if (allPoints.length > 0) {
+      northeast = {
+        lat: Math.max(...allPoints.map(p => p[1])),
+        lng: Math.max(...allPoints.map(p => p[0])),
+      };
+      southwest = {
+        lat: Math.min(...allPoints.map(p => p[1])),
+        lng: Math.min(...allPoints.map(p => p[0])),
+      };
+    } else if (waypoints.length >= 2) {
+      // Fallback to waypoints
+      const lats = waypoints.map((w: any) => w.lat);
+      const lngs = waypoints.map((w: any) => w.lon);
+      northeast = { lat: Math.max(...lats), lng: Math.max(...lngs) };
+      southwest = { lat: Math.min(...lats), lng: Math.min(...lngs) };
     }
     
     return {
       distance: route.total_distance || 0,
       duration: route.total_duration || 0,
-      polyline: JSON.stringify(points),
+      polyline: allPoints.map(p => `${p[1]},${p[0]}`).join(';'),
       steps,
-      bounds: {
-        northeast: {
-          lat: Math.max(...points.map((p: [number, number]) => p[1])),
-          lng: Math.max(...points.map((p: [number, number]) => p[0])),
-        },
-        southwest: {
-          lat: Math.min(...points.map((p: [number, number]) => p[1])),
-          lng: Math.min(...points.map((p: [number, number]) => p[0])),
-        },
-      },
-      overview: `${formatDistance(route.total_distance)} via 2GIS route`,
+      bounds: { northeast, southwest },
+      overview: route.ui_total_distance 
+        ? `${route.ui_total_distance.value} ${route.ui_total_distance.unit} (${route.ui_total_duration})`
+        : formatDistance(route.total_distance),
     };
   } catch (error) {
     console.error('Error parsing directions response:', error);

@@ -51,7 +51,7 @@ export interface TwoGISDirectionsResponse {
 }
 
 /**
- * 2GIS Maps SDK Loader
+ * 2GIS Maps SDK Loader (MapGL)
  */
 export class TwoGISLoader {
   private static instance: TwoGISLoader | null = null;
@@ -70,6 +70,10 @@ export class TwoGISLoader {
     return TwoGISLoader.instance;
   }
 
+  getApiKey(): string {
+    return this.apiKey;
+  }
+
   async load(): Promise<void> {
     if (this.loaded) {
       return Promise.resolve();
@@ -80,26 +84,22 @@ export class TwoGISLoader {
     }
 
     this.loadPromise = new Promise((resolve, reject) => {
-      // Load 2GIS Maps API script
+      // Load 2GIS MapGL SDK
       const script = document.createElement('script');
-      script.src = `https://maps.api.2gis.com/2.0/loader.js?pkg=full`;
+      script.src = 'https://mapgl.2gis.com/api/js/v1';
       script.async = true;
-      script.defer = true;
 
       script.onload = () => {
-        // Initialize 2GIS with API key
-        if (typeof window !== 'undefined' && (window as any).DG) {
-          (window as any).DG.then(() => {
-            this.loaded = true;
-            resolve();
-          });
+        if (typeof window !== 'undefined' && (window as any).mapgl) {
+          this.loaded = true;
+          resolve();
         } else {
-          reject(new Error('2GIS Maps API failed to load'));
+          reject(new Error('2GIS MapGL API failed to load'));
         }
       };
 
       script.onerror = () => {
-        reject(new Error('Failed to load 2GIS Maps API script'));
+        reject(new Error('Failed to load 2GIS MapGL API script'));
       };
 
       document.head.appendChild(script);

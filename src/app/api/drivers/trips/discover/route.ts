@@ -6,30 +6,35 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const driverId = searchParams.get('driverId');
+    const tripType = searchParams.get('tripType'); // 'SHARED', 'PRIVATE', or 'all'
     const limit = parseInt(searchParams.get('limit') || '10');
     const offset = parseInt(searchParams.get('offset') || '0');
     
     // Get available trips that:
-    // 1. Are PUBLISHED status
+    // 1. Are PUBLISHED or OFFERED status (trips waiting for drivers)
     // 2. Don't have a driver assigned yet
     // 3. Have departure time in the future
-    // 4. Are SHARED or GROUP type (not private - those need quotes)
     const now = new Date();
     
+    // Build where clause dynamically
+    const whereClause: any = {
+      OR: [
+        { status: 'PUBLISHED' },
+        { status: 'OFFERED' }
+      ],
+      driverId: null,
+      departureTime: {
+        gt: now
+      }
+    };
+    
+    // Filter by trip type if specified
+    if (tripType && tripType !== 'all') {
+      whereClause.tripType = tripType;
+    }
+    
     const trips = await prisma.trip.findMany({
-      where: {
-        status: 'PUBLISHED',
-        driverId: null,
-        departureTime: {
-          gt: now
-        },
-        // Only show trips that are not exclusively private
-        OR: [
-          { trip_type: 'SHARED' },
-          { trip_type: 'GROUP' },
-          { trip_type: null } // Legacy trips without type
-        ]
-      },
+      where: whereClause,
       include: {
         organizer: {
           select: {
@@ -37,6 +42,18 @@ export async function GET(request: NextRequest) {
             name: true,
             avatar: true,
             phone: true
+          }
+        },
+        bookings: {
+          where: {
+            status: {
+              in: ['CONFIRMED', 'PENDING']
+            }
+          },
+          select: {
+            id: true,
+            seatsBooked: true,
+            status: true
           }
         }
       },
@@ -49,18 +66,7 @@ export async function GET(request: NextRequest) {
     
     // Get total count for pagination
     const totalCount = await prisma.trip.count({
-      where: {
-        status: 'PUBLISHED',
-        driverId: null,
-        departureTime: {
-          gt: now
-        },
-        OR: [
-          { trip_type: 'SHARED' },
-          { trip_type: 'GROUP' },
-          { trip_type: null }
-        ]
-      }
+      where: whereClause
     });
     
     // Transform trips for driver view
@@ -77,11 +83,16 @@ export async function GET(request: NextRequest) {
       else if (hoursUntilDeparture <= 6) urgency = 'high';
       else if (hoursUntilDeparture <= 24) urgency = 'medium';
       
+      // Count confirmed bookings
+      const confirmedBookings = trip.bookings?.filter(b => b.status === 'CONFIRMED').length || 0;
+      const bookedSeats = trip.bookings?.reduce((sum, b) => sum + b.seatsBooked, 0) || 0;
+      
       return {
         id: trip.id,
         title: trip.title,
         description: trip.description,
-        tripType: trip.trip_type || 'SHARED',
+        tripType: trip.tripType || 'SHARED',
+        status: trip.status,
         departureTime: trip.departureTime,
         returnTime: trip.returnTime,
         origin: {
@@ -98,6 +109,8 @@ export async function GET(request: NextRequest) {
         },
         totalSeats: trip.totalSeats,
         availableSeats: trip.availableSeats,
+        bookedSeats,
+        confirmedBookings,
         pricing: {
           basePrice,
           platformFee,
@@ -108,7 +121,7 @@ export async function GET(request: NextRequest) {
         urgency,
         hoursUntilDeparture: Math.round(hoursUntilDeparture * 10) / 10,
         zone: trip.zone,
-        estimatedDays: trip.estimated_days,
+        estimatedDays: trip.estimatedDays,
         distance: trip.distance,
         createdAt: trip.createdAt
       };
