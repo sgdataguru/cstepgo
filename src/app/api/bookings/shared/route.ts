@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { withAuth, TokenPayload } from '@/lib/auth/middleware';
+import { realtimeBroadcastService } from '@/lib/services/realtimeBroadcastService';
 
 // Define enums locally (matches Prisma schema)
 enum TripType {

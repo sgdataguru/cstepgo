@@ -120,7 +120,7 @@ async function validateLocationReplayFeature() {
         status: { in: ['PENDING', 'CONFIRMED'] },
         trip: {
           driverId: { not: null },
-          status: { in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] },
+          status: { in: ['PUBLISHED', 'IN_PROGRESS', 'DEPARTED', 'EN_ROUTE'] },
         },
       },
       include: {
