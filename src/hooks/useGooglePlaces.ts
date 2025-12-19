@@ -1,6 +1,7 @@
-/// <reference types="@types/google.maps" />
+// @ts-nocheck
+// Note: This hook is legacy code kept for reference. The app now uses 2GIS Maps.
+// Google Maps packages (@googlemaps/js-api-loader, @types/google.maps) not installed.
 import { useState, useEffect, useCallback } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
 
 export interface PlaceSuggestion {
   placeId: string;
