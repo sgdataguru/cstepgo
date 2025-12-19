@@ -1,8 +1,12 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function VerifyPage() {
+// Force dynamic rendering - uses searchParams
+export const dynamic = 'force-dynamic';
+
+function VerifyContent() {
     const searchParams = useSearchParams();
     const email = searchParams.get('email');
 
@@ -71,5 +75,20 @@ export default function VerifyPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function VerifyPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-cyan-50 py-12 px-4 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        }>
+            <VerifyContent />
+        </Suspense>
     );
 }

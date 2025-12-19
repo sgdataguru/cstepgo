@@ -4,6 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+
+// Force dynamic rendering - uses authentication headers
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 import { withAuth } from '@/lib/auth/middleware';
 import { getUserBookings, getUpcomingBookingsCount, getUserBookingStats } from '@/lib/services/bookingService';
 import { BookingStatus } from '@prisma/client';

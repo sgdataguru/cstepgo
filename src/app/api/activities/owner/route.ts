@@ -4,6 +4,10 @@ import { OwnerActivitiesQuerySchema } from '@/lib/validations/activitySchemas';
 import { getOwnerActivities } from '@/lib/services/activityService';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering - uses authentication headers
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 /**
  * GET /api/activities/owner
  * List all activities for the authenticated owner
