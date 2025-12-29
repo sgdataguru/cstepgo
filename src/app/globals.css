@@ -548,3 +548,156 @@
     }
   }
 }
+
+/* ============================================
+   GLOBAL INPUT FIELD STYLING STANDARD
+   Ensure all input text is black (#000000) for maximum visibility
+   Applied across the entire application - EXCEPT dark theme forms
+   ============================================ */
+
+/* All input types - force black text ONLY when not explicitly white */
+/* This preserves text-white classes on dark background forms */
+input:not(.text-white),
+input[type="text"]:not(.text-white),
+input[type="email"]:not(.text-white),
+input[type="tel"]:not(.text-white),
+input[type="number"]:not(.text-white),
+input[type="password"]:not(.text-white),
+input[type="url"]:not(.text-white),
+input[type="search"]:not(.text-white),
+input[type="date"]:not(.text-white),
+input[type="time"]:not(.text-white),
+input[type="datetime-local"]:not(.text-white),
+input[type="month"]:not(.text-white),
+input[type="week"]:not(.text-white),
+input[type="color"]:not(.text-white),
+select:not(.text-white),
+textarea:not(.text-white),
+select[multiple]:not(.text-white) {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important; /* Safari override */
+}
+
+/* Placeholder text - consistent gray ONLY for non-white inputs */
+input:not(.text-white)::placeholder,
+input[type="text"]:not(.text-white)::placeholder,
+input[type="email"]:not(.text-white)::placeholder,
+input[type="tel"]:not(.text-white)::placeholder,
+input[type="number"]:not(.text-white)::placeholder,
+input[type="password"]:not(.text-white)::placeholder,
+input[type="url"]:not(.text-white)::placeholder,
+input[type="search"]:not(.text-white)::placeholder,
+input[type="date"]:not(.text-white)::placeholder,
+input[type="time"]:not(.text-white)::placeholder,
+input[type="datetime-local"]:not(.text-white)::placeholder,
+input[type="month"]:not(.text-white)::placeholder,
+input[type="week"]:not(.text-white)::placeholder,
+select:not(.text-white)::placeholder,
+textarea:not(.text-white)::placeholder {
+  color: #6b7280 !important; /* gray-500 */
+  opacity: 1 !important; /* Ensure placeholder is visible */
+}
+
+/* Focus states - maintain black text ONLY for non-white inputs */
+input:not(.text-white):focus,
+input[type="text"]:not(.text-white):focus,
+input[type="email"]:not(.text-white):focus,
+input[type="tel"]:not(.text-white):focus,
+input[type="number"]:not(.text-white):focus,
+input[type="password"]:not(.text-white):focus,
+input[type="url"]:not(.text-white):focus,
+input[type="search"]:not(.text-white):focus,
+input[type="date"]:not(.text-white):focus,
+input[type="time"]:not(.text-white):focus,
+input[type="datetime-local"]:not(.text-white):focus,
+input[type="month"]:not(.text-white):focus,
+input[type="week"]:not(.text-white):focus,
+input[type="color"]:not(.text-white):focus,
+select:not(.text-white):focus,
+textarea:not(.text-white):focus {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important; /* Safari override */
+}
+
+/* Disabled states - slightly muted but still readable for non-white inputs */
+input:not(.text-white):disabled,
+input[type="text"]:not(.text-white):disabled,
+input[type="email"]:not(.text-white):disabled,
+input[type="tel"]:not(.text-white):disabled,
+input[type="number"]:not(.text-white):disabled,
+input[type="password"]:not(.text-white):disabled,
+input[type="url"]:not(.text-white):disabled,
+input[type="search"]:not(.text-white):disabled,
+input[type="date"]:not(.text-white):disabled,
+input[type="time"]:not(.text-white):disabled,
+input[type="datetime-local"]:not(.text-white):disabled,
+input[type="month"]:not(.text-white):disabled,
+input[type="week"]:not(.text-white):disabled,
+input[type="color"]:not(.text-white):disabled,
+select:not(.text-white):disabled,
+textarea:not(.text-white):disabled {
+  color: #374151 !important; /* gray-700 - still dark but indicates disabled */
+  -webkit-text-fill-color: #374151 !important;
+}
+
+/* Read-only states - maintain black text for non-white inputs */
+input:not(.text-white):read-only,
+input[type="text"]:not(.text-white):read-only,
+input[type="email"]:not(.text-white):read-only,
+input[type="tel"]:not(.text-white):read-only,
+input[type="number"]:not(.text-white):read-only,
+input[type="password"]:not(.text-white):read-only,
+input[type="url"]:not(.text-white):read-only,
+input[type="search"]:not(.text-white):read-only,
+input[type="date"]:not(.text-white):read-only,
+input[type="time"]:not(.text-white):read-only,
+input[type="datetime-local"]:not(.text-white):read-only,
+input[type="month"]:not(.text-white):read-only,
+input[type="week"]:not(.text-white):read-only,
+input[type="color"]:not(.text-white):read-only,
+select:not(.text-white):read-only,
+textarea:not(.text-white):read-only {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* Invalid states - keep black text but let border indicate error for non-white inputs */
+input:not(.text-white):invalid,
+input[type="text"]:not(.text-white):invalid,
+input[type="email"]:not(.text-white):invalid,
+input[type="tel"]:not(.text-white):invalid,
+input[type="number"]:not(.text-white):invalid,
+input[type="password"]:not(.text-white):invalid,
+input[type="url"]:not(.text-white):invalid,
+input[type="search"]:not(.text-white):invalid,
+input[type="date"]:not(.text-white):invalid,
+input[type="time"]:not(.text-white):invalid,
+input[type="datetime-local"]:not(.text-white):invalid,
+input[type="month"]:not(.text-white):invalid,
+input[type="week"]:not(.text-white):invalid,
+select:not(.text-white):invalid,
+textarea:not(.text-white):invalid {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* High specificity override for any conflicting styles - only for non-white inputs */
+input:not(.text-white):not([type]),
+input[type="text"]:not(.text-white),
+input[type="email"]:not(.text-white),
+input[type="tel"]:not(.text-white),
+input[type="number"]:not(.text-white),
+input[type="password"]:not(.text-white),
+input[type="url"]:not(.text-white),
+input[type="search"]:not(.text-white),
+input[type="date"]:not(.text-white),
+input[type="time"]:not(.text-white),
+input[type="datetime-local"]:not(.text-white),
+input[type="month"]:not(.text-white),
+input[type="week"]:not(.text-white),
+input[type="color"]:not(.text-white),
+select:not(.text-white),
+textarea:not(.text-white) {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}

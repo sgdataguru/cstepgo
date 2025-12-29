@@ -1,7 +1,9 @@
 /**
- * Mock Twilio Integration
- * Replace with real Twilio when credentials are available
+ * Twilio Integration for SMS and WhatsApp
+ * Real implementation using Twilio API
  */
+
+import twilio from 'twilio';
 
 export enum DeliveryStatus {
   SENT = 'SENT',
@@ -16,6 +18,18 @@ export interface MessageResult {
   errorMessage?: string;
 }
 
+// Initialize Twilio client
+const getTwilioClient = () => {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!accountSid || !authToken) {
+    throw new Error('Twilio credentials not configured. Please set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN environment variables.');
+  }
+
+  return twilio(accountSid, authToken);
+};
+
 /**
  * Send WhatsApp message via Twilio
  * @param phone - Phone number in E.164 format (e.g., +996555123456)
@@ -26,24 +40,26 @@ export async function sendWhatsAppMessage(
   message: string
 ): Promise<MessageResult> {
   try {
-    console.log('📱 [MOCK] Sending WhatsApp message to:', phone);
-    console.log('Message:', message);
-    
-    // TODO: Replace with real Twilio integration
-    // const twilioClient = twilio(
-    //   process.env.TWILIO_ACCOUNT_SID,
-    //   process.env.TWILIO_AUTH_TOKEN
-    // );
-    // const result = await twilioClient.messages.create({
-    //   from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-    //   to: `whatsapp:${phone}`,
-    //   body: message,
-    // });
-    
-    // Mock successful delivery
+    console.log('📱 Sending WhatsApp message to:', phone);
+
+    const client = getTwilioClient();
+    const whatsappNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!whatsappNumber) {
+      throw new Error('TWILIO_PHONE_NUMBER environment variable not set');
+    }
+
+    const result = await client.messages.create({
+      from: `whatsapp:${whatsappNumber}`,
+      to: `whatsapp:${phone}`,
+      body: message,
+    });
+
+    console.log('WhatsApp message sent successfully:', result.sid);
+
     return {
       status: DeliveryStatus.SENT,
-      messageId: `mock_wa_${Date.now()}`,
+      messageId: result.sid,
     };
   } catch (error) {
     console.error('WhatsApp delivery failed:', error);
@@ -64,24 +80,26 @@ export async function sendSMS(
   message: string
 ): Promise<MessageResult> {
   try {
-    console.log('📧 [MOCK] Sending SMS to:', phone);
-    console.log('Message:', message);
-    
-    // TODO: Replace with real Twilio integration
-    // const twilioClient = twilio(
-    //   process.env.TWILIO_ACCOUNT_SID,
-    //   process.env.TWILIO_AUTH_TOKEN
-    // );
-    // const result = await twilioClient.messages.create({
-    //   from: process.env.TWILIO_PHONE_NUMBER,
-    //   to: phone,
-    //   body: message,
-    // });
-    
-    // Mock successful delivery
+    console.log('📧 Sending SMS to:', phone);
+
+    const client = getTwilioClient();
+    const smsNumber = process.env.TWILIO_PHONE_NUMBER;
+
+    if (!smsNumber) {
+      throw new Error('TWILIO_PHONE_NUMBER environment variable not set');
+    }
+
+    const result = await client.messages.create({
+      from: smsNumber,
+      to: phone,
+      body: message,
+    });
+
+    console.log('SMS sent successfully:', result.sid);
+
     return {
       status: DeliveryStatus.SENT,
-      messageId: `mock_sms_${Date.now()}`,
+      messageId: result.sid,
     };
   } catch (error) {
     console.error('SMS delivery failed:', error);

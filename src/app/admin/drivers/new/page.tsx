@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DriverRegistrationForm } from './components/DriverRegistrationForm';
 import { SuccessModal } from './components/SuccessModal';
@@ -11,6 +11,8 @@ export default function NewDriverPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [registrationResponse, setRegistrationResponse] = useState<DriverRegistrationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // Removed authentication check - allow public access for driver registration
   
   const handleSuccess = (response: DriverRegistrationResponse) => {
     setRegistrationResponse(response);

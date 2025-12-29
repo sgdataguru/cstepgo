@@ -47,9 +47,27 @@ export default function DriversListPage() {
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      router.push('/auth/login');
+      return;
+    }
+    
+    fetchDrivers();
+  }, []);
+  
   const fetchDrivers = async () => {
     setLoading(true);
     try {
+      // Get authentication token
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+      
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
@@ -59,7 +77,11 @@ export default function DriversListPage() {
       if (vehicleTypeFilter !== 'ALL') params.append('vehicleType', vehicleTypeFilter);
       if (searchQuery) params.append('search', searchQuery);
       
-      const response = await fetch(`/api/admin/drivers?${params}`);
+      const response = await fetch(`/api/admin/drivers?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
       
       if (response.ok) {
@@ -74,7 +96,10 @@ export default function DriversListPage() {
   };
   
   useEffect(() => {
-    fetchDrivers();
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      fetchDrivers();
+    }
   }, [pagination.page, statusFilter, vehicleTypeFilter]);
   
   const handleSearch = () => {

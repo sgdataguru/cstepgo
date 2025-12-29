@@ -88,6 +88,8 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
     setLoading(true);
     
     try {
+      // Removed authentication requirement - public driver registration
+      
       const response = await fetch('/api/admin/drivers', {
         method: 'POST',
         headers: {
@@ -160,7 +162,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.fullName}
               onChange={(e) => handleInputChange('fullName', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.fullName ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="e.g., Damir Amangeldy"
@@ -178,7 +180,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.phone ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="+7 701 234 5678"
@@ -196,7 +198,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="email"
               value={formData.email}
               onChange={(e) => handleInputChange('email', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="driver@example.com"
@@ -215,7 +217,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.nationalId}
               onChange={(e) => handleInputChange('nationalId', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.nationalId ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="123456789012"
@@ -244,7 +246,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
             <select
               value={formData.vehicleType}
               onChange={(e) => handleInputChange('vehicleType', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900"
             >
               {vehicleTypes.map(type => (
                 <option key={type.value} value={type.value}>{type.label}</option>
@@ -260,7 +262,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.vehicleMake}
               onChange={(e) => handleInputChange('vehicleMake', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.vehicleMake ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="e.g., Toyota"
@@ -278,7 +280,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.vehicleModel}
               onChange={(e) => handleInputChange('vehicleModel', e.target.value)}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.vehicleModel ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="e.g., Camry"
@@ -296,7 +298,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="number"
               value={formData.vehicleYear}
               onChange={(e) => handleInputChange('vehicleYear', parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900"
               min="1990"
               max={new Date().getFullYear() + 1}
             />
@@ -310,7 +312,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.licensePlate}
               onChange={(e) => handleInputChange('licensePlate', e.target.value.toUpperCase())}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all uppercase ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all uppercase text-gray-900 ${
                 errors.licensePlate ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="ABC 123"
@@ -328,7 +330,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.vehicleColor}
               onChange={(e) => handleInputChange('vehicleColor', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900"
               placeholder="e.g., White"
             />
           </div>
@@ -341,7 +343,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="number"
               value={formData.seatCapacity}
               onChange={(e) => handleInputChange('seatCapacity', parseInt(e.target.value))}
-              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all ${
+              className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900 ${
                 errors.seatCapacity ? 'border-red-500' : 'border-gray-300'
               }`}
               min="1"
@@ -372,7 +374,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="text"
               value={formData.homeCity}
               onChange={(e) => handleInputChange('homeCity', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900"
               placeholder="e.g., Almaty"
             />
           </div>
@@ -385,7 +387,7 @@ export function DriverRegistrationForm({ onSuccess, onError }: DriverRegistratio
               type="number"
               value={formData.serviceRadiusKm}
               onChange={(e) => handleInputChange('serviceRadiusKm', parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all text-gray-900"
               min="1"
               max="1000"
             />

@@ -79,8 +79,8 @@ export function SuccessModal({ response, onClose, onRegisterAnother }: SuccessMo
               </div>
               <div>
                 <p className="text-sm text-gray-500">Status</p>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  {driver.status}
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  APPROVED
                 </span>
               </div>
             </div>
@@ -149,9 +149,9 @@ export function SuccessModal({ response, onClose, onRegisterAnother }: SuccessMo
             </div>
             <p className="text-xs text-teal-700 mt-3 flex items-center">
               <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Driver will be required to change password on first login
+              Driver is auto-approved and ready to start accepting trips
             </p>
           </div>
           

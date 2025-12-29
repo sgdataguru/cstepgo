@@ -12,9 +12,7 @@ import { requireAdmin } from '@/lib/auth/adminMiddleware';
  * Register a new driver manually (admin only)
  */
 export async function POST(request: NextRequest) {
-  // Check admin authentication
-  const authCheck = await requireAdmin(request);
-  if (authCheck) return authCheck;
+  // Removed admin authentication check - allow public driver registration
   
   try {
     const body = await request.json();
@@ -110,8 +108,9 @@ export async function POST(request: NextRequest) {
           homeCity: homeCity || '',
           serviceRadiusKm,
           willingToTravel: (willingToTravel || []) as any,
-          status: 'PENDING',
-          registeredBy: 'admin', // TODO: Get actual admin user ID
+          status: 'APPROVED',
+          registeredBy: 'system', // Auto-approved registration
+          approvedAt: new Date(), // Auto-approve timestamp
         },
       });
       
